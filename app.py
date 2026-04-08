@@ -159,8 +159,16 @@ if page == "📊 Learning Dashboard":
         color_discrete_sequence=["#800000", "#1a3c5e", "#2d6a2e", "#6b3fa0"],
     )
     fig_gantt.update_yaxes(autorange="reversed")
-    fig_gantt.add_vline(x=datetime.now(), line_dash="dash", line_color="red",
-                        annotation_text="TODAY", annotation_position="top")
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    fig_gantt.add_shape(
+        type="line", x0=today_str, x1=today_str, y0=0, y1=1,
+        xref="x", yref="paper",
+        line=dict(color="red", width=2, dash="dash"),
+    )
+    fig_gantt.add_annotation(
+        x=today_str, y=1.05, xref="x", yref="paper",
+        text="TODAY", showarrow=False, font=dict(color="red", size=12),
+    )
     fig_gantt.update_layout(height=400, margin=dict(l=0, r=0, t=30, b=0))
     st.plotly_chart(fig_gantt, use_container_width=True)
 
