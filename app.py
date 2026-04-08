@@ -731,174 +731,112 @@ if page == "🎮 ISM War Room":
     """, unsafe_allow_html=True)
 
     # ══════════════════════════════════════════════════════════════════════════
-    # WHY THIS STRATEGY WORKS — Deep Dive
+    # WHY THIS STRATEGY WORKS — Deep Dive Cards
     # ══════════════════════════════════════════════════════════════════════════
     with st.expander("**Why does this strategy work? (Deep Dive)**"):
 
-        st.markdown("---")
+        DEEP_CARDS = [
+            {
+                "title": "Price at ~half of max WTP",
+                "color": "#800000",
+                "ref": "1. PRICING — The #1 Lever",
+                "body": """WTP is <b>uniformly distributed \\$0 to max_WTP</b>.<br><br>
+                Revenue = 0.0001 x mkt x [(maxWTP - P) / maxWTP] x P<br><br>
+                Quadratic in P → derivative = 0 →<br>
+                <b>P* = max_WTP / 2</b> (revenue-max)<br><br>
+                With \\$100 marginal cost:<br>
+                <b>P*_profit = (max_WTP + 100) / 2</b><br><br>
+                <i>e.g. maxWTP=\\$800 → profit-max = \\$450</i><br><br>
+                <span style="opacity:0.6;font-size:0.75rem;">Microeconomics + Pricing Strategies</span>""",
+            },
+            {
+                "title": "Never stock out",
+                "color": "#0e7c7b",
+                "ref": "2. INVENTORY MANAGEMENT",
+                "body": """<i>"If no on-hand inventory, the customer is lost <b>forever</b>."</i><br><br>
+                Not "comes back tomorrow" — <b>permanently gone</b>. Stockouts compound into
+                massive market shrinkage.<br><br>
+                At ~15 units/day demand, 6-day lead time → need <b>≥90 units safety stock</b>.<br><br>
+                <b>Reorder Point = Daily Demand x Lead Time + Safety Stock</b><br><br>
+                Cost of holding (\\$100/unit) is trivial vs permanently losing customers.<br><br>
+                <span style="opacity:0.6;font-size:0.75rem;">Operations Management (Little's Law, newsvendor)</span>""",
+            },
+            {
+                "title": "Manage cash obsessively",
+                "color": "#1a3c5e",
+                "ref": "5. CASH MANAGEMENT",
+                "body": """<b>Cash IS the score.</b> Not revenue, not profit.<br><br>
+                <table style="width:100%;font-size:0.8rem;color:white;border-collapse:collapse;">
+                <tr><td>Cash interest</td><td><b>3% APR</b></td></tr>
+                <tr><td>Emergency loans</td><td><b style="color:#ff6b6b;">40% APR</b></td></tr>
+                <tr><td>Cost of capital</td><td><b>10% APR</b></td></tr>
+                <tr><td>Tax rate</td><td><b>35% quarterly</b></td></tr>
+                </table><br>
+                <b>37% spread</b> between earning & borrowing. Running dry = catastrophe.<br><br>
+                <span style="opacity:0.6;font-size:0.75rem;">Corporate Finance + Financial Strategy</span>""",
+            },
+            {
+                "title": "Trade smartly",
+                "color": "#6b3fa0",
+                "ref": "4. TRADING GAME",
+                "body": """Your specialty is <b>proprietary</b> — leverage it.<br><br>
+                <b>BATNA:</b> Sell retail yourself (140K market)<br>
+                <b>Their BATNA:</b> Zero revenue from your product<br>
+                <b>ZOPA:</b> \\$100 (your cost) to their retail price<br><br>
+                Shipping eats margins: Mail \\$40/unit (3d), Container \\$10/unit (21d).<br>
+                Bad deals lock you in. Price wars → zero profit.<br>
+                <b>Integrative deals create value:</b> swap Specialty for Hormone.<br><br>
+                <span style="opacity:0.6;font-size:0.75rem;">Negotiations (BATNA/ZOPA) + Competitive Strategy</span>""",
+            },
+            {
+                "title": "Wind down before game end",
+                "color": "#b22222",
+                "ref": "7. END-GAME EXECUTION",
+                "body": """<i>"All inventory becomes obsolete."</i><br><br>
+                Every unsold unit = <b>\\$100 wasted</b>. 500 units = \\$50K lost.<br><br>
+                <b>Stop when:</b> days_remaining &lt; lead_time + (inventory / daily_demand)<br><br>
+                <i>e.g. lead=3.5d, inv=200, demand=15/d → stop at 16.8 days left</i><br><br>
+                <b>End-game:</b> slash prices — selling at \\$101 beats holding at \\$0.
+                This is the newsvendor model with zero salvage value.<br><br>
+                <span style="opacity:0.6;font-size:0.75rem;">Operations Mgmt (newsvendor) + Pricing Strategies</span>""",
+            },
+            {
+                "title": "How it all connects",
+                "color": "#333333",
+                "ref": "",
+                "body": """<pre style="font-size:0.7rem;color:white;margin:0;line-height:1.4;">
+Pricing (max rev/unit) ────→ Cash inflow
+                                   │
+Inventory (no stockout) ──→ Preserves market
+                                   │
+Cash mgmt (avoid 40%) ───→ Protects balance
+                                   │
+Smart trading ────────────→ New revenue
+                                   │
+End-game wind-down ───────→ Inv → Cash
+                                   │
+                        ═══════════════
+                        FINAL CASH = SCORE
+                        ═══════════════</pre>
+                <br><b>All 5 cylinders must fire simultaneously.</b> That's why this is the capstone.""",
+            },
+        ]
 
-        # Card 1: Pricing
-        st.markdown("""
-        #### 1. Why "Price at ~half of max WTP"
-        *Links to: [Strategy 1 — Pricing](#1-pricing-the-1-lever)*
-
-        WTP is **uniformly distributed from \\$0 to max_WTP**. If you set price P:
-
-        - **Probability of sale** = (max_WTP - P) / max_WTP
-        - **Daily revenue** = 0.0001 x market x [(max_WTP - P) / max_WTP] x P
-
-        This is a quadratic in P. Taking the derivative:
-
-        > **P\\* = max_WTP / 2** (revenue-maximizing)
-
-        Accounting for \\$100/unit marginal cost, the **profit-maximizing** price shifts slightly higher:
-
-        > **P\\*_profit = (max_WTP + 100) / 2**
-
-        Example: if max_WTP = \\$800 → revenue-max = \\$400, profit-max = **\\$450**.
-        That extra \\$50 costs a few customers but earns more per unit.
-
-        *Source: Microeconomics (monopoly pricing), Pricing Strategies (inverse elasticity rule)*
-        """)
-
-        st.markdown("---")
-
-        # Card 2: Never stock out
-        st.markdown("""
-        #### 2. Why "Never stock out"
-        *Links to: [Strategy 2 — Inventory Management](#2-inventory-management-never-stock-out-never-over-stock)*
-
-        The game's most punishing rule:
-
-        > *"If a customer arrives and there is no on-hand inventory, the customer is lost **forever**."*
-
-        Not "comes back tomorrow" — **permanently gone**. Every stockout shrinks your addressable
-        market. Over a multi-hundred-day game, this compounds into massive revenue loss.
-
-        **The math:** At ~15 units/day demand and 6-day lead time (both products running),
-        you need ≥90 units of safety stock. The cost of holding that inventory (\\$100/unit materials)
-        is trivial compared to permanently losing customers.
-
-        The reorder point formula:
-
-        > **Reorder Point = Daily Demand x Lead Time + Safety Stock**
-
-        *Source: Operations Management (Little's Law, newsvendor model)*
-        """)
-
-        st.markdown("---")
-
-        # Card 3: Cash management
-        st.markdown("""
-        #### 3. Why "Manage cash obsessively"
-        *Links to: [Strategy 5 — Cash Management](#5-cash-management-the-objective-function)*
-
-        **Cash is literally the score.** Not revenue, not profit, not market share.
-
-        The numbers that make this critical:
-
-        | Parameter | Rate | Implication |
-        |---|---|---|
-        | Cash interest | **3% APR** | Idle cash compounds |
-        | Emergency loans | **40% APR** | Running out of cash is catastrophic |
-        | Cost of capital | **10% APR** | NPV hurdle for all investments |
-        | Tax rate | **35% quarterly** | Plan cash reserves for tax payments |
-
-        The **37% spread** between earning (3%) and borrowing (40%) means the penalty for
-        running dry is enormous. Every investment must clear the 10% hurdle — a factory
-        costing \\$200K that takes 90 days to build needs to generate enough cash in
-        remaining game days to beat what \\$200K earns sitting in the bank.
-
-        *Source: Corporate Finance (NPV, cost of capital), Financial Strategy (capital structure)*
-        """)
-
-        st.markdown("---")
-
-        # Card 4: Trade smartly
-        st.markdown("""
-        #### 4. Why "Trade smartly"
-        *Links to: [Strategy 4 — Trading Game](#4-trading-game-negotiate-like-you-learned-in-38803)*
-
-        When trading opens, the game shifts to **multi-player strategic interaction**.
-
-        **Why trade at all?**
-        - Your specialty is proprietary — only you make it. Other teams want it
-        - Buying others' Hormone lets you resell at retail markup in your region
-        - Trading unlocks revenue streams without building new infrastructure
-
-        **The BATNA framework:**
-        - Your BATNA for selling = sell retail yourself (limited by 140K market)
-        - Their BATNA for buying = zero revenue from your specialty
-        - **ZOPA** = wholesale price between \\$100 (your cost) and their retail price
-
-        **Why "smartly" matters:**
-        - Shipping costs eat margins: Mail = \\$40/unit, Container = \\$10/unit but 21 days
-        - Bad agreements lock you in (termination penalties, price limits)
-        - Price wars destroy value for everyone (Bertrand → zero profit)
-        - **Integrative deals** create value: "I supply Specialty if you supply Hormone"
-
-        *Source: Negotiations (BATNA, ZOPA, integrative bargaining),
-        Competitive Strategy (Garicano & Gertner on price competition)*
-        """)
-
-        st.markdown("---")
-
-        # Card 5: Wind down
-        st.markdown("""
-        #### 5. Why "Wind down production before game end"
-        *Links to: [Strategy 7 — End-Game Execution](#7-end-game-execution-the-final-20-of-game-time)*
-
-        The game states:
-
-        > *"All inventory becomes obsolete. Your objective is to maximize the firm's cash balance."*
-
-        **Every unsold unit = \\$100 of cash wasted** (materials cost with zero recovery).
-        500 unsold units = \\$50,000 lost.
-
-        **When to stop production:**
-
-        > Stop when: days_remaining < lead_time + (inventory / daily_demand)
-
-        Example: lead_time = 3.5 days, inventory = 200, demand = 15/day
-        → Stop when days_remaining < 3.5 + 13.3 = **16.8 days**
-
-        **End-game pricing shift:**
-        - Normal: maximize profit per unit (P* = (max_WTP + 100) / 2)
-        - End-game: maximize units sold — even \\$101 beats holding at \\$0
-
-        This is the **newsvendor model** — balancing overstocking cost (\\$100 wasted)
-        vs understocking cost (lost sale), except salvage value is literally zero.
-
-        *Source: Operations Management (newsvendor, EOQ), Pricing Strategies (dynamic pricing)*
-        """)
-
-        st.markdown("---")
-
-        # Integration diagram
-        st.markdown("""
-        #### How it all connects
-
-        ```
-        Pricing (max revenue/unit)  ──────→  Cash inflow
-                                                  │
-        Inventory (never stockout)  ──→  Preserves market size (customers)
-                                                  │
-        Cash management (avoid 40%)  ──→  Protects cash balance
-                                                  │
-        Smart trading  ────────────────→  New revenue streams
-                                                  │
-        End-game wind-down  ───────────→  Converts inventory → cash
-                                                  │
-                                           ══════════════
-                                           FINAL CASH = SCORE
-                                           ══════════════
-        ```
-
-        Every element connects. Mispricing reduces inflow. Stockouts permanently shrink your market.
-        Poor cash management triggers 40% interest. Bad trades lock you in. Late wind-down turns
-        cash into waste. **The teams that win run all five cylinders simultaneously** — which is exactly
-        why this is the capstone.
-        """)
+        # Render cards in rows of 3
+        for row_start in range(0, len(DEEP_CARDS), 3):
+            row_cards = DEEP_CARDS[row_start:row_start + 3]
+            card_cols = st.columns(len(row_cards))
+            for ci, card in enumerate(row_cards):
+                ref_html = f'<div style="font-size:0.65rem;opacity:0.5;margin-bottom:6px;">See above: {card["ref"]}</div>' if card["ref"] else ""
+                with card_cols[ci]:
+                    st.markdown(f"""
+                    <div style="background:{card['color']};color:white;border-radius:10px;
+                        padding:1rem;min-height:320px;display:flex;flex-direction:column;">
+                        <h4 style="color:white;margin:0 0 0.3rem 0;font-size:0.95rem;">{card['title']}</h4>
+                        {ref_html}
+                        <div style="font-size:0.8rem;line-height:1.45;flex:1;">{card['body']}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
