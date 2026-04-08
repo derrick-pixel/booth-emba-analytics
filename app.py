@@ -644,35 +644,42 @@ if page == "🎮 ISM War Room":
                 return base64.b64encode(f.read()).decode()
         return None
 
-    # Team overview cards with photo thumbnails
-    for team_name, team_data in TEAMS.items():
-        is_us = team_data.get("is_us", False)
-        border = "3px solid #ffd700" if is_us else "1px solid rgba(255,255,255,0.15)"
-        badge = " (US)" if is_us else ""
+    # Team overview cards in 2-column grid, compact & squarish
+    team_items = list(TEAMS.items())
+    for row_start in range(0, len(team_items), 2):
+        cols = st.columns(2)
+        for col_idx in range(2):
+            if row_start + col_idx >= len(team_items):
+                break
+            team_name, team_data = team_items[row_start + col_idx]
+            is_us = team_data.get("is_us", False)
+            border = "3px solid #ffd700" if is_us else "1px solid rgba(255,255,255,0.1)"
+            badge = " (US)" if is_us else ""
 
-        # Build member photos HTML with base64 embedded images
-        photos_html = ""
-        for display_name, file_key in team_data["members"]:
-            b64 = get_photo_base64(file_key)
-            if b64:
-                img_tag = f'<img src="data:image/jpeg;base64,{b64}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.4);"/>'
-            else:
-                initials = "".join(w[0] for w in display_name.split())
-                img_tag = f'<div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;">{initials}</div>'
-            photos_html += f'<div style="text-align:center;flex:1;min-width:70px;">{img_tag}<div style="font-size:0.7rem;margin-top:4px;line-height:1.2;">{display_name}</div></div>'
+            photos_html = ""
+            for display_name, file_key in team_data["members"]:
+                b64 = get_photo_base64(file_key)
+                if b64:
+                    img_tag = f'<img src="data:image/jpeg;base64,{b64}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(255,255,255,0.5);"/>'
+                else:
+                    initials = "".join(w[0] for w in display_name.split())
+                    img_tag = f'<div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.7rem;">{initials}</div>'
+                short_name = display_name.split()[0]
+                photos_html += f'<div style="text-align:center;width:55px;">{img_tag}<div style="font-size:0.6rem;margin-top:2px;line-height:1.1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">{short_name}</div></div>'
 
-        st.markdown(f"""
-        <div style="background:{team_data['color']};color:white;border-radius:10px;
-            padding:1rem;margin-bottom:0.6rem;border:{border};">
-            <div style="display:flex;justify-content:space-between;align-items:baseline;">
-                <h4 style="color:white;margin:0;">{team_name}{badge}</h4>
-                <span style="font-size:0.75rem;opacity:0.7;">Seat {team_data['id']} | {team_data['theme']}</span>
-            </div>
-            <div style="display:flex;gap:8px;margin-top:0.7rem;flex-wrap:wrap;justify-content:space-around;">
-                {photos_html}
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+            with cols[col_idx]:
+                st.markdown(f"""
+                <div style="background:{team_data['color']};color:white;border-radius:8px;
+                    padding:0.6rem 0.8rem;margin-bottom:0.5rem;border:{border};">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;">
+                        <span style="font-weight:700;font-size:0.95rem;">{team_name}{badge}</span>
+                        <span style="font-size:0.65rem;opacity:0.6;">{team_data['id']}</span>
+                    </div>
+                    <div style="display:flex;gap:4px;justify-content:space-between;">
+                        {photos_html}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
 
     st.markdown("")
     st.markdown("**8 teams x 6 members = 48 players** competing in the same simulation.")
