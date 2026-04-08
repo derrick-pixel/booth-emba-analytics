@@ -39,8 +39,11 @@ st.markdown("""
 
     .main { font-family: 'Inter', sans-serif; }
 
-    .stMetric > div { background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    .stMetric > div { background: rgba(128, 0, 0, 0.15);
         padding: 1rem; border-radius: 10px; border-left: 4px solid #800000; }
+    .stMetric label { color: inherit !important; }
+    .stMetric [data-testid="stMetricValue"] { color: inherit !important; }
+    .stMetric [data-testid="stMetricLabel"] { color: inherit !important; }
 
     .big-header { font-size: 2.5rem; font-weight: 700; color: #800000;
         margin-bottom: 0; line-height: 1.2; }
