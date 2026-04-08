@@ -813,16 +813,15 @@ if page == "🎮 ISM War Room":
             row_cards = DEEP_CARDS[row_start:row_start + 3]
             card_cols = st.columns(len(row_cards))
             for ci, card in enumerate(row_cards):
-                ref_html = f'<div style="font-size:0.65rem;opacity:0.5;margin-bottom:6px;">See above: {card["ref"]}</div>' if card["ref"] else ""
+                ref_line = f'See above: {card["ref"]}' if card["ref"] else ""
                 with card_cols[ci]:
-                    st.markdown(f"""
-                    <div style="background:{card['color']};color:white;border-radius:10px;
-                        padding:1rem;min-height:320px;display:flex;flex-direction:column;">
-                        <h4 style="color:white;margin:0 0 0.3rem 0;font-size:0.95rem;">{card['title']}</h4>
-                        {ref_html}
-                        <div style="font-size:0.8rem;line-height:1.45;flex:1;">{card['body']}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    card_html = f'<div style="background:{card["color"]};color:white;border-radius:10px;padding:1rem;min-height:320px;font-size:0.8rem;line-height:1.45;">'
+                    card_html += f'<h4 style="color:white;margin:0 0 0.3rem 0;font-size:0.95rem;">{card["title"]}</h4>'
+                    if ref_line:
+                        card_html += f'<span style="font-size:0.65rem;opacity:0.5;">{ref_line}</span><br>'
+                    card_html += card["body"]
+                    card_html += '</div>'
+                    st.markdown(card_html, unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
