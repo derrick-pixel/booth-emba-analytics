@@ -804,16 +804,7 @@ if page == "🎮 ISM War Room":
                 "title": "How it all connects",
                 "color": "#333333",
                 "ref": "",
-                "body": """<div style="font-size:0.78rem;line-height:1.6;">
-                Pricing ──→ <b>Cash inflow</b><br>
-                Inventory ──→ <b>Preserves market</b><br>
-                Cash mgmt ──→ <b>Protects balance</b><br>
-                Trading ──→ <b>New revenue</b><br>
-                Wind-down ──→ <b>Inv → Cash</b><br><br>
-                <div style="text-align:center;padding:0.5rem;background:rgba(255,255,255,0.15);border-radius:6px;font-size:1rem;font-weight:700;">
-                FINAL CASH = SCORE</div><br>
-                <b>All 5 cylinders must fire simultaneously.</b> That's why this is the capstone.
-                </div>""",
+                "body": """Pricing ──→ <b>Cash inflow</b><br>Inventory ──→ <b>Preserves market</b><br>Cash mgmt ──→ <b>Protects balance</b><br>Trading ──→ <b>New revenue</b><br>Wind-down ──→ <b>Inv → Cash</b><br><br><span style="padding:0.4rem 0.8rem;background:rgba(255,255,255,0.15);border-radius:6px;font-size:1rem;font-weight:700;">FINAL CASH = SCORE</span><br><br><b>All 5 cylinders must fire simultaneously.</b> That's why this is the capstone.""",
             },
         ]
 
