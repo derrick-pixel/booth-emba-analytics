@@ -650,11 +650,11 @@ if page == "🎮 ISM War Room":
                 return base64.b64encode(f.read()).decode()
         return None
 
-    # Team overview cards in 2-column grid, 2 rows of 3 photos each
+    # Team overview cards in 4-column grid, 2 rows of 3 photos each
     team_items = list(TEAMS.items())
-    for row_start in range(0, len(team_items), 2):
-        cols = st.columns(2)
-        for col_idx in range(2):
+    for row_start in range(0, len(team_items), 4):
+        cols = st.columns(4)
+        for col_idx in range(4):
             if row_start + col_idx >= len(team_items):
                 break
             team_name, team_data = team_items[row_start + col_idx]
