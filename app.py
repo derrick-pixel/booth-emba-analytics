@@ -452,21 +452,42 @@ if page == "🎮 ISM War Room":
     # ══════════════════════════════════════════════════════════════════════════
     # TEAM ROLES & DECISION FRAMEWORK
     # ══════════════════════════════════════════════════════════════════════════
-    st.subheader("Team Organization")
+    st.subheader("Team Panem (1-29)")
+
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #1a3c5e 0%, #2d5a8e 100%);
+        color: white; border-radius: 12px; padding: 1.2rem; margin-bottom: 1rem;">
+        <h4 style="color: #ffd700; margin-top: 0;">Team Panem</h4>
+        <p style="margin-bottom: 0; font-size: 0.95rem;">
+        Chris Ma &nbsp;|&nbsp; Shiyuan Tian &nbsp;|&nbsp; Yohei Nakadate &nbsp;|&nbsp;
+        <strong>Derrick Teo</strong> &nbsp;|&nbsp; Jack Meng &nbsp;|&nbsp; Jason Weng
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
     role_col1, role_col2 = st.columns(2)
     with role_col1:
+        st.markdown("#### Suggested Role Assignments")
+        st.markdown("*Roles TBD — discuss with team and update. 6 members = can double up on key areas.*")
         roles_data = [
-            {"Role": "CEO / Strategist", "Focus": "Overall strategy, competitor monitoring (Scoreboard), final calls",
+            {"Role": "CEO / Strategist", "Suggested": "TBD",
+             "Focus": "Overall strategy, competitor monitoring, final calls",
              "Key Reports": "Scoreboard, Market Grid"},
-            {"Role": "CFO", "Focus": "Cash management, financial statements, bonds, dividends, tax planning",
+            {"Role": "CFO", "Suggested": "TBD",
+             "Focus": "Cash management, financial statements, bonds, tax planning",
              "Key Reports": "Financial Statements, Working Capital"},
-            {"Role": "COO", "Focus": "Factory ops, reorder points, inventory levels, shipping agreements",
+            {"Role": "COO", "Suggested": "TBD",
+             "Focus": "Factory ops, reorder points, inventory, production shipping",
              "Key Reports": "Inventory Status, Inventory Activities"},
-            {"Role": "CMO", "Focus": "Pricing decisions, advertising, market research, focus groups",
+            {"Role": "CMO / Pricing", "Suggested": "TBD",
+             "Focus": "Pricing decisions, advertising, market research, focus groups",
              "Key Reports": "Price Response, Product Analysis"},
-            {"Role": "Head of Trade", "Focus": "Negotiate shipping agreements, manage inter-team relationships",
-             "Key Reports": "Active Shipping Agreement Sankey"},
+            {"Role": "Head of Trade", "Suggested": "TBD",
+             "Focus": "Negotiate shipping agreements, manage inter-team deals",
+             "Key Reports": "Shipping Agreement Sankey"},
+            {"Role": "Analyst / Scout", "Suggested": "TBD",
+             "Focus": "Monitor competitors' financials (quarterly), track market share, model scenarios",
+             "Key Reports": "Market Grid, competitor Financial Statements"},
         ]
         st.dataframe(pd.DataFrame(roles_data), use_container_width=True, hide_index=True)
 
@@ -477,13 +498,21 @@ if page == "🎮 ISM War Room":
         > as a team will help you avoid frustrations... This has been a key competitive
         > advantage for teams in the past."*
 
-        **Pre-agree on:**
-        1. Who has final say on pricing? (CMO, with CEO override)
-        2. Who approves trade deals? (Head of Trade + CEO)
-        3. Who monitors cash? (CFO raises alarm if < threshold)
-        4. How do you resolve disagreements? (Majority vote, 30-second timer)
+        **With 6 members, your advantage is bandwidth.** Pre-agree on:
+        1. **Who has final say on pricing?** (CMO, with CEO override)
+        2. **Who approves trade deals?** (Head of Trade + CEO sign-off)
+        3. **Who monitors cash?** (CFO raises alarm if < threshold)
+        4. **How do you resolve disagreements?** (Majority vote, 30-second timer)
+        5. **Who watches competitors?** (Analyst tracks scoreboard + market grid)
+        6. **Communication:** Use the in-game internal chat for real-time coordination
 
-        **Cross-train everyone** — roles will shift as the business grows.
+        **Cross-train everyone** — the syllabus explicitly says teams that are
+        cross-trained on all aspects perform better. Roles will shift as the business grows.
+
+        #### 6-Person Advantage
+        - **Always-on monitoring:** Someone can always watch the scoreboard while others execute
+        - **Parallel negotiations:** Trade with 2-3 teams simultaneously
+        - **Shift coverage:** During the 2-hour game sessions, rotate breaks
         """)
 
     st.markdown("---")
