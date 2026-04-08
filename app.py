@@ -634,31 +634,41 @@ if page == "🎮 ISM War Room":
                   "theme": "The Matrix"},
     }
 
+    import base64, os
+    PHOTO_DIR = os.path.join(os.path.dirname(__file__), "photos")
+
+    def get_photo_base64(file_key):
+        path = os.path.join(PHOTO_DIR, f"{file_key}.jpg")
+        if os.path.exists(path):
+            with open(path, "rb") as f:
+                return base64.b64encode(f.read()).decode()
+        return None
+
     # Team overview cards with photo thumbnails
     for team_name, team_data in TEAMS.items():
         is_us = team_data.get("is_us", False)
         border = "3px solid #ffd700" if is_us else "1px solid rgba(255,255,255,0.15)"
         badge = " (US)" if is_us else ""
 
-        # Build member photos HTML - 6 photos in a row
+        # Build member photos HTML with base64 embedded images
         photos_html = ""
         for display_name, file_key in team_data["members"]:
-            photo_url = f"{PHOTO_BASE}/{file_key}.jpg"
-            photos_html += f"""
-            <div style="text-align: center; flex: 1; min-width: 70px;">
-                <img src="{photo_url}" style="width: 60px; height: 60px; border-radius: 50%;
-                    object-fit: cover; border: 2px solid rgba(255,255,255,0.4);" />
-                <div style="font-size: 0.7rem; margin-top: 4px; line-height: 1.2;">{display_name}</div>
-            </div>"""
+            b64 = get_photo_base64(file_key)
+            if b64:
+                img_tag = f'<img src="data:image/jpeg;base64,{b64}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.4);"/>'
+            else:
+                initials = "".join(w[0] for w in display_name.split())
+                img_tag = f'<div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;">{initials}</div>'
+            photos_html += f'<div style="text-align:center;flex:1;min-width:70px;">{img_tag}<div style="font-size:0.7rem;margin-top:4px;line-height:1.2;">{display_name}</div></div>'
 
         st.markdown(f"""
-        <div style="background: {team_data['color']}; color: white; border-radius: 10px;
-            padding: 1rem; margin-bottom: 0.6rem; border: {border};">
-            <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                <h4 style="color: white; margin: 0;">{team_name}{badge}</h4>
-                <span style="font-size: 0.75rem; opacity: 0.7;">Seat {team_data['id']} | {team_data['theme']}</span>
+        <div style="background:{team_data['color']};color:white;border-radius:10px;
+            padding:1rem;margin-bottom:0.6rem;border:{border};">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;">
+                <h4 style="color:white;margin:0;">{team_name}{badge}</h4>
+                <span style="font-size:0.75rem;opacity:0.7;">Seat {team_data['id']} | {team_data['theme']}</span>
             </div>
-            <div style="display: flex; gap: 8px; margin-top: 0.7rem; flex-wrap: wrap; justify-content: space-around;">
+            <div style="display:flex;gap:8px;margin-top:0.7rem;flex-wrap:wrap;justify-content:space-around;">
                 {photos_html}
             </div>
         </div>
