@@ -241,9 +241,15 @@ if page == "🎮 ISM War Room":
         fig_pricing.add_trace(go.Scatter(x=price_range, y=daily_demand * 100,
                                           name="Daily COGS", line=dict(color="#999", width=1, dash="dash")))
         fig_pricing.add_vline(x=profit_max_price, line_dash="dash", line_color="green",
-                               annotation_text=f"Profit-max: ${profit_max_price:,.0f}")
+                               annotation_text=f"Profit-max: ${profit_max_price:,.0f}",
+                               annotation_position="top left",
+                               annotation_font_size=11,
+                               annotation_y=1.08)
         fig_pricing.add_vline(x=optimal_price, line_dash="dot", line_color="#800000",
-                               annotation_text=f"Revenue-max: ${optimal_price:,.0f}")
+                               annotation_text=f"Rev-max: ${optimal_price:,.0f}",
+                               annotation_position="top right",
+                               annotation_font_size=11,
+                               annotation_y=0.95)
         fig_pricing.update_layout(height=350, xaxis_title="Price ($)", yaxis_title="$ per day",
                                    margin=dict(l=0, r=0, t=30, b=0), yaxis_tickformat="$,.0f")
         st.plotly_chart(fig_pricing, use_container_width=True)
