@@ -584,6 +584,90 @@ if page == "🎮 ISM War Room":
     st.markdown("---")
 
     # ══════════════════════════════════════════════════════════════════════════
+    # COMPETITOR INTELLIGENCE
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("Competitor Intelligence")
+
+    TEAMS = {
+        "B612": {"id": "1-25", "color": "#6b3fa0",
+                  "members": ["Masa Ishigaki", "Takeshi Tanaka", "Hyeyoung Lee",
+                              "Valerii Egorov", "Carlos Naibryf", "Fengshu Jin"],
+                  "theme": "The Little Prince"},
+        "Dune": {"id": "1-26", "color": "#b8860b",
+                  "members": ["Jo Hayes", "Jenny Yang", "Morry Mori",
+                              "Suliya Suliya", "Betty Wang", "Kosuke Okura"],
+                  "theme": "Dune"},
+        "Globex": {"id": "1-27", "color": "#c44e00",
+                    "members": ["Prashanth Palepu", "Lisa Lau", "George Chia",
+                                "Jeffrey Chen", "Kacey Du", "Lambert Xu"],
+                    "theme": "The Simpsons"},
+        "Gotham": {"id": "1-28", "color": "#333333",
+                    "members": ["Inge Supatra", "Bryan Wong", "Delphine Terrien",
+                                "Benjamin Jiang", "Dai Kato", "Ngiap Seng Khoo"],
+                    "theme": "Batman / Gotham"},
+        "Panem": {"id": "1-29", "color": "#800000",
+                   "members": ["Chris Ma", "Shiyuan Tian", "Yohei Nakadate",
+                               "Derrick Teo", "Jack Meng", "Jason Weng"],
+                   "theme": "The Hunger Games",
+                   "is_us": True},
+        "Vulcan": {"id": "1-31", "color": "#1a3c5e",
+                    "members": ["Eric Zhang", "Jony Hu", "Laurence Zhu",
+                                "Yehwan Kim", "Tom Hsieh", "Sudeep Rathee"],
+                    "theme": "Star Trek"},
+        "Westeros": {"id": "1-32", "color": "#2d6a2e",
+                      "members": ["Kosuke Shinohara", "Ken Ng", "Taku Yasuda",
+                                  "Ryan Kim", "Andy Yoo", "Jumpei Maruyama"],
+                      "theme": "Game of Thrones"},
+        "Zion": {"id": "1-33", "color": "#0e7c7b",
+                  "members": ["Ken Chew", "Ryo Aikawa", "Louis Woenardi",
+                              "Dimas Purnama", "Chris Kwan", "Alex Wang"],
+                  "theme": "The Matrix"},
+    }
+
+    # Team overview cards
+    team_cols = st.columns(4)
+    for i, (team_name, team_data) in enumerate(TEAMS.items()):
+        col = team_cols[i % 4]
+        is_us = team_data.get("is_us", False)
+        border = "3px solid #ffd700" if is_us else "1px solid rgba(255,255,255,0.15)"
+        badge = " (US)" if is_us else ""
+        with col:
+            members_html = "<br>".join(team_data["members"])
+            st.markdown(f"""
+            <div style="background: {team_data['color']}; color: white; border-radius: 10px;
+                padding: 1rem; margin-bottom: 0.8rem; border: {border}; min-height: 220px;">
+                <h4 style="color: white; margin: 0 0 0.2rem 0;">{team_name}{badge}</h4>
+                <p style="margin: 0 0 0.5rem 0; font-size: 0.75rem; opacity: 0.7;">
+                    Seat {team_data['id']} | {team_data['theme']}</p>
+                <p style="margin: 0; font-size: 0.82rem; line-height: 1.5;">{members_html}</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+    st.markdown("")
+    st.markdown("**8 teams x 6 members = 48 players** competing in the same simulation.")
+    st.markdown("In the Trading Game & Competition, these are the teams you'll negotiate with and compete against.")
+
+    # Competitor tracking table (placeholder for live game)
+    with st.expander("**Live Competitor Tracker** (update during game)"):
+        st.markdown("*During the game, update this tracker with intel from the Scoreboard and Market Grid reports.*")
+        tracker_data = []
+        for team_name, team_data in TEAMS.items():
+            tracker_data.append({
+                "Team": team_name,
+                "Seat": team_data["id"],
+                "Cash Position": "—",
+                "Strategy Observed": "—",
+                "Pricing (Hormone)": "—",
+                "Pricing (Specialty)": "—",
+                "Trading Partner?": "—",
+                "Threat Level": "—",
+            })
+        st.dataframe(pd.DataFrame(tracker_data), use_container_width=True, hide_index=True)
+        st.caption("Update this table manually during game play to track competitor moves.")
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
     # THE ONE-LINE STRATEGY
     # ══════════════════════════════════════════════════════════════════════════
     st.markdown("""
