@@ -126,19 +126,39 @@ if page == "🎮 ISM War Room":
     else:
         st.success("**Capstone completed!**")
 
-    # ── KPI Cheat Sheet ───────────────────────────────────────────────────────
+    # ── KPI Cheat Sheet with hover tooltips ──────────────────────────────────
     st.subheader("Critical Game Parameters")
-    p1, p2, p3, p4 = st.columns(4)
-    p1.metric("Batch Size", "100 units")
-    p2.metric("Material Cost", "$100/unit")
-    p3.metric("Production Cycle", "2.5 days")
-    p4.metric("Factory→DC Transit", "1 day")
+    st.caption("Hover over each card for details")
 
-    p5, p6, p7, p8 = st.columns(4)
-    p5.metric("Customer Arrival", "0.01% x Mkt/day")
-    p6.metric("Emergency Loan APR", "40%", delta="-Avoid at all costs", delta_color="inverse")
-    p7.metric("Cash Interest", "3% APR")
-    p8.metric("Tax Rate", "35% quarterly")
+    PARAMS = [
+        {"label": "Batch Size", "value": "100 units",
+         "tip": "Products manufactured in batches of 100. Factory can only make 1 batch of 1 product at a time. Cost = $100 x 100 = $10,000 per batch."},
+        {"label": "Material Cost", "value": "$100/unit",
+         "tip": "Raw material cost per unit. Payable 15 days after incurred. Total batch cost = $10,000. This is your floor price — never sell below $100."},
+        {"label": "Production Cycle", "value": "2.5 days",
+         "tip": "Time to manufacture 1 batch. Factory can start next batch immediately while current ships. If both products run, they alternate batches."},
+        {"label": "Factory→DC Transit", "value": "1 day",
+         "tip": "Free shipping from your factory to your DC (same region). Total lead time = 2.5 + 1 = 3.5 days. If both products: ~6 days effective."},
+        {"label": "Customer Arrival", "value": "0.01%/day",
+         "tip": "Daily arrivals = 0.0001 x market size. Hormone (300K mkt) = 30 customers/day. Specialty (140K mkt) = 14 customers/day. Lost forever if no stock."},
+        {"label": "Emergency Loan", "value": "40% APR",
+         "tip": "If cash hits zero, you get forced loans at 40% APR — catastrophic. Auto-repaid as cash becomes available. AVOID AT ALL COSTS."},
+        {"label": "Cash Interest", "value": "3% APR",
+         "tip": "Idle cash earns 3% annually. Not amazing, but means holding cash isn't wasteful. The 37% spread vs emergency loans makes cash management critical."},
+        {"label": "Tax Rate", "value": "35% quarterly",
+         "tip": "Profits taxed at 35%, paid end of every quarter (90 days). Plan cash reserves for tax bills. High inventory write-offs reduce taxable income."},
+    ]
+
+    for row_start in range(0, len(PARAMS), 4):
+        row_params = PARAMS[row_start:row_start + 4]
+        param_cols = st.columns(4)
+        for pi, param in enumerate(row_params):
+            with param_cols[pi]:
+                tip_escaped = param["tip"].replace("'", "&#39;")
+                st.markdown(f"""<div style="position:relative;background:rgba(128,0,0,0.15);border-left:4px solid #800000;border-radius:10px;padding:0.8rem 1rem;cursor:help;" title="{tip_escaped}">
+<span style="font-size:0.8rem;opacity:0.7;">{param["label"]}</span><br>
+<span style="font-size:1.5rem;font-weight:700;">{param["value"]}</span>
+</div>""", unsafe_allow_html=True)
 
     st.markdown("---")
 
