@@ -671,10 +671,10 @@ if page == "🎮 ISM War Room":
                 for display_name, file_key in member_list:
                     b64 = get_photo_base64(file_key)
                     if b64:
-                        img_tag = f'<img src="data:image/jpeg;base64,{b64}" style="width:62px;height:62px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(255,255,255,0.5);"/>'
+                        img_tag = f'<img src="data:image/jpeg;base64,{b64}" style="width:71px;height:71px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(255,255,255,0.5);"/>'
                     else:
                         initials = "".join(w[0] for w in display_name.split())
-                        img_tag = f'<div style="width:62px;height:62px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.65rem;">{initials}</div>'
+                        img_tag = f'<div style="width:71px;height:71px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.65rem;">{initials}</div>'
                     html += f'<div style="text-align:center;flex:1;">{img_tag}<div style="font-size:0.72rem;margin-top:2px;line-height:1.15;">{display_name}</div></div>'
                 return html
 
