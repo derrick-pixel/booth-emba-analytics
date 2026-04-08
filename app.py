@@ -588,60 +588,81 @@ if page == "🎮 ISM War Room":
     # ══════════════════════════════════════════════════════════════════════════
     st.subheader("Competitor Intelligence")
 
+    PHOTO_BASE = "https://raw.githubusercontent.com/derrick-pixel/booth-emba-analytics/main/photos"
+
     TEAMS = {
         "B612": {"id": "1-25", "color": "#6b3fa0",
-                  "members": ["Masa Ishigaki", "Takeshi Tanaka", "Hyeyoung Lee",
-                              "Valerii Egorov", "Carlos Naibryf", "Fengshu Jin"],
+                  "members": [("Masa Ishigaki", "masa_ishigaki"), ("Takeshi Tanaka", "takeshi_tanaka"),
+                              ("Hyeyoung Lee", "hyeyoung_lee"), ("Valerii Egorov", "valerii_egorov"),
+                              ("Carlos Naibryf", "carlos_naibryf"), ("Fengshu Jin", "fengshu_jin")],
                   "theme": "The Little Prince"},
         "Dune": {"id": "1-26", "color": "#b8860b",
-                  "members": ["Jo Hayes", "Jenny Yang", "Morry Mori",
-                              "Suliya Suliya", "Betty Wang", "Kosuke Okura"],
+                  "members": [("Jo Hayes", "jo_hayes"), ("Jenny Yang", "jenny_yang"),
+                              ("Morry Mori", "morry_mori"), ("Suliya Suliya", "suliya_suliya"),
+                              ("Betty Wang", "betty_wang"), ("Kosuke Okura", "kosuke_okura")],
                   "theme": "Dune"},
         "Globex": {"id": "1-27", "color": "#c44e00",
-                    "members": ["Prashanth Palepu", "Lisa Lau", "George Chia",
-                                "Jeffrey Chen", "Kacey Du", "Lambert Xu"],
+                    "members": [("Prashanth Palepu", "prashanth_palepu"), ("Lisa Lau", "lisa_lau"),
+                                ("George Chia", "george_chia"), ("Jeffrey Chen", "jeffrey_chen"),
+                                ("Kacey Du", "kacey_du"), ("Lambert Xu", "lambert_xu")],
                     "theme": "The Simpsons"},
         "Gotham": {"id": "1-28", "color": "#333333",
-                    "members": ["Inge Supatra", "Bryan Wong", "Delphine Terrien",
-                                "Benjamin Jiang", "Dai Kato", "Ngiap Seng Khoo"],
+                    "members": [("Inge Supatra", "inge_supatra"), ("Bryan Wong", "bryan_wong"),
+                                ("Delphine Terrien", "delphine_terrien"), ("Benjamin Jiang", "benjamin_jiang"),
+                                ("Dai Kato", "dai_kato"), ("Ngiap Seng Khoo", "ngiap_seng_khoo")],
                     "theme": "Batman / Gotham"},
         "Panem": {"id": "1-29", "color": "#800000",
-                   "members": ["Chris Ma", "Shiyuan Tian", "Yohei Nakadate",
-                               "Derrick Teo", "Jack Meng", "Jason Weng"],
+                   "members": [("Chris Ma", "chris_ma"), ("Shiyuan Tian", "shiyuan_tian"),
+                               ("Yohei Nakadate", "yohei_nakadate"), ("Derrick Teo", "derrick_teo"),
+                               ("Jack Meng", "jack_meng"), ("Jason Weng", "jason_weng")],
                    "theme": "The Hunger Games",
                    "is_us": True},
         "Vulcan": {"id": "1-31", "color": "#1a3c5e",
-                    "members": ["Eric Zhang", "Jony Hu", "Laurence Zhu",
-                                "Yehwan Kim", "Tom Hsieh", "Sudeep Rathee"],
+                    "members": [("Eric Zhang", "eric_zhang"), ("Jony Hu", "jony_hu"),
+                                ("Laurence Zhu", "laurence_zhu"), ("Yehwan Kim", "yehwan_kim"),
+                                ("Tom Hsieh", "tom_hsieh"), ("Sudeep Rathee", "sudeep_rathee")],
                     "theme": "Star Trek"},
         "Westeros": {"id": "1-32", "color": "#2d6a2e",
-                      "members": ["Kosuke Shinohara", "Ken Ng", "Taku Yasuda",
-                                  "Ryan Kim", "Andy Yoo", "Jumpei Maruyama"],
+                      "members": [("Kosuke Shinohara", "kosuke_shinohara"), ("Ken Ng", "ken_ng"),
+                                  ("Taku Yasuda", "taku_yasuda"), ("Ryan Kim", "ryan_kim"),
+                                  ("Andy Yoo", "andy_yoo"), ("Jumpei Maruyama", "jumpei_maruyama")],
                       "theme": "Game of Thrones"},
         "Zion": {"id": "1-33", "color": "#0e7c7b",
-                  "members": ["Ken Chew", "Ryo Aikawa", "Louis Woenardi",
-                              "Dimas Purnama", "Chris Kwan", "Alex Wang"],
+                  "members": [("Ken Chew", "ken_chew"), ("Ryo Aikawa", "ryo_aikawa"),
+                              ("Louis Woenardi", "louis_woenardi"), ("Dimas Purnama", "dimas_purnama"),
+                              ("Chris Kwan", "chris_kwan"), ("Alex Wang", "alex_wang")],
                   "theme": "The Matrix"},
     }
 
-    # Team overview cards
-    team_cols = st.columns(4)
-    for i, (team_name, team_data) in enumerate(TEAMS.items()):
-        col = team_cols[i % 4]
+    # Team overview cards with photo thumbnails
+    for team_name, team_data in TEAMS.items():
         is_us = team_data.get("is_us", False)
         border = "3px solid #ffd700" if is_us else "1px solid rgba(255,255,255,0.15)"
         badge = " (US)" if is_us else ""
-        with col:
-            members_html = "<br>".join(team_data["members"])
-            st.markdown(f"""
-            <div style="background: {team_data['color']}; color: white; border-radius: 10px;
-                padding: 1rem; margin-bottom: 0.8rem; border: {border}; min-height: 220px;">
-                <h4 style="color: white; margin: 0 0 0.2rem 0;">{team_name}{badge}</h4>
-                <p style="margin: 0 0 0.5rem 0; font-size: 0.75rem; opacity: 0.7;">
-                    Seat {team_data['id']} | {team_data['theme']}</p>
-                <p style="margin: 0; font-size: 0.82rem; line-height: 1.5;">{members_html}</p>
+
+        # Build member photos HTML - 6 photos in a row
+        photos_html = ""
+        for display_name, file_key in team_data["members"]:
+            photo_url = f"{PHOTO_BASE}/{file_key}.jpg"
+            photos_html += f"""
+            <div style="text-align: center; flex: 1; min-width: 70px;">
+                <img src="{photo_url}" style="width: 60px; height: 60px; border-radius: 50%;
+                    object-fit: cover; border: 2px solid rgba(255,255,255,0.4);" />
+                <div style="font-size: 0.7rem; margin-top: 4px; line-height: 1.2;">{display_name}</div>
+            </div>"""
+
+        st.markdown(f"""
+        <div style="background: {team_data['color']}; color: white; border-radius: 10px;
+            padding: 1rem; margin-bottom: 0.6rem; border: {border};">
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <h4 style="color: white; margin: 0;">{team_name}{badge}</h4>
+                <span style="font-size: 0.75rem; opacity: 0.7;">Seat {team_data['id']} | {team_data['theme']}</span>
             </div>
-            """, unsafe_allow_html=True)
+            <div style="display: flex; gap: 8px; margin-top: 0.7rem; flex-wrap: wrap; justify-content: space-around;">
+                {photos_html}
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
     st.markdown("")
     st.markdown("**8 teams x 6 members = 48 players** competing in the same simulation.")
