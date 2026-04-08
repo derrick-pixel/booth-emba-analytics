@@ -89,6 +89,7 @@ with st.sidebar:
     page = st.radio(
         "Navigate",
         [
+            "🎮 ISM War Room",
             "📊 Learning Dashboard",
             "🕸️ Knowledge Graph",
             "📈 Content Analytics",
@@ -103,10 +104,474 @@ with st.sidebar:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# PAGE 0: ISM WAR ROOM — GLEACHER GAME STRATEGY
+# ══════════════════════════════════════════════════════════════════════════════
+
+if page == "🎮 ISM War Room":
+    st.markdown('<p class="big-header">ISM Capstone War Room</p>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-header">Gleacher Game Strategy — Integrated Strategic Management (42805)</p>',
+                unsafe_allow_html=True)
+    st.markdown("")
+
+    # ── Countdown & Schedule ──────────────────────────────────────────────────
+    capstone_start = date(2026, 4, 12)
+    days_to_go = (capstone_start - date.today()).days
+    if days_to_go > 0:
+        st.warning(f"**{days_to_go} days until Capstone Week begins** (Sunday, April 12)")
+    elif days_to_go >= -6:
+        st.error("**CAPSTONE WEEK IS LIVE — EXECUTE THE PLAN!**")
+    else:
+        st.success("**Capstone completed!**")
+
+    # ── KPI Cheat Sheet ───────────────────────────────────────────────────────
+    st.subheader("Critical Game Parameters")
+    p1, p2, p3, p4 = st.columns(4)
+    p1.metric("Batch Size", "100 units")
+    p2.metric("Material Cost", "$100/unit")
+    p3.metric("Production Cycle", "2.5 days")
+    p4.metric("Factory→DC Transit", "1 day")
+
+    p5, p6, p7, p8 = st.columns(4)
+    p5.metric("Customer Arrival", "0.01% x Mkt/day")
+    p6.metric("Emergency Loan APR", "40%", delta="-Avoid at all costs", delta_color="inverse")
+    p7.metric("Cash Interest", "3% APR")
+    p8.metric("Tax Rate", "35% quarterly")
+
+    st.markdown("---")
+
+    # ── Week Schedule ─────────────────────────────────────────────────────────
+    st.subheader("Week Schedule & Game Progression")
+
+    schedule_data = [
+        {"Day": "Sunday Apr 12", "Class (3-6pm)": "Microeconomics, Statistics, Operations",
+         "Game (7-9pm)": "Monopoly + Trading Game", "Assignment": "A1 due by 3pm (Individual)"},
+        {"Day": "Monday Apr 13", "Class (3-6pm)": "Operations, Financial Accounting",
+         "Game (7-9pm)": "Production Game", "Assignment": "A2 due by 9am (Group)"},
+        {"Day": "Tuesday Apr 14", "Class (3-6pm)": "Marketing, Finance, Strategy",
+         "Game (7-9pm)": "Practice Game", "Assignment": "A3 due by 9am (Group)"},
+        {"Day": "Wednesday Apr 15", "Class (3-6pm)": "Analyze Practice, Prep for Competition",
+         "Game (7-9pm)": "COMPETITION", "Assignment": "A4 due by 9am (Group)"},
+        {"Day": "Thursday Apr 16", "Class (3-6pm)": "Game Analysis",
+         "Game (7-9pm)": "COMPETITION", "Assignment": "A5 due by 9am (Group)"},
+        {"Day": "Friday Apr 17", "Class": "Wrap-Up",
+         "Game (7-9pm)": "—", "Assignment": "A6 + Final Project due May 3"},
+    ]
+    st.dataframe(pd.DataFrame(schedule_data), use_container_width=True, hide_index=True)
+
+    # ── Grading Weights ───────────────────────────────────────────────────────
+    grade_col1, grade_col2 = st.columns([1, 2])
+    with grade_col1:
+        st.subheader("Grading Breakdown")
+        grade_data = {
+            "Component": ["Assignments 1-3 (Group)", "Assignments 4-5 (Group)", "Assignment 6 (Individual)",
+                          "Final Project (Group)", "Participation", "Game Performance"],
+            "Points": [30, 10, 10, 30, 10, 10],
+        }
+        grade_df = pd.DataFrame(grade_data)
+        fig_grade = px.pie(grade_df, values="Points", names="Component",
+                           color_discrete_sequence=["#800000", "#b22222", "#cd5c5c",
+                                                     "#1a3c5e", "#2d6a2e", "#b8860b"],
+                           hole=0.4)
+        fig_grade.update_layout(height=300, margin=dict(l=0, r=0, t=10, b=0))
+        st.plotly_chart(fig_grade, use_container_width=True)
+
+    with grade_col2:
+        st.subheader("Game Performance = 10% of grade")
+        st.markdown("""
+        The **final project** (30%) is the biggest single component — it requires:
+        - Summary & analysis of your decisions and outcomes during the simulation
+        - A projection for the future
+        - A **valuation of the business**
+
+        **Key insight:** Game Performance is only 10%, but the Final Project (30%) depends on
+        how well you played. Playing well = better story to tell = higher combined score (40%).
+        """)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # THE 7 WINNING STRATEGIES
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("The 7 Winning Strategies")
+
+    # ── Strategy 1: Pricing ───────────────────────────────────────────────────
+    with st.expander("**1. PRICING — The #1 Lever**", expanded=True):
+        st.markdown("""
+        WTP is **uniformly distributed** from \\$0 to max WTP. This means the optimal monopoly price is:
+
+        > **P* = max_WTP / 2**
+
+        This maximizes `Revenue = arrival_rate x (max_WTP - P) / max_WTP x P`
+        """)
+
+        st.markdown("#### Interactive Pricing Simulator")
+        sim_col1, sim_col2 = st.columns(2)
+        with sim_col1:
+            max_wtp = st.slider("Max WTP ($)", 200, 2000, 800, 50)
+            market_size = st.selectbox("Market Size", [140000, 300000], index=1,
+                                        format_func=lambda x: f"{x:,} ({'Hormone' if x==300000 else 'Specialty'})")
+            price_range = np.arange(50, max_wtp, 10)
+
+        arrival_rate = 0.0001 * market_size
+        daily_demand = arrival_rate * (max_wtp - price_range) / max_wtp
+        daily_revenue = daily_demand * price_range
+        daily_cost = daily_demand * 100  # $100/unit marginal cost
+        daily_profit = daily_revenue - daily_cost
+
+        optimal_price = max_wtp / 2
+        # Profit-maximizing price (accounting for marginal cost)
+        profit_max_price = (max_wtp + 100) / 2
+
+        with sim_col2:
+            st.metric("Revenue-Maximizing Price", f"${optimal_price:,.0f}")
+            st.metric("Profit-Maximizing Price (incl. $100 cost)", f"${profit_max_price:,.0f}")
+            demand_at_opt = arrival_rate * (max_wtp - profit_max_price) / max_wtp
+            st.metric("Daily Demand at Profit-Max Price", f"{demand_at_opt:,.1f} units/day")
+            st.metric("Daily Profit at Profit-Max Price",
+                       f"${demand_at_opt * (profit_max_price - 100):,.0f}/day")
+
+        fig_pricing = go.Figure()
+        fig_pricing.add_trace(go.Scatter(x=price_range, y=daily_revenue,
+                                          name="Daily Revenue", line=dict(color="#800000", width=2)))
+        fig_pricing.add_trace(go.Scatter(x=price_range, y=daily_profit,
+                                          name="Daily Profit (after COGS)", line=dict(color="#2d6a2e", width=2)))
+        fig_pricing.add_trace(go.Scatter(x=price_range, y=daily_demand * 100,
+                                          name="Daily COGS", line=dict(color="#999", width=1, dash="dash")))
+        fig_pricing.add_vline(x=profit_max_price, line_dash="dash", line_color="green",
+                               annotation_text=f"Profit-max: ${profit_max_price:,.0f}")
+        fig_pricing.add_vline(x=optimal_price, line_dash="dot", line_color="#800000",
+                               annotation_text=f"Revenue-max: ${optimal_price:,.0f}")
+        fig_pricing.update_layout(height=350, xaxis_title="Price ($)", yaxis_title="$ per day",
+                                   margin=dict(l=0, r=0, t=30, b=0), yaxis_tickformat="$,.0f")
+        st.plotly_chart(fig_pricing, use_container_width=True)
+
+        st.markdown("""
+        **Tactical rules:**
+        - Start at **profit-maximizing price** (slightly above max_WTP/2 to account for $100 cost)
+        - If inventory piling up → **lower price** to move units
+        - If stocking out → **raise price** to slow demand and capture more surplus
+        - **End-game:** slash prices aggressively — unsold inventory = $0
+        """)
+
+    # ── Strategy 2: Inventory ─────────────────────────────────────────────────
+    with st.expander("**2. INVENTORY MANAGEMENT — Never Stock Out, Never Over-Stock**"):
+        st.markdown("""
+        **From Operations Management (Little's Law, Newsvendor):**
+
+        | Parameter | Hormone | Specialty |
+        |---|---|---|
+        | Market size | 300,000 | 140,000 |
+        | Arrival rate | 30 customers/day | 14 customers/day |
+        | Production cycle | 2.5 days | 2.5 days |
+        | Transit to DC | 1 day | 1 day |
+        | **Lead time** | **3.5 days** | **3.5 days** |
+
+        **Reorder Point = Daily Demand x Lead Time + Safety Stock**
+
+        If both products running, factory alternates batches → effective cycle = 5 days + 1 day transit = **6 days lead time**
+
+        **End-game protocol:**
+        1. Calculate days remaining
+        2. Set reorder point to **-1** (stop production) when: `days_remaining < lead_time + (inventory / daily_demand)`
+        3. This ensures you sell through remaining stock with zero left over
+        """)
+
+        st.markdown("#### Reorder Point Calculator")
+        rc1, rc2, rc3 = st.columns(3)
+        with rc1:
+            calc_price = st.number_input("Your Price ($)", value=450, step=50)
+            calc_max_wtp = st.number_input("Max WTP ($)", value=800, step=50)
+        with rc2:
+            calc_market = st.number_input("Market Size", value=300000, step=10000)
+            calc_both = st.checkbox("Both products running?", value=True)
+        lead_time = 6.0 if calc_both else 3.5
+        daily_demand_calc = 0.0001 * calc_market * (calc_max_wtp - calc_price) / calc_max_wtp if calc_max_wtp > calc_price else 0
+        safety_stock = 50
+        reorder = daily_demand_calc * lead_time + safety_stock
+        with rc3:
+            st.metric("Daily Demand", f"{daily_demand_calc:,.1f} units")
+            st.metric("Lead Time", f"{lead_time} days")
+            st.metric("Recommended Reorder Point", f"{reorder:,.0f} units")
+
+    # ── Strategy 3: Capacity ──────────────────────────────────────────────────
+    with st.expander("**3. CAPACITY AS BOTTLENECK**"):
+        st.markdown("""
+        **Factory throughput:**
+        - Batch = 100 units in 2.5 days → **40 units/day max** (single product)
+        - Both products → alternating → **~20 units/day each**
+
+        **Key question:** Can your factory keep up with demand at your chosen price?
+
+        | Scenario | Demand/day | Capacity/day | Status |
+        |---|---|---|---|
+        | Hormone only, P=400, maxWTP=800 | 15 | 40 | Comfortable |
+        | Both products, P=400/400 | 15 + 7 = 22 | 40 (alternating) | Tight but OK |
+        | Lower prices to move volume | 25+ | 20 each | **Bottleneck!** |
+
+        **If bottlenecked:** Raise prices. It's better to sell fewer units at higher margin than to stock out.
+
+        **In Production Game:** You can build new factories (90-day build time, requires land + capital + daily labor).
+        Only worth it if enough game days remain to recoup the investment.
+        """)
+
+    # ── Strategy 4: Trading ───────────────────────────────────────────────────
+    with st.expander("**4. TRADING GAME — Negotiate Like You Learned in 38803**"):
+        st.markdown("""
+        **When trading opens, you can buy/sell products with other teams.**
+
+        #### Shipping Costs
+        | Mode | Cost | Transit | Best for |
+        |---|---|---|---|
+        | Mail (same region) | Free | 1 day | Internal |
+        | Mail (between regions) | $400/10 units = $40/unit | 3 days | Small/fast orders |
+        | Container (between regions) | $10,000/1000 units = $10/unit | 21 days | Bulk/long games |
+
+        #### As a BUYER (importing Hormone):
+        - Negotiate wholesale price **well below** your retail price
+        - Your margin = retail price - wholesale price - shipping cost
+        - Prefer mail for short games (3 days vs 21 days for containers)
+        - Set reorder points carefully — you don't control their production
+
+        #### As a SELLER (exporting your Specialty):
+        - Your specialty is **proprietary** — leverage this!
+        - Use **franchise fees** (one-time or ongoing) for guaranteed income
+        - Use **revenue sharing** (% of retail) to participate in upside
+        - Set **termination penalties** to lock in agreements
+        - Set **retail price limits** to prevent buyers from undercutting your home market
+
+        #### BATNA Analysis (from Negotiations):
+        - Your BATNA = sell everything retail yourself
+        - Their BATNA = not having your product at all
+        - **ZOPA** = wholesale price between your marginal cost ($100) and their expected retail margin
+        - Look for **integrative deals**: "I'll supply you Specialty if you supply me Hormone"
+        """)
+
+    # ── Strategy 5: Financial ─────────────────────────────────────────────────
+    with st.expander("**5. CASH MANAGEMENT — The Objective Function**"):
+        st.markdown("""
+        **Objective = Maximize ending cash balance.**
+
+        #### The Cash Flow Cycle
+        ```
+        Day 0: Order materials ($100/unit)
+        Day 0-2.5: Production (daily labor expense running)
+        Day 2.5: Batch complete, ships to DC
+        Day 3.5: Arrives at DC, available for sale
+        Day 3.5+: Sales generate revenue (immediate cash)
+        Day 15: Materials payable comes due
+        Day 90: Tax payment (35% of quarterly profit)
+        ```
+
+        #### Rules
+        - **NEVER** hit emergency loans → 40% APR destroys your cash
+        - Cash earns 3% APR → sitting on cash is not terrible
+        - Cost of capital = 10% APR → use this for NPV calculations
+        - Raw materials payable in 15 days → you get a working capital float
+        - Other expenses payable in 30 days (Trading Game)
+
+        #### Financial Statements to Monitor
+        1. **Income Statement** → Are you profitable?
+        2. **Balance Sheet** → Watch cash, inventory, payables
+        3. **Working Capital Report** → Current ratio > 1.0 always
+        4. **Market Grid** → Your market share vs competitors
+        5. **Price Response** → How demand responds to your price changes
+        """)
+
+    # ── Strategy 6: Expansion ─────────────────────────────────────────────────
+    with st.expander("**6. EXPANSION DECISIONS — NPV or Nothing**"):
+        st.markdown("""
+        **From Corporate Finance: Only invest if NPV > 0 given remaining game time.**
+
+        #### New Factory
+        - Requires: land ($100K) + capital + daily labor
+        - Build time: **90 days**
+        - Only viable in longer games
+        - Can build in **other regions** to serve those markets directly
+
+        #### New Distribution Center
+        - Opens retail sales in another region
+        - Infinite capacity (no need for more than 1 per region)
+        - Build time required — plan ahead
+
+        #### Product Design & Development
+        - Create new products (takes time + R&D spend)
+        - Consider: does the margin justify the investment given time remaining?
+
+        #### Advertising
+        - Increases demand (shifts demand curve right)
+        - Costs daily $ per SKU per DC
+        - **Test small, measure ROI** via Price Response report
+        - Only worth it if you have excess capacity
+
+        #### Bonds
+        - Issue bonds to raise capital for expansion
+        - Consider credit rating impact
+        - Only issue if the investment NPV exceeds interest costs
+        """)
+
+    # ── Strategy 7: End-game ──────────────────────────────────────────────────
+    with st.expander("**7. END-GAME EXECUTION — The Final 20% of Game Time**", expanded=True):
+        st.markdown("""
+        **All inventory becomes obsolete at game end. This phase determines winners.**
+
+        #### End-Game Countdown Checklist
+
+        **When ~30% of game time remains:**
+        - [ ] Review inventory levels and production pipeline
+        - [ ] Calculate how many days of inventory you have at current demand
+        - [ ] Begin reducing reorder points
+
+        **When ~15% of game time remains:**
+        - [ ] Set reorder point to **-1** (stop production) — account for 3.5-day lead time
+        - [ ] Start reducing prices to accelerate sales
+        - [ ] Terminate costly shipping agreements (if penalty < ongoing cost)
+
+        **Final days:**
+        - [ ] **Slash prices** aggressively — selling at $101 is better than holding at $0
+        - [ ] Verify no batches are in-process at the factory
+        - [ ] Collect all receivables from trading partners
+        - [ ] Pay off any remaining debts
+        - [ ] Verify final cash position on Scoreboard
+
+        #### The Math on End-Game Pricing
+        If you have 100 units of inventory with 2 days left:
+        - At current price $450: sell ~15 units = **$6,750 revenue**
+        - At fire-sale price $150: sell ~24 units = **$3,600 revenue**
+        - Unsold units at $450: 85 units x $100 cost = **-$8,500 wasted**
+        - Unsold units at $150: 76 units x $100 cost = **-$7,600 wasted**
+
+        **Lower price = more units sold = less wasted inventory = more net cash.**
+        But the optimal fire-sale price depends on remaining time and inventory — use the Price Response report.
+        """)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # TEAM ROLES & DECISION FRAMEWORK
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("Team Organization")
+
+    role_col1, role_col2 = st.columns(2)
+    with role_col1:
+        roles_data = [
+            {"Role": "CEO / Strategist", "Focus": "Overall strategy, competitor monitoring (Scoreboard), final calls",
+             "Key Reports": "Scoreboard, Market Grid"},
+            {"Role": "CFO", "Focus": "Cash management, financial statements, bonds, dividends, tax planning",
+             "Key Reports": "Financial Statements, Working Capital"},
+            {"Role": "COO", "Focus": "Factory ops, reorder points, inventory levels, shipping agreements",
+             "Key Reports": "Inventory Status, Inventory Activities"},
+            {"Role": "CMO", "Focus": "Pricing decisions, advertising, market research, focus groups",
+             "Key Reports": "Price Response, Product Analysis"},
+            {"Role": "Head of Trade", "Focus": "Negotiate shipping agreements, manage inter-team relationships",
+             "Key Reports": "Active Shipping Agreement Sankey"},
+        ]
+        st.dataframe(pd.DataFrame(roles_data), use_container_width=True, hide_index=True)
+
+    with role_col2:
+        st.markdown("""
+        #### Decision Process (from the syllabus):
+        > *"Establishing an organized decision-making and conflict-resolution process
+        > as a team will help you avoid frustrations... This has been a key competitive
+        > advantage for teams in the past."*
+
+        **Pre-agree on:**
+        1. Who has final say on pricing? (CMO, with CEO override)
+        2. Who approves trade deals? (Head of Trade + CEO)
+        3. Who monitors cash? (CFO raises alarm if < threshold)
+        4. How do you resolve disagreements? (Majority vote, 30-second timer)
+
+        **Cross-train everyone** — roles will shift as the business grows.
+        """)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # COURSE INTEGRATION MAP
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("How Each Course Powers Your Game Decisions")
+
+    course_game_map = [
+        {"Course": "Microeconomics", "Game Application": "Demand curves, WTP, price elasticity, Nash equilibrium in pricing wars",
+         "When It Matters": "Every pricing decision"},
+        {"Course": "Operations Management", "Game Application": "Little's Law, bottleneck analysis, reorder points, inventory management",
+         "When It Matters": "Factory & inventory management"},
+        {"Course": "Competitive Strategy", "Game Application": "Porter's 5 Forces, entry barriers, competitive positioning",
+         "When It Matters": "Trading game, expansion decisions"},
+        {"Course": "Corporate Finance", "Game Application": "NPV for investments, cost of capital (10%), WACC, bond decisions",
+         "When It Matters": "Factory/DC expansion, bonds, valuation"},
+        {"Course": "Financial Accounting", "Game Application": "Reading income statements, balance sheets, working capital ratios",
+         "When It Matters": "Monitoring financial health"},
+        {"Course": "Pricing Strategies", "Game Application": "EVC, price discrimination, competitor reaction, elasticity optimization",
+         "When It Matters": "Setting and adjusting prices"},
+        {"Course": "Marketing Management", "Game Application": "STP, positioning, advertising ROI, product line decisions",
+         "When It Matters": "Product design, advertising spend"},
+        {"Course": "Managerial Accounting", "Game Application": "Cost analysis, ABC, variance analysis, performance metrics",
+         "When It Matters": "Tracking profitability by product/region"},
+        {"Course": "Negotiations", "Game Application": "BATNA, ZOPA, integrative bargaining, coalition building",
+         "When It Matters": "Every trading negotiation"},
+        {"Course": "Managerial Decision Making", "Game Application": "Avoiding anchoring bias, prospect theory, System 1 vs 2",
+         "When It Matters": "Under time pressure — slow down and think"},
+        {"Course": "Financial Strategy", "Game Application": "Capital structure, leverage, debt capacity",
+         "When It Matters": "Bond issuance decisions"},
+        {"Course": "Macroeconomics", "Game Application": "Interest rate environment, risk assessment",
+         "When It Matters": "Scenario planning"},
+    ]
+    st.dataframe(pd.DataFrame(course_game_map), use_container_width=True, hide_index=True, height=460)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # PRE-READ PRIORITY
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("Pre-Read Priority Order")
+
+    preread_data = [
+        {"Priority": "1", "Document": "Monopoly Game Case Brief", "Why": "Understand the core mechanics — pricing, inventory, production",
+         "Status": "Must Read"},
+        {"Priority": "2", "Document": "Trading Game Case Brief", "Why": "Shipping agreement terms are complex — learn them cold",
+         "Status": "Must Read"},
+        {"Priority": "3", "Document": "Gleacher Game Player Manual", "Why": "Know the UI — don't waste game time clicking around",
+         "Status": "Must Read"},
+        {"Priority": "4", "Document": "Note on Microeconomics for Strategists", "Why": "Demand/supply/pricing foundations for the game",
+         "Status": "Must Read"},
+        {"Priority": "5", "Document": "D0: Managing Inventories / Newsvendor Model", "Why": "Reorder point optimization",
+         "Status": "High"},
+        {"Priority": "6", "Document": "D0: Note on Competitive Positioning", "Why": "How to position vs other teams in trading",
+         "Status": "High"},
+        {"Priority": "7", "Document": "D0: Financial Statement Analysis", "Why": "Reading the in-game financial reports",
+         "Status": "High"},
+        {"Priority": "8", "Document": "D0: Dynamics of Price Competition (Garicano & Gertner)", "Why": "How price wars evolve — avoid them",
+         "Status": "Medium"},
+        {"Priority": "9", "Document": "D0: Can You Say What Your Strategy Is?", "Why": "Final project narrative — articulate your strategy",
+         "Status": "Medium"},
+        {"Priority": "10", "Document": "D0: What Is Strategy? (Porter)", "Why": "Backdrop for final project analysis",
+         "Status": "Medium"},
+    ]
+    st.dataframe(pd.DataFrame(preread_data), use_container_width=True, hide_index=True)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # THE ONE-LINE STRATEGY
+    # ══════════════════════════════════════════════════════════════════════════
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #800000 0%, #b22222 100%);
+        color: white; border-radius: 12px; padding: 2rem; text-align: center; margin: 1rem 0;">
+        <h3 style="color: white; margin-top: 0;">The One-Line Strategy</h3>
+        <p style="font-size: 1.2rem; margin-bottom: 0;">
+        Price at ~half of max WTP, never stock out, manage cash obsessively,
+        trade smartly, and wind down production before game end so you finish
+        with <strong>maximum cash and zero inventory</strong>.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # PAGE 1: LEARNING DASHBOARD
 # ══════════════════════════════════════════════════════════════════════════════
 
-if page == "📊 Learning Dashboard":
+elif page == "📊 Learning Dashboard":
     st.markdown('<p class="big-header">Learning Dashboard</p>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">Your complete AXP-25 journey at a glance</p>', unsafe_allow_html=True)
     st.markdown("")
