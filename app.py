@@ -93,6 +93,7 @@ with st.sidebar:
         "Navigate",
         [
             "🎮 ISM War Room",
+            "⚔️ Trial War Room",
             "📊 Learning Dashboard",
             "🕸️ Knowledge Graph",
             "📈 Content Analytics",
@@ -841,6 +842,445 @@ if page == "🎮 ISM War Room":
                     card_html += card["body"]
                     card_html += '</div>'
                     st.markdown(card_html, unsafe_allow_html=True)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE 0.5: TRIAL WAR ROOM
+# ══════════════════════════════════════════════════════════════════════════════
+
+elif page == "⚔️ Trial War Room":
+    st.markdown('<p class="big-header">Trial War Room</p>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-header">Live calculators for the Monopoly & Trading Game trial (Apr 12-13)</p>',
+                unsafe_allow_html=True)
+    st.markdown("")
+
+    # ── Game Constants ────────────────────────────────────────────────────────
+    MAX_WTP = 1000  # Confirmed from Assignment 2
+    MC_PRODUCTION = 100  # $100/unit material cost
+    BATCH_SIZE = 100
+    PRODUCTION_DAYS = 2.5
+    CAPACITY_PER_DAY = BATCH_SIZE / PRODUCTION_DAYS  # 40 units/day
+
+    SHIPPING = {
+        "Same region": {"cost_per_unit": 0, "days": 1, "label": "Free, 1 day"},
+        "Mail (between regions)": {"cost_per_unit": 40, "days": 3, "label": "$40/unit, 3 days"},
+        "Container (between regions)": {"cost_per_unit": 10, "days": 21, "label": "$10/unit, 21 days"},
+    }
+
+    # ── Key insight banner ────────────────────────────────────────────────────
+    st.markdown("""
+<div style="background:linear-gradient(135deg,#800000,#b22222);color:white;
+    border-radius:12px;padding:1.2rem 1.5rem;margin-bottom:1rem;">
+<h4 style="color:#ffd700;margin:0 0 0.5rem 0;">Max WTP = $1,000 (confirmed from Assignment 2)</h4>
+<div style="display:flex;gap:2rem;flex-wrap:wrap;">
+<div><span style="opacity:0.7;">Optimal Home Retail</span><br><b style="font-size:1.3rem;">$550</b><br><span style="font-size:0.75rem;opacity:0.6;">(1000+100)/2</span></div>
+<div><span style="opacity:0.7;">Optimal Retail (w/ mail ship)</span><br><b style="font-size:1.3rem;">$570</b><br><span style="font-size:0.75rem;opacity:0.6;">(1000+140)/2</span></div>
+<div><span style="opacity:0.7;">Home Hormone Demand</span><br><b style="font-size:1.3rem;">13.5 /day</b><br><span style="font-size:0.75rem;opacity:0.6;">30 × (1000-550)/1000</span></div>
+<div><span style="opacity:0.7;">Home Specialty Demand</span><br><b style="font-size:1.3rem;">6.3 /day</b><br><span style="font-size:0.75rem;opacity:0.6;">14 × (1000-550)/1000</span></div>
+<div><span style="opacity:0.7;">Factory Capacity</span><br><b style="font-size:1.3rem;">40 /day</b><br><span style="font-size:0.75rem;opacity:0.6;">100 units / 2.5 days</span></div>
+<div><span style="opacity:0.7;">Excess Capacity</span><br><b style="font-size:1.3rem;">~20 /day</b><br><span style="font-size:0.75rem;opacity:0.6;">40 - 13.5 - 6.3 = 20.2</span></div>
+</div>
+</div>
+""", unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 1: PRICING OPTIMIZER
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("1. Retail Pricing Optimizer")
+    st.caption("Monopoly pricing with uniform WTP distribution [0, MaxWTP]")
+
+    pr_col1, pr_col2 = st.columns([1, 2])
+    with pr_col1:
+        pr_max_wtp = st.number_input("Max WTP ($)", value=1000, step=50, key="trial_maxwtp")
+        pr_mc = st.number_input("Marginal Cost ($/unit)", value=100, step=10, key="trial_mc")
+        pr_market = st.selectbox("Market Size", [300000, 140000, 50000, 20000],
+                                  format_func=lambda x: f"{x:,}",
+                                  key="trial_market")
+        pr_arrival = 0.0001 * pr_market
+
+        # Optimal price
+        pr_optimal = (pr_max_wtp + pr_mc) / 2
+        pr_demand_opt = pr_arrival * (pr_max_wtp - pr_optimal) / pr_max_wtp if pr_max_wtp > pr_optimal else 0
+        pr_profit_opt = pr_demand_opt * (pr_optimal - pr_mc)
+
+        st.markdown("---")
+        st.metric("Optimal Retail Price", f"${pr_optimal:,.0f}")
+        st.metric("Daily Demand", f"{pr_demand_opt:,.1f} units")
+        st.metric("Daily Profit", f"${pr_profit_opt:,.0f}")
+        st.metric("Daily Revenue", f"${pr_demand_opt * pr_optimal:,.0f}")
+
+    with pr_col2:
+        price_range = np.arange(pr_mc, pr_max_wtp, 5)
+        demand_arr = pr_arrival * (pr_max_wtp - price_range) / pr_max_wtp
+        revenue_arr = demand_arr * price_range
+        profit_arr = demand_arr * (price_range - pr_mc)
+
+        fig_pr = go.Figure()
+        fig_pr.add_trace(go.Scatter(x=price_range, y=profit_arr,
+                                     name="Daily Profit", line=dict(color="#2d6a2e", width=3)))
+        fig_pr.add_trace(go.Scatter(x=price_range, y=revenue_arr,
+                                     name="Daily Revenue", line=dict(color="#800000", width=2, dash="dash")))
+        fig_pr.add_trace(go.Scatter(x=price_range, y=demand_arr * pr_mc,
+                                     name="Daily COGS", line=dict(color="#999", width=1, dash="dot")))
+        fig_pr.add_vline(x=pr_optimal, line_dash="dash", line_color="#2d6a2e",
+                          annotation_text=f"Optimal: ${pr_optimal:,.0f}",
+                          annotation_position="top left")
+        fig_pr.update_layout(height=400, xaxis_title="Retail Price ($)", yaxis_title="$ per day",
+                              margin=dict(l=0, r=0, t=30, b=0), yaxis_tickformat="$,.0f")
+        st.plotly_chart(fig_pr, use_container_width=True)
+
+        # Price sensitivity table
+        st.markdown("**Price Sensitivity Table**")
+        price_points = [300, 400, 450, 500, 550, 600, 700, 800, 900]
+        sens_data = []
+        for p in price_points:
+            if p >= pr_max_wtp:
+                continue
+            d = pr_arrival * (pr_max_wtp - p) / pr_max_wtp
+            r = d * p
+            prof = d * (p - pr_mc)
+            sens_data.append({
+                "Price": f"${p}",
+                "P(buy)": f"{(pr_max_wtp - p) / pr_max_wtp:.1%}",
+                "Demand/day": f"{d:.1f}",
+                "Revenue/day": f"${r:,.0f}",
+                "Profit/day": f"${prof:,.0f}",
+                "vs Optimal": f"{(prof / pr_profit_opt - 1) * 100:+.1f}%" if pr_profit_opt > 0 else "—",
+            })
+        st.dataframe(pd.DataFrame(sens_data), use_container_width=True, hide_index=True)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 2: TRADE DEAL EVALUATOR (Double Marginalization)
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("2. Trade Deal Evaluator")
+    st.caption("Evaluate wholesale deals — watch for double marginalization!")
+
+    td_col1, td_col2, td_col3 = st.columns(3)
+    with td_col1:
+        st.markdown("**Deal Parameters**")
+        td_wholesale = st.number_input("Wholesale Price ($/unit)", value=300, step=25, key="td_wholesale")
+        td_ship_mode = st.selectbox("Shipping Mode", list(SHIPPING.keys()), index=1, key="td_ship")
+        td_ship_cost = SHIPPING[td_ship_mode]["cost_per_unit"]
+        td_ship_days = SHIPPING[td_ship_mode]["days"]
+        td_buyer_market = st.number_input("Buyer's Market Size", value=300000, step=10000, key="td_buyermkt")
+        td_buyer_arrival = 0.0001 * td_buyer_market
+
+    # Seller's total cost to deliver
+    seller_total_cost = MC_PRODUCTION + td_ship_cost
+    # Buyer's effective cost = wholesale price
+    buyer_mc = td_wholesale
+    # Buyer optimizes their retail price given their cost
+    buyer_optimal_retail = (MAX_WTP + buyer_mc) / 2
+    buyer_demand = td_buyer_arrival * (MAX_WTP - buyer_optimal_retail) / MAX_WTP
+    buyer_daily_profit = buyer_demand * (buyer_optimal_retail - buyer_mc)
+
+    # Supply chain optimal (if vertically integrated)
+    sc_optimal_retail = (MAX_WTP + seller_total_cost) / 2
+    sc_demand = td_buyer_arrival * (MAX_WTP - sc_optimal_retail) / MAX_WTP
+    sc_daily_profit = sc_demand * (sc_optimal_retail - seller_total_cost)
+
+    # Actual supply chain profit under double marginalization
+    actual_sc_profit = buyer_demand * (buyer_optimal_retail - seller_total_cost)
+
+    # Seller's profit
+    seller_daily_profit = buyer_demand * (td_wholesale - MC_PRODUCTION - td_ship_cost)
+
+    # Deadweight loss
+    dw_loss = sc_daily_profit - actual_sc_profit
+
+    with td_col2:
+        st.markdown("**Buyer's Perspective**")
+        st.metric("Buyer's Optimal Retail", f"${buyer_optimal_retail:,.0f}")
+        st.metric("Buyer's Daily Demand", f"{buyer_demand:,.1f} units")
+        st.metric("Buyer's Daily Profit", f"${buyer_daily_profit:,.0f}")
+        st.metric("Buyer's Margin/Unit", f"${buyer_optimal_retail - buyer_mc:,.0f}")
+
+    with td_col3:
+        st.markdown("**Seller's Perspective (You)**")
+        st.metric("Seller's Margin/Unit", f"${td_wholesale - MC_PRODUCTION - td_ship_cost:,.0f}")
+        st.metric("Seller's Daily Profit", f"${seller_daily_profit:,.0f}")
+        st.metric("Shipping Cost", f"${td_ship_cost}/unit, {td_ship_days} days")
+
+    # Double marginalization analysis
+    dm_col1, dm_col2 = st.columns(2)
+    with dm_col1:
+        pct_captured = (actual_sc_profit / sc_daily_profit * 100) if sc_daily_profit > 0 else 0
+        loss_color = "#2d6a2e" if pct_captured > 85 else ("#b8860b" if pct_captured > 70 else "#b22222")
+        st.markdown(f"""
+<div style="border:2px solid {loss_color};border-radius:10px;padding:1rem;">
+<h4 style="margin:0;color:{loss_color};">Double Marginalization Analysis</h4>
+<table style="width:100%;margin-top:0.5rem;">
+<tr><td>Optimal SC Profit (integrated)</td><td style="text-align:right;font-weight:700;">${sc_daily_profit:,.0f}/day</td></tr>
+<tr><td>Actual SC Profit (with wholesale)</td><td style="text-align:right;font-weight:700;">${actual_sc_profit:,.0f}/day</td></tr>
+<tr><td>Deadweight Loss</td><td style="text-align:right;color:#b22222;font-weight:700;">-${dw_loss:,.0f}/day ({100-pct_captured:.1f}%)</td></tr>
+<tr><td>SC Profit Captured</td><td style="text-align:right;color:{loss_color};font-weight:700;">{pct_captured:.1f}%</td></tr>
+<tr><td>Seller's Share</td><td style="text-align:right;">${seller_daily_profit:,.0f} ({seller_daily_profit/actual_sc_profit*100:.0f}%)</td></tr>
+<tr><td>Buyer's Share</td><td style="text-align:right;">${buyer_daily_profit:,.0f} ({buyer_daily_profit/actual_sc_profit*100:.0f}%)</td></tr>
+</table>
+</div>
+""", unsafe_allow_html=True)
+
+    with dm_col2:
+        # Wholesale price sweep
+        ws_range = np.arange(seller_total_cost + 10, MAX_WTP * 0.6, 10)
+        seller_profits = []
+        buyer_profits = []
+        sc_profits = []
+        for w in ws_range:
+            b_retail = (MAX_WTP + w) / 2
+            b_demand = td_buyer_arrival * (MAX_WTP - b_retail) / MAX_WTP
+            seller_profits.append(b_demand * (w - MC_PRODUCTION - td_ship_cost))
+            buyer_profits.append(b_demand * (b_retail - w))
+            sc_profits.append(b_demand * (b_retail - seller_total_cost))
+
+        fig_dm = go.Figure()
+        fig_dm.add_trace(go.Scatter(x=ws_range, y=sc_profits,
+                                     name="Total SC Profit", line=dict(color="#333", width=2, dash="dash")))
+        fig_dm.add_trace(go.Scatter(x=ws_range, y=seller_profits,
+                                     name="Seller Profit", line=dict(color="#800000", width=2)))
+        fig_dm.add_trace(go.Scatter(x=ws_range, y=buyer_profits,
+                                     name="Buyer Profit", line=dict(color="#1a3c5e", width=2)))
+        fig_dm.add_hline(y=sc_daily_profit, line_dash="dot", line_color="green",
+                          annotation_text=f"Integrated optimum: ${sc_daily_profit:,.0f}")
+        fig_dm.add_vline(x=td_wholesale, line_dash="dash", line_color="orange",
+                          annotation_text=f"Your W=${td_wholesale}")
+        fig_dm.update_layout(height=350, xaxis_title="Wholesale Price ($)",
+                              yaxis_title="Daily Profit ($)", yaxis_tickformat="$,.0f",
+                              margin=dict(l=0, r=0, t=30, b=0))
+        st.plotly_chart(fig_dm, use_container_width=True)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 3: CAPACITY & PRODUCTION PLANNER
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("3. Capacity & Production Planner")
+
+    cap_col1, cap_col2 = st.columns([1, 2])
+    with cap_col1:
+        st.markdown("**Your Products**")
+        p1_price = st.number_input("Hormone Price ($)", value=550, step=25, key="cap_p1")
+        p2_price = st.number_input("Specialty Price ($)", value=550, step=25, key="cap_p2")
+        p1_market = 300000
+        p2_market = 140000
+        num_wholesale = st.number_input("Wholesale units/day committed", value=0, step=5, key="cap_ws")
+
+    p1_demand = 0.0001 * p1_market * (MAX_WTP - p1_price) / MAX_WTP if p1_price < MAX_WTP else 0
+    p2_demand = 0.0001 * p2_market * (MAX_WTP - p2_price) / MAX_WTP if p2_price < MAX_WTP else 0
+    total_demand = p1_demand + p2_demand + num_wholesale
+
+    # If both products running, effective capacity per product = ~20/day
+    both_running = p1_demand > 0 and p2_demand > 0
+    effective_cap = CAPACITY_PER_DAY  # 40
+    if both_running:
+        # Allocate proportionally
+        p1_alloc = CAPACITY_PER_DAY * p1_demand / (p1_demand + p2_demand) if (p1_demand + p2_demand) > 0 else 20
+        p2_alloc = CAPACITY_PER_DAY - p1_alloc
+    else:
+        p1_alloc = CAPACITY_PER_DAY if p1_demand > 0 else 0
+        p2_alloc = CAPACITY_PER_DAY if p2_demand > 0 else 0
+
+    utilization = total_demand / CAPACITY_PER_DAY * 100
+    util_color = "#2d6a2e" if utilization < 80 else ("#b8860b" if utilization < 100 else "#b22222")
+
+    with cap_col2:
+        # Capacity gauge
+        fig_cap = go.Figure(go.Indicator(
+            mode="gauge+number+delta",
+            value=total_demand,
+            delta={"reference": CAPACITY_PER_DAY, "relative": False, "valueformat": ".1f",
+                   "increasing": {"color": "#b22222"}, "decreasing": {"color": "#2d6a2e"}},
+            title={"text": "Total Demand vs Capacity (units/day)"},
+            gauge={
+                "axis": {"range": [0, CAPACITY_PER_DAY * 1.5]},
+                "bar": {"color": util_color},
+                "steps": [
+                    {"range": [0, CAPACITY_PER_DAY * 0.8], "color": "rgba(45,106,46,0.15)"},
+                    {"range": [CAPACITY_PER_DAY * 0.8, CAPACITY_PER_DAY], "color": "rgba(184,134,11,0.15)"},
+                    {"range": [CAPACITY_PER_DAY, CAPACITY_PER_DAY * 1.5], "color": "rgba(178,34,34,0.15)"},
+                ],
+                "threshold": {"line": {"color": "red", "width": 3}, "value": CAPACITY_PER_DAY},
+            },
+        ))
+        fig_cap.update_layout(height=280, margin=dict(l=30, r=30, t=60, b=10))
+        st.plotly_chart(fig_cap, use_container_width=True)
+
+        cap_data = {
+            "Product": ["Hormone (retail)", "Specialty (retail)", "Wholesale", "**Total**"],
+            "Demand/day": [f"{p1_demand:.1f}", f"{p2_demand:.1f}", f"{num_wholesale:.0f}", f"**{total_demand:.1f}**"],
+            "Price": [f"${p1_price}", f"${p2_price}", "—", ""],
+            "Margin/unit": [f"${p1_price - MC_PRODUCTION}", f"${p2_price - MC_PRODUCTION}", "—", ""],
+            "Daily Profit": [f"${p1_demand * (p1_price - MC_PRODUCTION):,.0f}",
+                             f"${p2_demand * (p2_price - MC_PRODUCTION):,.0f}", "—",
+                             f"**${p1_demand * (p1_price - MC_PRODUCTION) + p2_demand * (p2_price - MC_PRODUCTION):,.0f}**"],
+        }
+        st.dataframe(pd.DataFrame(cap_data), use_container_width=True, hide_index=True)
+
+        if utilization > 100:
+            st.error(f"BOTTLENECK: Demand ({total_demand:.1f}/day) exceeds capacity ({CAPACITY_PER_DAY:.0f}/day). Raise prices or cut wholesale.")
+        elif utilization > 80:
+            st.warning(f"Capacity utilization: {utilization:.0f}% — approaching limit. Monitor closely.")
+        else:
+            st.success(f"Capacity utilization: {utilization:.0f}% — {CAPACITY_PER_DAY - total_demand:.1f} units/day excess available for wholesale.")
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 4: INVENTORY & REORDER CALCULATOR
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("4. Inventory & Reorder Point Calculator")
+
+    inv_col1, inv_col2, inv_col3 = st.columns(3)
+    with inv_col1:
+        inv_price = st.number_input("Your Retail Price ($)", value=550, step=25, key="inv_price")
+        inv_market = st.selectbox("Market Size", [300000, 140000], key="inv_mkt",
+                                   format_func=lambda x: f"{x:,} ({'Hormone' if x == 300000 else 'Specialty'})")
+        inv_both = st.checkbox("Both products running?", value=True, key="inv_both")
+        inv_safety = st.number_input("Safety Stock (units)", value=50, step=10, key="inv_safety")
+
+    inv_lead = 6.0 if inv_both else 3.5
+    inv_daily_demand = 0.0001 * inv_market * (MAX_WTP - inv_price) / MAX_WTP if inv_price < MAX_WTP else 0
+    inv_reorder = inv_daily_demand * inv_lead + inv_safety
+    inv_days_of_stock = lambda on_hand: on_hand / inv_daily_demand if inv_daily_demand > 0 else float('inf')
+
+    with inv_col2:
+        st.metric("Daily Demand", f"{inv_daily_demand:.1f} units")
+        st.metric("Lead Time", f"{inv_lead} days")
+        st.metric("Reorder Point", f"{inv_reorder:.0f} units")
+        st.metric("Pipeline Stock Needed", f"{inv_daily_demand * inv_lead:.0f} units")
+
+    with inv_col3:
+        inv_on_hand = st.number_input("Current On-Hand", value=100, step=10, key="inv_oh")
+        inv_in_transit = st.number_input("In-Transit", value=0, step=10, key="inv_it")
+        inv_in_process = st.number_input("In-Process", value=100, step=10, key="inv_ip")
+        total_pipeline = inv_on_hand + inv_in_transit + inv_in_process
+        days_cover = total_pipeline / inv_daily_demand if inv_daily_demand > 0 else float('inf')
+
+        if days_cover < inv_lead:
+            st.error(f"STOCKOUT RISK: {days_cover:.1f} days of coverage vs {inv_lead} day lead time")
+        elif days_cover < inv_lead * 1.5:
+            st.warning(f"Coverage: {days_cover:.1f} days — thin buffer")
+        else:
+            st.success(f"Coverage: {days_cover:.1f} days — healthy")
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 5: END-GAME WIND-DOWN CALCULATOR
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("5. End-Game Wind-Down Calculator")
+
+    eg_col1, eg_col2 = st.columns(2)
+    with eg_col1:
+        eg_days_left = st.number_input("Game Days Remaining", value=30, step=1, key="eg_days")
+        eg_inventory = st.number_input("Total Inventory (on-hand + pipeline)", value=200, step=50, key="eg_inv")
+        eg_price = st.number_input("Current Price ($)", value=550, step=25, key="eg_price")
+        eg_market_size = st.number_input("Market Size", value=300000, step=10000, key="eg_mkt")
+
+    eg_demand = 0.0001 * eg_market_size * (MAX_WTP - eg_price) / MAX_WTP if eg_price < MAX_WTP else 0
+    eg_units_sellable = eg_demand * eg_days_left
+    eg_surplus = eg_inventory - eg_units_sellable
+    eg_stop_day = eg_inventory / eg_demand if eg_demand > 0 else float('inf')
+    eg_stop_production_at = eg_days_left - eg_stop_day
+
+    with eg_col2:
+        st.metric("Daily Demand at Current Price", f"{eg_demand:.1f} units")
+        st.metric("Units Sellable in Remaining Days", f"{eg_units_sellable:.0f}")
+        if eg_surplus > 0:
+            st.metric("Surplus (will be wasted)", f"{eg_surplus:.0f} units",
+                       delta=f"-${eg_surplus * MC_PRODUCTION:,.0f} wasted", delta_color="inverse")
+            # Suggest fire-sale price
+            # At what price would demand * days_left = inventory?
+            # 0.0001 * mkt * (maxWTP - P) / maxWTP * days = inv
+            # (maxWTP - P) = inv * maxWTP / (0.0001 * mkt * days)
+            needed_prob = eg_inventory / (0.0001 * eg_market_size * eg_days_left) if eg_days_left > 0 else 1
+            fire_sale_price = max(MC_PRODUCTION, MAX_WTP * (1 - needed_prob))
+            st.metric("Fire-Sale Price to Clear", f"${fire_sale_price:,.0f}")
+        else:
+            st.metric("Headroom", f"{-eg_surplus:.0f} more units could be sold",
+                       delta="No waste", delta_color="normal")
+
+        if eg_stop_production_at > 0:
+            st.warning(f"Stop production when {eg_stop_production_at:.0f} days remain (accounting for lead time)")
+        else:
+            st.info("Production should already be stopped — sell through existing inventory")
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 6: ASSIGNMENT 2 QUICK REFERENCE
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("6. Assignment 2 — Quick Reference Answers")
+
+    with st.expander("**Part 1: Trading Game Questions**", expanded=False):
+        st.markdown(f"""
+**Q1 — Production Capacity:** {CAPACITY_PER_DAY:.0f} units/day (100 units / 2.5 days)
+
+**Q2 — Excess Capacity:**
+- Hormone demand at $550: {0.0001 * 300000 * (1000-550)/1000:.1f} units/day
+- Specialty demand at $550: {0.0001 * 140000 * (1000-550)/1000:.1f} units/day
+- Total home demand: ~19.8 units/day → **Excess: ~20.2 units/day**
+
+**Q3 — Market size variation:** Smaller specialty markets = less bargaining power for buyers.
+Larger markets = more valuable trade partnerships. Use market size data to calibrate wholesale pricing.
+
+**Q4 — Order quantity considerations:**
+- Container (1000 units, $10/unit, 21 days) vs Mail (10 units, $40/unit, 3 days)
+- Match to demand rate: don't order 1000 if you sell 5/day (200 days of stock!)
+- Account for game end: avoid ordering more than you can sell
+
+**Q5 — Wholesale selling price:** ~$250-350 recommended.
+At $300 wholesale (mail): seller margin = $300-$140 = $160/unit.
+Buyer retails at $(1000+300)/2 = $650, demand = footfall × 35%.
+Higher wholesale → more double marginalization → less total profit.
+
+**Q6 — Wholesale buying price:** Push for $140-200.
+At $200: your retail = $(1000+200)/2 = $600, margin = $400/unit.
+At $300: your retail = $650, margin = $350/unit.
+
+**Q7 — Contribution margin comparison:**
+- Retail Hormone at $550: margin = **$450/unit**
+- Wholesale selling at $300 (mail): margin = **$160/unit**
+- Retail is ~2.8x more profitable per unit
+
+**Q8 — Capacity allocation:** Prioritize retail (higher margin), then wholesale with excess.
+Between products: choose higher-margin product if capacity-constrained.
+
+**Q9 — Reorder point adjustment:** Raise reorder point when wholesaling — retail stockouts
+lose customers forever, wholesale can wait.
+
+**Q10 — Avoiding stockouts:** Monitor days-of-supply, set reorder > lead_time × demand + safety stock,
+watch Inventory Status report, keep buffer of 50+ units.
+        """)
+
+    with st.expander("**Part 2: Supply Chain Profit (Hypothetical)**", expanded=False):
+        st.markdown("""
+Given: MC=$100, Shipping=$40, Max WTP=$1,000, Footfall=10/day
+
+**Q11:** Buyer's optimal retail at W=$570: **(1000+570)/2 = $785**
+
+**Q12:** Demand at $785: 10 × (1000-785)/1000 = **2.15 units/day**
+
+**Q13:** Buyer's daily profit: 2.15 × ($785-$570) = **$462.25/day**
+
+**Q14:** SC profit: 2.15 × ($785-$140) = **$1,386.75/day**
+
+**Q15:** Seller gets $924.50 (67%), Buyer gets $462.25 (33%)
+
+**Q16:** Demand at retail $570: 10 × 0.43 = **4.3 units/day**
+
+**Q17:** SC profit at retail $570: 4.3 × ($570-$140) = **$1,849/day**
+
+**Q18:** Seller gets $1,849 (100%), Buyer gets **$0** (zero margin!)
+
+**Q19:** Ideal: charge W at cost ($140) + use franchise fees to split profit.
+In practice: W=$200-300 with revenue sharing. Key insight: **double marginalization
+destroys 25% of supply chain profit** when W=$570.
+        """)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
