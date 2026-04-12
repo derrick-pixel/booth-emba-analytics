@@ -855,7 +855,7 @@ elif page == "⚔️ Trial War Room":
     st.markdown("")
 
     # ── Game Constants ────────────────────────────────────────────────────────
-    MAX_WTP = 500  # Monopoly Game: Max WTP = $500
+    MAX_WTP = 1000  # Confirmed from Assignment 2
     MC_PRODUCTION = 100  # $100/unit material cost
     BATCH_SIZE = 100
     PRODUCTION_DAYS = 2.5
@@ -868,24 +868,17 @@ elif page == "⚔️ Trial War Room":
     }
 
     # ── Key insight banner ────────────────────────────────────────────────────
-    # Derived constants for banner
-    _opt_home = (MAX_WTP + MC_PRODUCTION) / 2  # 300
-    _opt_ship = (MAX_WTP + MC_PRODUCTION + 40) / 2  # 320
-    _h_demand = 0.0001 * 300000 * (MAX_WTP - _opt_home) / MAX_WTP  # 30 × 0.4 = 12
-    _s_demand = 0.0001 * 140000 * (MAX_WTP - _opt_home) / MAX_WTP  # 14 × 0.4 = 5.6
-    _excess = CAPACITY_PER_DAY - _h_demand - _s_demand
-
-    st.markdown(f"""
+    st.markdown("""
 <div style="background:linear-gradient(135deg,#800000,#b22222);color:white;
     border-radius:12px;padding:1.2rem 1.5rem;margin-bottom:1rem;">
-<h4 style="color:#ffd700;margin:0 0 0.5rem 0;">Monopoly Game — Max WTP = ${MAX_WTP} | Lead Time = 3.5 days | Cost of Capital = 10%</h4>
+<h4 style="color:#ffd700;margin:0 0 0.5rem 0;">Max WTP = $1,000 (confirmed from Assignment 2)</h4>
 <div style="display:flex;gap:2rem;flex-wrap:wrap;">
-<div><span style="opacity:0.7;">Optimal Home Retail</span><br><b style="font-size:1.3rem;">${_opt_home:.0f}</b><br><span style="font-size:0.75rem;opacity:0.6;">({MAX_WTP}+{MC_PRODUCTION})/2</span></div>
-<div><span style="opacity:0.7;">Optimal Retail (w/ mail ship)</span><br><b style="font-size:1.3rem;">${_opt_ship:.0f}</b><br><span style="font-size:0.75rem;opacity:0.6;">({MAX_WTP}+140)/2</span></div>
-<div><span style="opacity:0.7;">Home Hormone Demand</span><br><b style="font-size:1.3rem;">{_h_demand:.1f} /day</b><br><span style="font-size:0.75rem;opacity:0.6;">30 × ({MAX_WTP}-{_opt_home:.0f})/{MAX_WTP}</span></div>
-<div><span style="opacity:0.7;">Home Specialty Demand</span><br><b style="font-size:1.3rem;">{_s_demand:.1f} /day</b><br><span style="font-size:0.75rem;opacity:0.6;">14 × ({MAX_WTP}-{_opt_home:.0f})/{MAX_WTP}</span></div>
+<div><span style="opacity:0.7;">Optimal Home Retail</span><br><b style="font-size:1.3rem;">$550</b><br><span style="font-size:0.75rem;opacity:0.6;">(1000+100)/2</span></div>
+<div><span style="opacity:0.7;">Optimal Retail (w/ mail ship)</span><br><b style="font-size:1.3rem;">$570</b><br><span style="font-size:0.75rem;opacity:0.6;">(1000+140)/2</span></div>
+<div><span style="opacity:0.7;">Home Hormone Demand</span><br><b style="font-size:1.3rem;">13.5 /day</b><br><span style="font-size:0.75rem;opacity:0.6;">30 × (1000-550)/1000</span></div>
+<div><span style="opacity:0.7;">Home Specialty Demand</span><br><b style="font-size:1.3rem;">6.3 /day</b><br><span style="font-size:0.75rem;opacity:0.6;">14 × (1000-550)/1000</span></div>
 <div><span style="opacity:0.7;">Factory Capacity</span><br><b style="font-size:1.3rem;">40 /day</b><br><span style="font-size:0.75rem;opacity:0.6;">100 units / 2.5 days</span></div>
-<div><span style="opacity:0.7;">Excess Capacity</span><br><b style="font-size:1.3rem;">~{_excess:.1f} /day</b><br><span style="font-size:0.75rem;opacity:0.6;">40 - {_h_demand:.1f} - {_s_demand:.1f}</span></div>
+<div><span style="opacity:0.7;">Excess Capacity</span><br><b style="font-size:1.3rem;">~20 /day</b><br><span style="font-size:0.75rem;opacity:0.6;">40 - 13.5 - 6.3 = 20.2</span></div>
 </div>
 </div>
 """, unsafe_allow_html=True)
@@ -900,7 +893,7 @@ elif page == "⚔️ Trial War Room":
 
     pr_col1, pr_col2 = st.columns([1, 2])
     with pr_col1:
-        pr_max_wtp = st.number_input("Max WTP ($)", value=500, step=50, key="trial_maxwtp")
+        pr_max_wtp = st.number_input("Max WTP ($)", value=1000, step=50, key="trial_maxwtp")
         pr_mc = st.number_input("Marginal Cost ($/unit)", value=100, step=10, key="trial_mc")
         pr_market = st.selectbox("Market Size", [300000, 140000, 50000, 20000],
                                   format_func=lambda x: f"{x:,}",
@@ -940,7 +933,7 @@ elif page == "⚔️ Trial War Room":
 
         # Price sensitivity table
         st.markdown("**Price Sensitivity Table**")
-        price_points = [150, 200, 250, 300, 350, 400, 450]
+        price_points = [300, 400, 450, 500, 550, 600, 700, 800, 900]
         sens_data = []
         for p in price_points:
             if p >= pr_max_wtp:
@@ -969,7 +962,7 @@ elif page == "⚔️ Trial War Room":
     td_col1, td_col2, td_col3 = st.columns(3)
     with td_col1:
         st.markdown("**Deal Parameters**")
-        td_wholesale = st.number_input("Wholesale Price ($/unit)", value=200, step=25, key="td_wholesale")
+        td_wholesale = st.number_input("Wholesale Price ($/unit)", value=300, step=25, key="td_wholesale")
         td_ship_mode = st.selectbox("Shipping Mode", list(SHIPPING.keys()), index=1, key="td_ship")
         td_ship_cost = SHIPPING[td_ship_mode]["cost_per_unit"]
         td_ship_days = SHIPPING[td_ship_mode]["days"]
@@ -1071,11 +1064,11 @@ elif page == "⚔️ Trial War Room":
     # ── Shared inputs in a prominent panel ────────────────────────────────────
     gs_col1, gs_col2, gs_col3, gs_col4 = st.columns(4)
     with gs_col1:
-        gs_hormone_price = st.number_input("Hormone Retail Price ($)", value=300, step=25, key="gs_p1")
+        gs_hormone_price = st.number_input("Hormone Retail Price ($)", value=550, step=25, key="gs_p1")
     with gs_col2:
-        gs_specialty_price = st.number_input("Specialty Retail Price ($)", value=300, step=25, key="gs_p2")
+        gs_specialty_price = st.number_input("Specialty Retail Price ($)", value=550, step=25, key="gs_p2")
     with gs_col3:
-        gs_ws_price = st.number_input("Wholesale Price ($/unit)", value=200, step=25, key="gs_ws_price")
+        gs_ws_price = st.number_input("Wholesale Price ($/unit)", value=300, step=25, key="gs_ws_price")
         gs_ws_units = st.number_input("Wholesale units/day", value=0, step=5, key="gs_ws_units")
     with gs_col4:
         gs_ws_ship = st.selectbox("Wholesale Shipping", list(SHIPPING.keys()), index=1, key="gs_ws_ship")
