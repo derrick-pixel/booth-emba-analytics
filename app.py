@@ -973,51 +973,207 @@ elif page == "🕸️ Knowledge Graph":
                 unsafe_allow_html=True)
     st.markdown("")
 
-    # Filter
+    # ── Build the full graph (needed for popups and main viz) ─────────────────
     categories = ["All"] + list(CATEGORY_COLORS.keys())
-    sel_cat = st.selectbox("Filter by discipline", categories)
+    filter_col, explore_col = st.columns([1, 2])
+    with filter_col:
+        sel_cat = st.selectbox("Filter by discipline", categories)
 
     # Build NetworkX graph
     G = nx.Graph()
+    # Track which course each framework belongs to
+    fw_to_courses = {}
 
-    # Add course nodes
     for c in COURSES:
         if sel_cat != "All" and c["category"] != sel_cat:
             continue
         G.add_node(c["name"], node_type="course", category=c["category"],
                     size=max(c["units"], 30), color=CATEGORY_COLORS.get(c["category"], "#999"))
-
-        # Add framework nodes connected to course
         for f in c["frameworks"]:
             G.add_node(f, node_type="framework", category=c["category"],
                         size=15, color=CATEGORY_COLORS.get(c["category"], "#999"))
             G.add_edge(c["name"], f, weight=2)
+            fw_to_courses.setdefault(f, []).append(c["name"])
 
-    # Add cross-concept connections
     for src, tgt, label in CONCEPT_CONNECTIONS:
         if G.has_node(src) and G.has_node(tgt):
             G.add_edge(src, tgt, weight=1, label=label)
 
-    # Layout
+    # Framework explorer selector
+    all_frameworks = sorted([n for n in G.nodes()
+                             if G.nodes[n].get("node_type") == "framework"])
+    with explore_col:
+        selected_fw = st.selectbox(
+            "Explore a framework (click to open details)",
+            ["— Select a framework —"] + all_frameworks,
+            key="kg_explore_fw",
+        )
+
+    # ── Framework popup overlay ───────────────────────────────────────────────
+    if selected_fw and selected_fw != "— Select a framework —":
+        fw_data = G.nodes[selected_fw]
+        neighbors = list(G.neighbors(selected_fw))
+        neighbor_courses = [n for n in neighbors if G.nodes[n].get("node_type") == "course"]
+        neighbor_fws = [n for n in neighbors if G.nodes[n].get("node_type") == "framework"]
+
+        # Find cross-discipline bridges involving this framework
+        fw_bridges = []
+        for src, tgt, label in CONCEPT_CONNECTIONS:
+            if (src == selected_fw or tgt == selected_fw) and G.has_node(src) and G.has_node(tgt):
+                other = tgt if src == selected_fw else src
+                fw_bridges.append({"Connected To": other, "Bridge Path": label})
+
+        # Popup overlay card
+        cat_color = fw_data.get("color", "#666")
+        st.markdown(f"""
+<div style="border:2px solid {cat_color}; border-radius:12px; padding:20px 24px;
+            margin:8px 0 16px 0; background:rgba(255,255,255,0.03);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+  <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+    <div style="width:14px; height:14px; border-radius:50%; background:{cat_color};"></div>
+    <span style="font-size:1.4em; font-weight:700; color:{cat_color};">{selected_fw}</span>
+    <span style="font-size:0.85em; color:rgba(180,180,180,0.8); margin-left:auto;">
+      {fw_data.get("category", "")} &middot; {G.degree(selected_fw)} connections
+    </span>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+        pop_col1, pop_col2 = st.columns([1, 1])
+
+        with pop_col1:
+            # Parent courses
+            st.markdown("**Taught In**")
+            for course in neighbor_courses:
+                c_color = G.nodes[course].get("color", "#666")
+                st.markdown(f'<span style="color:{c_color}; font-weight:600;">&#9679;</span> {course}',
+                            unsafe_allow_html=True)
+
+            # Connected frameworks
+            st.markdown("")
+            st.markdown("**Connected Frameworks**")
+            for fw in sorted(neighbor_fws):
+                fw_cat = G.nodes[fw].get("category", "")
+                fw_color = G.nodes[fw].get("color", "#888")
+                # Find edge label if it exists
+                edge_data = G.edges.get((selected_fw, fw), {})
+                edge_label = edge_data.get("label", "")
+                label_str = f' <span style="color:rgba(160,160,160,0.7); font-size:0.85em;">via {edge_label}</span>' if edge_label else ""
+                parent_courses = fw_to_courses.get(fw, [])
+                course_str = f' <span style="color:rgba(140,140,140,0.6); font-size:0.8em;">({", ".join(parent_courses[:2])})</span>' if parent_courses else ""
+                st.markdown(
+                    f'<span style="color:{fw_color};">&#9656;</span> {fw}{label_str}{course_str}',
+                    unsafe_allow_html=True,
+                )
+
+            # Cross-discipline bridges
+            if fw_bridges:
+                st.markdown("")
+                st.markdown("**Cross-Discipline Bridges**")
+                for b in fw_bridges:
+                    st.markdown(f"&#8644; **{b['Connected To']}** — _{b['Bridge Path']}_")
+
+        with pop_col2:
+            # Mini neighborhood subgraph
+            st.markdown("**Neighborhood Graph**")
+            subgraph_nodes = [selected_fw] + neighbors
+            H = G.subgraph(subgraph_nodes).copy()
+            sub_pos = nx.spring_layout(H, k=1.8, iterations=40, seed=42)
+
+            # Build mini plotly figure
+            sub_edge_x, sub_edge_y = [], []
+            for e in H.edges():
+                x0, y0 = sub_pos[e[0]]
+                x1, y1 = sub_pos[e[1]]
+                sub_edge_x.extend([x0, x1, None])
+                sub_edge_y.extend([y0, y1, None])
+
+            sub_edge_trace = go.Scatter(
+                x=sub_edge_x, y=sub_edge_y, mode="lines",
+                line=dict(width=1.5, color="rgba(200,200,200,0.6)"),
+                hoverinfo="none",
+            )
+
+            # Nodes for mini graph
+            sub_nx, sub_ny, sub_text, sub_colors, sub_sizes, sub_symbols = (
+                [], [], [], [], [], [])
+            for node in H.nodes():
+                x, y = sub_pos[node]
+                ndata = H.nodes[node]
+                sub_nx.append(x); sub_ny.append(y)
+                sub_text.append(node)
+                if node == selected_fw:
+                    sub_colors.append(cat_color)
+                    sub_sizes.append(22)
+                    sub_symbols.append("star")
+                elif ndata.get("node_type") == "course":
+                    sub_colors.append(ndata.get("color", "#666"))
+                    sub_sizes.append(16)
+                    sub_symbols.append("square")
+                else:
+                    sub_colors.append(ndata.get("color", "#888"))
+                    sub_sizes.append(12)
+                    sub_symbols.append("circle")
+
+            sub_node_trace = go.Scatter(
+                x=sub_nx, y=sub_ny, mode="markers+text",
+                marker=dict(size=sub_sizes, color=sub_colors, symbol=sub_symbols,
+                            line=dict(width=1.5, color="white")),
+                text=sub_text, textposition="top center",
+                textfont=dict(size=9, color="#ccc"),
+                hoverinfo="text",
+            )
+
+            sub_fig = go.Figure(data=[sub_edge_trace, sub_node_trace])
+            sub_fig.update_layout(
+                showlegend=False, height=350,
+                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                margin=dict(l=5, r=5, t=5, b=5),
+                plot_bgcolor="rgba(0,0,0,0)",
+                paper_bgcolor="rgba(0,0,0,0)",
+            )
+            st.plotly_chart(sub_fig, use_container_width=True)
+
+        st.markdown("---")
+
+    # ── Main graph with highlighting ──────────────────────────────────────────
     pos = nx.spring_layout(G, k=2.5, iterations=60, seed=42)
 
-    # Build Plotly figure
-    edge_x, edge_y = [], []
-    for edge in G.edges():
-        x0, y0 = pos[edge[0]]
-        x1, y1 = pos[edge[1]]
-        edge_x.extend([x0, x1, None])
-        edge_y.extend([y0, y1, None])
+    # Determine highlighted nodes
+    highlight_nodes = set()
+    if selected_fw and selected_fw != "— Select a framework —":
+        highlight_nodes = {selected_fw} | set(G.neighbors(selected_fw))
 
-    edge_trace = go.Scatter(
+    # Build edge traces — split into highlighted and normal
+    edge_x, edge_y = [], []
+    hl_edge_x, hl_edge_y = [], []
+    for u, v in G.edges():
+        x0, y0 = pos[u]
+        x1, y1 = pos[v]
+        if highlight_nodes and (u in highlight_nodes and v in highlight_nodes):
+            hl_edge_x.extend([x0, x1, None])
+            hl_edge_y.extend([y0, y1, None])
+        else:
+            edge_x.extend([x0, x1, None])
+            edge_y.extend([y0, y1, None])
+
+    traces = []
+    traces.append(go.Scatter(
         x=edge_x, y=edge_y, mode="lines",
-        line=dict(width=0.5, color="#ccc"),
-        hoverinfo="none",
-    )
+        line=dict(width=0.5, color="rgba(200,200,200,0.3)" if highlight_nodes else "#ccc"),
+        hoverinfo="none", showlegend=False,
+    ))
+    if hl_edge_x:
+        traces.append(go.Scatter(
+            x=hl_edge_x, y=hl_edge_y, mode="lines",
+            line=dict(width=2.5, color="rgba(255,200,50,0.7)"),
+            hoverinfo="none", showlegend=False,
+        ))
 
     # Separate course and framework nodes
     course_x, course_y, course_text, course_colors, course_sizes = [], [], [], [], []
-    fw_x, fw_y, fw_text, fw_colors, fw_sizes = [], [], [], [], []
+    fw_x, fw_y, fw_text, fw_colors, fw_sizes, fw_opacities = [], [], [], [], [], []
 
     for node in G.nodes():
         x, y = pos[node]
@@ -1029,28 +1185,38 @@ elif page == "🕸️ Knowledge Graph":
             course_sizes.append(data["size"] / 3)
         else:
             fw_x.append(x); fw_y.append(y)
-            # Count connections
             degree = G.degree(node)
             fw_text.append(f"{node} ({degree} connections)")
-            fw_colors.append(data["color"])
-            fw_sizes.append(8 + degree * 3)
+            if highlight_nodes and node in highlight_nodes:
+                fw_colors.append(data["color"])
+                fw_sizes.append(12 + degree * 4)
+                fw_opacities.append(1.0)
+            elif highlight_nodes:
+                fw_colors.append("#555")
+                fw_sizes.append(6 + degree * 2)
+                fw_opacities.append(0.2)
+            else:
+                fw_colors.append(data["color"])
+                fw_sizes.append(8 + degree * 3)
+                fw_opacities.append(0.7)
 
-    course_trace = go.Scatter(
+    traces.append(go.Scatter(
+        x=fw_x, y=fw_y, mode="markers",
+        marker=dict(size=fw_sizes, color=fw_colors,
+                    opacity=fw_opacities,
+                    line=dict(width=1, color="white")),
+        text=fw_text, hoverinfo="text", name="Frameworks",
+    ))
+
+    traces.append(go.Scatter(
         x=course_x, y=course_y, mode="markers+text",
         marker=dict(size=course_sizes, color=course_colors, line=dict(width=2, color="white")),
         text=course_text, textposition="top center",
         textfont=dict(size=10, color="#333"),
         hoverinfo="text", name="Courses",
-    )
+    ))
 
-    fw_trace = go.Scatter(
-        x=fw_x, y=fw_y, mode="markers",
-        marker=dict(size=fw_sizes, color=fw_colors, opacity=0.7,
-                    line=dict(width=1, color="white")),
-        text=fw_text, hoverinfo="text", name="Frameworks",
-    )
-
-    fig_graph = go.Figure(data=[edge_trace, fw_trace, course_trace])
+    fig_graph = go.Figure(data=traces)
     fig_graph.update_layout(
         showlegend=True, height=700,
         xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
