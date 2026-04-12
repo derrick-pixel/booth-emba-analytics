@@ -92,8 +92,8 @@ with st.sidebar:
     page = st.radio(
         "Navigate",
         [
-            "⚔️ 12 Trial War Room",
             "🏭 13 Trial War Room",
+            "⚔️ 12 Trial War Room",
             "🎮 ISM War Room",
             "📖 War Room Prep",
             "🕸️ Knowledge Graph",
