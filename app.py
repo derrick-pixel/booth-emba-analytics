@@ -1347,7 +1347,7 @@ Linear regression gives **a = Max WTP** (the price intercept where demand hits z
     inv_market = p1_market if inv_product == "Hormone" else p2_market
     inv_daily_demand = p1_demand if inv_product == "Hormone" else p2_demand
 
-    inv_lead = BASE_LEAD_TIME * 2 - 1 if both_running else BASE_LEAD_TIME  # 6.0 if both, 3.5 if single
+    inv_default_lead = BASE_LEAD_TIME * 2 - 1 if both_running else BASE_LEAD_TIME
     inv_max_wtp = H_MAX_WTP if inv_product == "Hormone" else S_MAX_WTP
     inv_N = ARRIVAL_RATE * inv_market  # arrivals per day
     inv_p = (inv_max_wtp - inv_price) / inv_max_wtp if inv_price < inv_max_wtp else 0
@@ -1355,6 +1355,10 @@ Linear regression gives **a = Max WTP** (the price intercept where demand hits z
     inv_col1, inv_col2, inv_col3 = st.columns(3)
     with inv_col1:
         st.markdown(f"**{inv_product}** at **${inv_price}**")
+        inv_lead = st.number_input("Lead Time (days)", value=float(inv_default_lead),
+                                    step=0.5, format="%.1f", key="inv_lead",
+                                    help=f"Auto: {inv_default_lead:.1f} days ({'both products' if both_running else 'single product'}). "
+                                         f"= production ({PRODUCTION_DAYS}d) + transit. Adjust for actual observed lead time.")
         inv_service = st.selectbox("Service Level", [90, 95, 97.5, 99], index=1,
                                     format_func=lambda x: f"{x}%", key="inv_svc")
         inv_z = {90: 1.28, 95: 1.65, 97.5: 1.96, 99: 2.33}[inv_service]
@@ -1366,7 +1370,6 @@ Linear regression gives **a = Max WTP** (the price intercept where demand hits z
         inv_reorder = inv_demand_lt + inv_safety
 
         st.metric("Daily Demand (Np)", f"{inv_daily_demand:.1f} units")
-        st.metric("Lead Time", f"{inv_lead} days" + (" (both running)" if both_running else ""))
         st.metric("Safety Stock (z×σ)", f"{inv_safety:.0f} units")
         st.metric("Reorder Point", f"{inv_reorder:.0f} units")
         st.caption(f"z={inv_z}, σ_LT={inv_std_lt:.1f}, P(buy)={inv_p:.1%}")
