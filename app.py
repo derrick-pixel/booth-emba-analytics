@@ -1610,12 +1610,18 @@ elif page == "🕸️ Knowledge Graph":
     # Build edge traces — split into highlighted and normal
     edge_x, edge_y = [], []
     hl_edge_x, hl_edge_y = [], []
+    hl_edge_labels = []  # (midx, midy, label) for edge annotations
     for u, v in G.edges():
         x0, y0 = pos[u]
         x1, y1 = pos[v]
         if highlight_nodes and (u in highlight_nodes and v in highlight_nodes):
             hl_edge_x.extend([x0, x1, None])
             hl_edge_y.extend([y0, y1, None])
+            # Collect edge label at midpoint
+            edge_data = G.edges.get((u, v), {})
+            label = edge_data.get("label", "")
+            if label:
+                hl_edge_labels.append(((x0 + x1) / 2, (y0 + y1) / 2, label))
         else:
             edge_x.extend([x0, x1, None])
             edge_y.extend([y0, y1, None])
@@ -1633,10 +1639,8 @@ elif page == "🕸️ Knowledge Graph":
             hoverinfo="none", showlegend=False,
         ))
 
-    # Separate course and framework nodes
+    # Separate course nodes
     course_x, course_y, course_text, course_colors, course_sizes = [], [], [], [], []
-    fw_x, fw_y, fw_text, fw_colors, fw_sizes, fw_opacities = [], [], [], [], [], []
-
     for node in G.nodes():
         x, y = pos[node]
         data = G.nodes[node]
@@ -1645,30 +1649,54 @@ elif page == "🕸️ Knowledge Graph":
             course_text.append(node)
             course_colors.append(data["color"])
             course_sizes.append(data["size"] / 3)
-        else:
-            fw_x.append(x); fw_y.append(y)
-            degree = G.degree(node)
-            fw_text.append(f"{node} ({degree} connections)")
-            if highlight_nodes and node in highlight_nodes:
-                fw_colors.append(data["color"])
-                fw_sizes.append(12 + degree * 4)
-                fw_opacities.append(1.0)
-            elif highlight_nodes:
-                fw_colors.append("#555")
-                fw_sizes.append(6 + degree * 2)
-                fw_opacities.append(0.2)
-            else:
-                fw_colors.append(data["color"])
-                fw_sizes.append(8 + degree * 3)
-                fw_opacities.append(0.7)
 
+    # Split highlighted framework nodes: show text labels on them
+    hl_fw_x, hl_fw_y, hl_fw_text, hl_fw_colors, hl_fw_sizes = [], [], [], [], []
+    reg_fw_x, reg_fw_y, reg_fw_text, reg_fw_colors, reg_fw_sizes, reg_fw_opacities = (
+        [], [], [], [], [], [])
+
+    for i, node in enumerate([n for n in G.nodes() if G.nodes[n].get("node_type") != "course"]):
+        x, y = pos[node]
+        data = G.nodes[node]
+        degree = G.degree(node)
+        if highlight_nodes and node in highlight_nodes:
+            hl_fw_x.append(x); hl_fw_y.append(y)
+            hl_fw_text.append(node)
+            hl_fw_colors.append(data["color"])
+            hl_fw_sizes.append(12 + degree * 4)
+        elif highlight_nodes:
+            reg_fw_x.append(x); reg_fw_y.append(y)
+            reg_fw_text.append(f"{node} ({degree} connections)")
+            reg_fw_colors.append("#555")
+            reg_fw_sizes.append(6 + degree * 2)
+            reg_fw_opacities.append(0.2)
+        else:
+            reg_fw_x.append(x); reg_fw_y.append(y)
+            reg_fw_text.append(f"{node} ({degree} connections)")
+            reg_fw_colors.append(data["color"])
+            reg_fw_sizes.append(8 + degree * 3)
+            reg_fw_opacities.append(0.7)
+
+    # Regular (non-highlighted) framework nodes
     traces.append(go.Scatter(
-        x=fw_x, y=fw_y, mode="markers",
-        marker=dict(size=fw_sizes, color=fw_colors,
-                    opacity=fw_opacities,
+        x=reg_fw_x, y=reg_fw_y, mode="markers",
+        marker=dict(size=reg_fw_sizes, color=reg_fw_colors,
+                    opacity=reg_fw_opacities if reg_fw_opacities else [0.7],
                     line=dict(width=1, color="white")),
-        text=fw_text, hoverinfo="text", name="Frameworks",
+        text=reg_fw_text, hoverinfo="text", name="Frameworks",
     ))
+
+    # Highlighted framework nodes — with text labels overlaid
+    if hl_fw_x:
+        traces.append(go.Scatter(
+            x=hl_fw_x, y=hl_fw_y, mode="markers+text",
+            marker=dict(size=hl_fw_sizes, color=hl_fw_colors, opacity=1.0,
+                        line=dict(width=2, color="white")),
+            text=hl_fw_text, textposition="top center",
+            textfont=dict(size=9, color="#333"),
+            hoverinfo="text", name="Connected",
+            showlegend=False,
+        ))
 
     traces.append(go.Scatter(
         x=course_x, y=course_y, mode="markers+text",
@@ -1679,12 +1707,23 @@ elif page == "🕸️ Knowledge Graph":
     ))
 
     fig_graph = go.Figure(data=traces)
+
+    # Add edge label annotations on highlighted connections
+    annotations = []
+    for mx, my, label in hl_edge_labels:
+        annotations.append(dict(
+            x=mx, y=my, text=label, showarrow=False,
+            font=dict(size=8, color="rgba(255,200,50,0.9)"),
+            bgcolor="rgba(0,0,0,0.6)", borderpad=2,
+        ))
+
     fig_graph.update_layout(
         showlegend=True, height=700,
         xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
         margin=dict(l=0, r=0, t=30, b=0),
         plot_bgcolor="white",
+        annotations=annotations,
     )
     st.plotly_chart(fig_graph, use_container_width=True)
 
