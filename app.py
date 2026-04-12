@@ -92,8 +92,8 @@ with st.sidebar:
     page = st.radio(
         "Navigate",
         [
-            "🎮 ISM War Room",
             "⚔️ Trial War Room",
+            "🎮 ISM War Room",
             "📊 Learning Dashboard",
             "🕸️ Knowledge Graph",
             "📈 Content Analytics",
@@ -1056,158 +1056,181 @@ elif page == "⚔️ Trial War Room":
     st.markdown("---")
 
     # ══════════════════════════════════════════════════════════════════════════
-    # SECTION 3: CAPACITY & PRODUCTION PLANNER
+    # SHARED GAME STATE (feeds into sections 3, 4, 5)
     # ══════════════════════════════════════════════════════════════════════════
-    st.subheader("3. Capacity & Production Planner")
+    st.subheader("3. Live Game Dashboard")
+    st.caption("Set your current game state — all sections below update automatically")
 
-    cap_col1, cap_col2 = st.columns([1, 2])
-    with cap_col1:
-        st.markdown("**Your Products**")
-        p1_price = st.number_input("Hormone Price ($)", value=550, step=25, key="cap_p1")
-        p2_price = st.number_input("Specialty Price ($)", value=550, step=25, key="cap_p2")
-        p1_market = 300000
-        p2_market = 140000
-        num_wholesale = st.number_input("Wholesale units/day committed", value=0, step=5, key="cap_ws")
+    # ── Shared inputs in a prominent panel ────────────────────────────────────
+    gs_col1, gs_col2, gs_col3, gs_col4 = st.columns(4)
+    with gs_col1:
+        gs_hormone_price = st.number_input("Hormone Retail Price ($)", value=550, step=25, key="gs_p1")
+    with gs_col2:
+        gs_specialty_price = st.number_input("Specialty Retail Price ($)", value=550, step=25, key="gs_p2")
+    with gs_col3:
+        gs_ws_price = st.number_input("Wholesale Price ($/unit)", value=300, step=25, key="gs_ws_price")
+        gs_ws_units = st.number_input("Wholesale units/day", value=0, step=5, key="gs_ws_units")
+    with gs_col4:
+        gs_ws_ship = st.selectbox("Wholesale Shipping", list(SHIPPING.keys()), index=1, key="gs_ws_ship")
+        gs_days_left = st.number_input("Game Days Remaining", value=30, step=1, key="gs_days")
 
-    p1_demand = 0.0001 * p1_market * (MAX_WTP - p1_price) / MAX_WTP if p1_price < MAX_WTP else 0
-    p2_demand = 0.0001 * p2_market * (MAX_WTP - p2_price) / MAX_WTP if p2_price < MAX_WTP else 0
-    total_demand = p1_demand + p2_demand + num_wholesale
+    gs_ship_cost = SHIPPING[gs_ws_ship]["cost_per_unit"]
 
-    # If both products running, effective capacity per product = ~20/day
+    # ── Derived values (shared across all sections) ──────────────────────────
+    p1_market = 300000
+    p2_market = 140000
+    p1_demand = 0.0001 * p1_market * (MAX_WTP - gs_hormone_price) / MAX_WTP if gs_hormone_price < MAX_WTP else 0
+    p2_demand = 0.0001 * p2_market * (MAX_WTP - gs_specialty_price) / MAX_WTP if gs_specialty_price < MAX_WTP else 0
+    ws_margin = gs_ws_price - MC_PRODUCTION - gs_ship_cost
+    ws_daily_profit = gs_ws_units * ws_margin
+    total_demand = p1_demand + p2_demand + gs_ws_units
     both_running = p1_demand > 0 and p2_demand > 0
-    effective_cap = CAPACITY_PER_DAY  # 40
-    if both_running:
-        # Allocate proportionally
-        p1_alloc = CAPACITY_PER_DAY * p1_demand / (p1_demand + p2_demand) if (p1_demand + p2_demand) > 0 else 20
-        p2_alloc = CAPACITY_PER_DAY - p1_alloc
-    else:
-        p1_alloc = CAPACITY_PER_DAY if p1_demand > 0 else 0
-        p2_alloc = CAPACITY_PER_DAY if p2_demand > 0 else 0
+
+    p1_profit = p1_demand * (gs_hormone_price - MC_PRODUCTION)
+    p2_profit = p2_demand * (gs_specialty_price - MC_PRODUCTION)
+    total_daily_profit = p1_profit + p2_profit + ws_daily_profit
 
     utilization = total_demand / CAPACITY_PER_DAY * 100
     util_color = "#2d6a2e" if utilization < 80 else ("#b8860b" if utilization < 100 else "#b22222")
 
-    with cap_col2:
-        # Capacity gauge
-        fig_cap = go.Figure(go.Indicator(
-            mode="gauge+number+delta",
-            value=total_demand,
-            delta={"reference": CAPACITY_PER_DAY, "relative": False, "valueformat": ".1f",
-                   "increasing": {"color": "#b22222"}, "decreasing": {"color": "#2d6a2e"}},
-            title={"text": "Total Demand vs Capacity (units/day)"},
-            gauge={
-                "axis": {"range": [0, CAPACITY_PER_DAY * 1.5]},
-                "bar": {"color": util_color},
-                "steps": [
-                    {"range": [0, CAPACITY_PER_DAY * 0.8], "color": "rgba(45,106,46,0.15)"},
-                    {"range": [CAPACITY_PER_DAY * 0.8, CAPACITY_PER_DAY], "color": "rgba(184,134,11,0.15)"},
-                    {"range": [CAPACITY_PER_DAY, CAPACITY_PER_DAY * 1.5], "color": "rgba(178,34,34,0.15)"},
-                ],
-                "threshold": {"line": {"color": "red", "width": 3}, "value": CAPACITY_PER_DAY},
-            },
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 3A: CAPACITY GAUGE + BREAKDOWN
+    # ══════════════════════════════════════════════════════════════════════════
+    st.markdown("#### Capacity & Production")
+
+    cap_col1, cap_col2 = st.columns([3, 2])
+    with cap_col1:
+        # Stacked bar showing demand breakdown vs capacity
+        fig_cap = go.Figure()
+        fig_cap.add_trace(go.Bar(
+            x=["Demand"], y=[p1_demand], name=f"Hormone @ ${gs_hormone_price}",
+            marker_color="#800000", text=[f"{p1_demand:.1f}"], textposition="inside",
         ))
-        fig_cap.update_layout(height=280, margin=dict(l=30, r=30, t=60, b=10))
+        fig_cap.add_trace(go.Bar(
+            x=["Demand"], y=[p2_demand], name=f"Specialty @ ${gs_specialty_price}",
+            marker_color="#1a3c5e", text=[f"{p2_demand:.1f}"], textposition="inside",
+        ))
+        if gs_ws_units > 0:
+            fig_cap.add_trace(go.Bar(
+                x=["Demand"], y=[gs_ws_units], name=f"Wholesale @ ${gs_ws_price}",
+                marker_color="#b8860b", text=[f"{gs_ws_units:.0f}"], textposition="inside",
+            ))
+        fig_cap.add_hline(y=CAPACITY_PER_DAY, line_dash="dash", line_color="red",
+                           annotation_text=f"Capacity: {CAPACITY_PER_DAY:.0f}/day",
+                           annotation_position="top right")
+        fig_cap.update_layout(barmode="stack", height=300, yaxis_title="Units/day",
+                               margin=dict(l=0, r=0, t=30, b=0), showlegend=True,
+                               legend=dict(orientation="h", yanchor="bottom", y=1.02))
         st.plotly_chart(fig_cap, use_container_width=True)
 
-        cap_data = {
-            "Product": ["Hormone (retail)", "Specialty (retail)", "Wholesale", "**Total**"],
-            "Demand/day": [f"{p1_demand:.1f}", f"{p2_demand:.1f}", f"{num_wholesale:.0f}", f"**{total_demand:.1f}**"],
-            "Price": [f"${p1_price}", f"${p2_price}", "—", ""],
-            "Margin/unit": [f"${p1_price - MC_PRODUCTION}", f"${p2_price - MC_PRODUCTION}", "—", ""],
-            "Daily Profit": [f"${p1_demand * (p1_price - MC_PRODUCTION):,.0f}",
-                             f"${p2_demand * (p2_price - MC_PRODUCTION):,.0f}", "—",
-                             f"**${p1_demand * (p1_price - MC_PRODUCTION) + p2_demand * (p2_price - MC_PRODUCTION):,.0f}**"],
-        }
-        st.dataframe(pd.DataFrame(cap_data), use_container_width=True, hide_index=True)
+    with cap_col2:
+        # Profit breakdown table
+        cap_rows = [
+            {"Channel": "Hormone (retail)", "Demand/day": f"{p1_demand:.1f}",
+             "Price": f"${gs_hormone_price}", "Margin/unit": f"${gs_hormone_price - MC_PRODUCTION}",
+             "Daily Profit": f"${p1_profit:,.0f}"},
+            {"Channel": "Specialty (retail)", "Demand/day": f"{p2_demand:.1f}",
+             "Price": f"${gs_specialty_price}", "Margin/unit": f"${gs_specialty_price - MC_PRODUCTION}",
+             "Daily Profit": f"${p2_profit:,.0f}"},
+            {"Channel": "Wholesale", "Demand/day": f"{gs_ws_units:.0f}",
+             "Price": f"${gs_ws_price}", "Margin/unit": f"${ws_margin:,.0f}",
+             "Daily Profit": f"${ws_daily_profit:,.0f}"},
+        ]
+        st.dataframe(pd.DataFrame(cap_rows), use_container_width=True, hide_index=True)
+
+        # Summary metrics
+        sm1, sm2 = st.columns(2)
+        sm1.metric("Total Daily Profit", f"${total_daily_profit:,.0f}")
+        sm2.metric("Utilization", f"{utilization:.0f}%")
 
         if utilization > 100:
-            st.error(f"BOTTLENECK: Demand ({total_demand:.1f}/day) exceeds capacity ({CAPACITY_PER_DAY:.0f}/day). Raise prices or cut wholesale.")
+            st.error(f"BOTTLENECK: Demand ({total_demand:.1f}/day) > Capacity ({CAPACITY_PER_DAY:.0f}/day). Raise prices or cut wholesale.")
         elif utilization > 80:
-            st.warning(f"Capacity utilization: {utilization:.0f}% — approaching limit. Monitor closely.")
+            st.warning(f"Approaching capacity — {CAPACITY_PER_DAY - total_demand:.1f} units/day slack remaining.")
         else:
-            st.success(f"Capacity utilization: {utilization:.0f}% — {CAPACITY_PER_DAY - total_demand:.1f} units/day excess available for wholesale.")
+            st.success(f"{CAPACITY_PER_DAY - total_demand:.1f} units/day excess — room for {CAPACITY_PER_DAY - total_demand:.0f} wholesale units.")
 
     st.markdown("---")
 
     # ══════════════════════════════════════════════════════════════════════════
-    # SECTION 4: INVENTORY & REORDER CALCULATOR
+    # SECTION 3B: INVENTORY (uses shared prices)
     # ══════════════════════════════════════════════════════════════════════════
-    st.subheader("4. Inventory & Reorder Point Calculator")
+    st.markdown("#### Inventory & Reorder Points")
+
+    inv_product = st.radio("Product", ["Hormone", "Specialty"], horizontal=True, key="inv_prod")
+    inv_price = gs_hormone_price if inv_product == "Hormone" else gs_specialty_price
+    inv_market = p1_market if inv_product == "Hormone" else p2_market
+    inv_daily_demand = p1_demand if inv_product == "Hormone" else p2_demand
+
+    inv_lead = 6.0 if both_running else 3.5
+    inv_safety = 50
 
     inv_col1, inv_col2, inv_col3 = st.columns(3)
     with inv_col1:
-        inv_price = st.number_input("Your Retail Price ($)", value=550, step=25, key="inv_price")
-        inv_market = st.selectbox("Market Size", [300000, 140000], key="inv_mkt",
-                                   format_func=lambda x: f"{x:,} ({'Hormone' if x == 300000 else 'Specialty'})")
-        inv_both = st.checkbox("Both products running?", value=True, key="inv_both")
-        inv_safety = st.number_input("Safety Stock (units)", value=50, step=10, key="inv_safety")
-
-    inv_lead = 6.0 if inv_both else 3.5
-    inv_daily_demand = 0.0001 * inv_market * (MAX_WTP - inv_price) / MAX_WTP if inv_price < MAX_WTP else 0
-    inv_reorder = inv_daily_demand * inv_lead + inv_safety
-    inv_days_of_stock = lambda on_hand: on_hand / inv_daily_demand if inv_daily_demand > 0 else float('inf')
+        st.markdown(f"**{inv_product}** at **${inv_price}**")
+        st.metric("Daily Demand", f"{inv_daily_demand:.1f} units")
+        st.metric("Lead Time", f"{inv_lead} days" + (" (both running)" if both_running else ""))
+        inv_reorder = inv_daily_demand * inv_lead + inv_safety
+        st.metric("Recommended Reorder Point", f"{inv_reorder:.0f} units")
 
     with inv_col2:
-        st.metric("Daily Demand", f"{inv_daily_demand:.1f} units")
-        st.metric("Lead Time", f"{inv_lead} days")
-        st.metric("Reorder Point", f"{inv_reorder:.0f} units")
-        st.metric("Pipeline Stock Needed", f"{inv_daily_demand * inv_lead:.0f} units")
-
-    with inv_col3:
-        inv_on_hand = st.number_input("Current On-Hand", value=100, step=10, key="inv_oh")
+        st.markdown("**Current Inventory**")
+        inv_on_hand = st.number_input("On-Hand", value=100, step=10, key="inv_oh")
         inv_in_transit = st.number_input("In-Transit", value=0, step=10, key="inv_it")
         inv_in_process = st.number_input("In-Process", value=100, step=10, key="inv_ip")
+
+    with inv_col3:
         total_pipeline = inv_on_hand + inv_in_transit + inv_in_process
         days_cover = total_pipeline / inv_daily_demand if inv_daily_demand > 0 else float('inf')
-
+        st.markdown("**Status**")
+        st.metric("Total Pipeline", f"{total_pipeline} units")
+        st.metric("Days of Coverage", f"{days_cover:.1f} days")
+        st.metric("Pipeline Stock Needed", f"{inv_daily_demand * inv_lead:.0f} units")
         if days_cover < inv_lead:
-            st.error(f"STOCKOUT RISK: {days_cover:.1f} days of coverage vs {inv_lead} day lead time")
+            st.error(f"STOCKOUT RISK: {days_cover:.1f} days vs {inv_lead} day lead time!")
         elif days_cover < inv_lead * 1.5:
-            st.warning(f"Coverage: {days_cover:.1f} days — thin buffer")
+            st.warning(f"Thin buffer — consider raising reorder point")
         else:
-            st.success(f"Coverage: {days_cover:.1f} days — healthy")
+            st.success(f"Healthy coverage")
 
     st.markdown("---")
 
     # ══════════════════════════════════════════════════════════════════════════
-    # SECTION 5: END-GAME WIND-DOWN CALCULATOR
+    # SECTION 3C: END-GAME (uses shared prices and days)
     # ══════════════════════════════════════════════════════════════════════════
-    st.subheader("5. End-Game Wind-Down Calculator")
+    st.markdown("#### End-Game Wind-Down")
 
     eg_col1, eg_col2 = st.columns(2)
     with eg_col1:
-        eg_days_left = st.number_input("Game Days Remaining", value=30, step=1, key="eg_days")
-        eg_inventory = st.number_input("Total Inventory (on-hand + pipeline)", value=200, step=50, key="eg_inv")
-        eg_price = st.number_input("Current Price ($)", value=550, step=25, key="eg_price")
-        eg_market_size = st.number_input("Market Size", value=300000, step=10000, key="eg_mkt")
+        eg_total_inv = st.number_input("Total Inventory (all products)", value=200, step=50, key="eg_inv")
+        eg_product = st.radio("Analyze for", ["Hormone", "Specialty"], horizontal=True, key="eg_prod")
 
-    eg_demand = 0.0001 * eg_market_size * (MAX_WTP - eg_price) / MAX_WTP if eg_price < MAX_WTP else 0
-    eg_units_sellable = eg_demand * eg_days_left
-    eg_surplus = eg_inventory - eg_units_sellable
-    eg_stop_day = eg_inventory / eg_demand if eg_demand > 0 else float('inf')
-    eg_stop_production_at = eg_days_left - eg_stop_day
+    eg_price = gs_hormone_price if eg_product == "Hormone" else gs_specialty_price
+    eg_mkt = p1_market if eg_product == "Hormone" else p2_market
+    eg_demand = 0.0001 * eg_mkt * (MAX_WTP - eg_price) / MAX_WTP if eg_price < MAX_WTP else 0
+    eg_units_sellable = eg_demand * gs_days_left
+    eg_surplus = eg_total_inv - eg_units_sellable
 
     with eg_col2:
-        st.metric("Daily Demand at Current Price", f"{eg_demand:.1f} units")
-        st.metric("Units Sellable in Remaining Days", f"{eg_units_sellable:.0f}")
+        st.metric("Daily Demand at Current Price", f"{eg_demand:.1f} units ({eg_product} @ ${eg_price})")
+        st.metric("Units Sellable in {0} Days".format(gs_days_left), f"{eg_units_sellable:.0f}")
         if eg_surplus > 0:
             st.metric("Surplus (will be wasted)", f"{eg_surplus:.0f} units",
                        delta=f"-${eg_surplus * MC_PRODUCTION:,.0f} wasted", delta_color="inverse")
-            # Suggest fire-sale price
-            # At what price would demand * days_left = inventory?
-            # 0.0001 * mkt * (maxWTP - P) / maxWTP * days = inv
-            # (maxWTP - P) = inv * maxWTP / (0.0001 * mkt * days)
-            needed_prob = eg_inventory / (0.0001 * eg_market_size * eg_days_left) if eg_days_left > 0 else 1
-            fire_sale_price = max(MC_PRODUCTION, MAX_WTP * (1 - needed_prob))
-            st.metric("Fire-Sale Price to Clear", f"${fire_sale_price:,.0f}")
+            needed_prob = eg_total_inv / (0.0001 * eg_mkt * gs_days_left) if gs_days_left > 0 else 1
+            fire_sale = max(MC_PRODUCTION, MAX_WTP * (1 - needed_prob))
+            st.metric("Fire-Sale Price to Clear All", f"${fire_sale:,.0f}")
         else:
-            st.metric("Headroom", f"{-eg_surplus:.0f} more units could be sold",
+            st.metric("Headroom", f"{-eg_surplus:.0f} more units sellable",
                        delta="No waste", delta_color="normal")
 
-        if eg_stop_production_at > 0:
-            st.warning(f"Stop production when {eg_stop_production_at:.0f} days remain (accounting for lead time)")
+        eg_stop_day = eg_total_inv / eg_demand if eg_demand > 0 else float('inf')
+        if gs_days_left > eg_stop_day:
+            st.warning(f"Stop production when {gs_days_left - eg_stop_day:.0f} days remain")
         else:
-            st.info("Production should already be stopped — sell through existing inventory")
+            st.info("Current inventory won't last — keep producing or cut price")
 
     st.markdown("---")
 
