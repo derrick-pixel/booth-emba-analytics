@@ -886,9 +886,12 @@ elif page == "⚔️ Trial War Room":
     st.subheader("Game Parameters")
     st.caption("Adjust these to match the current game scenario — all sections below recalculate automatically")
 
-    gp_col1, gp_col2, gp_col3, gp_col4, gp_col5 = st.columns(5)
+    gp_col1, gp_col1b, gp_col2, gp_col3, gp_col4 = st.columns(5)
     with gp_col1:
-        MAX_WTP = st.number_input("Max WTP ($)", value=500, step=50, key="gp_maxwtp")
+        H_MAX_WTP = st.number_input("Hormone Max WTP ($)", value=500, step=50, key="gp_hmaxwtp")
+    with gp_col1b:
+        S_MAX_WTP = st.number_input("Specialty Max WTP ($)", value=800, step=50, key="gp_smaxwtp",
+                                     help="Proprietary product — likely higher than Hormone. Discover via Price Response report.")
     with gp_col2:
         MC_PRODUCTION = st.number_input("Materials Cost ($/unit)", value=100, step=10, key="gp_mc")
     with gp_col3:
@@ -917,10 +920,10 @@ elif page == "⚔️ Trial War Room":
     }
 
     # ── Dynamic banner (recalculates from inputs above) ──────────────────────
-    _opt_home = (MAX_WTP + MC_PRODUCTION) / 2
-    _opt_ship = (MAX_WTP + MC_PRODUCTION + 40) / 2
-    _h_demand = ARRIVAL_RATE * HORMONE_MARKET * (MAX_WTP - _opt_home) / MAX_WTP if MAX_WTP > _opt_home else 0
-    _s_demand = ARRIVAL_RATE * SPECIALTY_MARKET * (MAX_WTP - _opt_home) / MAX_WTP if MAX_WTP > _opt_home else 0
+    _h_opt = (H_MAX_WTP + MC_PRODUCTION) / 2
+    _s_opt = (S_MAX_WTP + MC_PRODUCTION) / 2
+    _h_demand = ARRIVAL_RATE * HORMONE_MARKET * (H_MAX_WTP - _h_opt) / H_MAX_WTP if H_MAX_WTP > _h_opt else 0
+    _s_demand = ARRIVAL_RATE * SPECIALTY_MARKET * (S_MAX_WTP - _s_opt) / S_MAX_WTP if S_MAX_WTP > _s_opt else 0
     _excess = CAPACITY_PER_DAY - _h_demand - _s_demand
 
     st.markdown(f"""
@@ -928,10 +931,10 @@ elif page == "⚔️ Trial War Room":
     border-radius:12px;padding:1.2rem 1.5rem;margin-bottom:1rem;">
 <h4 style="color:#ffd700;margin:0 0 0.5rem 0;">Derived Metrics (auto-calculated)</h4>
 <div style="display:flex;gap:2rem;flex-wrap:wrap;">
-<div><span style="opacity:0.7;">Optimal Home Retail</span><br><b style="font-size:1.3rem;">${_opt_home:.0f}</b><br><span style="font-size:0.75rem;opacity:0.6;">({MAX_WTP}+{MC_PRODUCTION})/2</span></div>
-<div><span style="opacity:0.7;">Optimal w/ Mail Ship</span><br><b style="font-size:1.3rem;">${_opt_ship:.0f}</b><br><span style="font-size:0.75rem;opacity:0.6;">({MAX_WTP}+{MC_PRODUCTION}+40)/2</span></div>
-<div><span style="opacity:0.7;">Hormone Demand</span><br><b style="font-size:1.3rem;">{_h_demand:.1f} /day</b><br><span style="font-size:0.75rem;opacity:0.6;">{ARRIVAL_RATE*HORMONE_MARKET:.0f} × ({MAX_WTP}-{_opt_home:.0f})/{MAX_WTP}</span></div>
-<div><span style="opacity:0.7;">Specialty Demand</span><br><b style="font-size:1.3rem;">{_s_demand:.1f} /day</b><br><span style="font-size:0.75rem;opacity:0.6;">{ARRIVAL_RATE*SPECIALTY_MARKET:.0f} × ({MAX_WTP}-{_opt_home:.0f})/{MAX_WTP}</span></div>
+<div><span style="opacity:0.7;">Hormone Optimal</span><br><b style="font-size:1.3rem;">${_h_opt:.0f}</b><br><span style="font-size:0.75rem;opacity:0.6;">({H_MAX_WTP}+{MC_PRODUCTION})/2</span></div>
+<div><span style="opacity:0.7;">Specialty Optimal</span><br><b style="font-size:1.3rem;">${_s_opt:.0f}</b><br><span style="font-size:0.75rem;opacity:0.6;">({S_MAX_WTP}+{MC_PRODUCTION})/2</span></div>
+<div><span style="opacity:0.7;">Hormone Demand</span><br><b style="font-size:1.3rem;">{_h_demand:.1f} /day</b><br><span style="font-size:0.75rem;opacity:0.6;">{ARRIVAL_RATE*HORMONE_MARKET:.0f} × ({H_MAX_WTP}-{_h_opt:.0f})/{H_MAX_WTP}</span></div>
+<div><span style="opacity:0.7;">Specialty Demand</span><br><b style="font-size:1.3rem;">{_s_demand:.1f} /day</b><br><span style="font-size:0.75rem;opacity:0.6;">{ARRIVAL_RATE*SPECIALTY_MARKET:.0f} × ({S_MAX_WTP}-{_s_opt:.0f})/{S_MAX_WTP}</span></div>
 <div><span style="opacity:0.7;">Factory Capacity</span><br><b style="font-size:1.3rem;">{CAPACITY_PER_DAY:.0f} /day</b><br><span style="font-size:0.75rem;opacity:0.6;">{BATCH_SIZE} / {PRODUCTION_DAYS} days</span></div>
 <div><span style="opacity:0.7;">Excess Capacity</span><br><b style="font-size:1.3rem;">{_excess:.1f} /day</b><br><span style="font-size:0.75rem;opacity:0.6;">{CAPACITY_PER_DAY:.0f} - {_h_demand:.1f} - {_s_demand:.1f}</span></div>
 </div>
@@ -946,34 +949,35 @@ elif page == "⚔️ Trial War Room":
     st.subheader("1. Retail Pricing Optimizer")
     st.caption("Monopoly pricing with uniform WTP distribution [0, MaxWTP] — drag the price sliders to simulate")
 
-    # Optimal reference price
-    pr_theoretical_optimal = (MAX_WTP + MC_PRODUCTION) / 2
+    # Optimal reference prices (separate per product)
+    pr_h_theoretical = (H_MAX_WTP + MC_PRODUCTION) / 2
+    pr_s_theoretical = (S_MAX_WTP + MC_PRODUCTION) / 2
 
     pr_h_col, pr_s_col = st.columns(2)
     with pr_h_col:
-        st.markdown("**Hormone**")
-        pr_h_price = st.slider("Hormone Price ($)", int(MC_PRODUCTION), int(MAX_WTP),
-                                int(pr_theoretical_optimal), step=5, key="pr_h_price")
+        st.markdown(f"**Hormone** (Max WTP: ${H_MAX_WTP:.0f})")
+        pr_h_price = st.slider("Hormone Price ($)", int(MC_PRODUCTION), int(H_MAX_WTP),
+                                int(pr_h_theoretical), step=5, key="pr_h_price")
     with pr_s_col:
-        st.markdown("**Specialty**")
-        pr_s_price = st.slider("Specialty Price ($)", int(MC_PRODUCTION), int(MAX_WTP),
-                                int(pr_theoretical_optimal), step=5, key="pr_s_price")
+        st.markdown(f"**Specialty** (Max WTP: ${S_MAX_WTP:.0f})")
+        pr_s_price = st.slider("Specialty Price ($)", int(MC_PRODUCTION), int(S_MAX_WTP),
+                                int(pr_s_theoretical), step=5, key="pr_s_price")
 
-    # Compute for both products
+    # Compute for both products with separate max WTP
     pr_h_arrival = ARRIVAL_RATE * HORMONE_MARKET
     pr_s_arrival = ARRIVAL_RATE * SPECIALTY_MARKET
-    pr_h_demand = pr_h_arrival * (MAX_WTP - pr_h_price) / MAX_WTP if pr_h_price < MAX_WTP else 0
-    pr_s_demand = pr_s_arrival * (MAX_WTP - pr_s_price) / MAX_WTP if pr_s_price < MAX_WTP else 0
+    pr_h_demand = pr_h_arrival * (H_MAX_WTP - pr_h_price) / H_MAX_WTP if pr_h_price < H_MAX_WTP else 0
+    pr_s_demand = pr_s_arrival * (S_MAX_WTP - pr_s_price) / S_MAX_WTP if pr_s_price < S_MAX_WTP else 0
     pr_h_profit = pr_h_demand * (pr_h_price - MC_PRODUCTION)
     pr_s_profit = pr_s_demand * (pr_s_price - MC_PRODUCTION)
     pr_h_revenue = pr_h_demand * pr_h_price
     pr_s_revenue = pr_s_demand * pr_s_price
 
-    # Optimal reference
-    pr_h_demand_opt = pr_h_arrival * (MAX_WTP - pr_theoretical_optimal) / MAX_WTP if MAX_WTP > pr_theoretical_optimal else 0
-    pr_s_demand_opt = pr_s_arrival * (MAX_WTP - pr_theoretical_optimal) / MAX_WTP if MAX_WTP > pr_theoretical_optimal else 0
-    pr_h_profit_opt = pr_h_demand_opt * (pr_theoretical_optimal - MC_PRODUCTION)
-    pr_s_profit_opt = pr_s_demand_opt * (pr_theoretical_optimal - MC_PRODUCTION)
+    # Optimal reference (each product has its own)
+    pr_h_demand_opt = pr_h_arrival * (H_MAX_WTP - pr_h_theoretical) / H_MAX_WTP if H_MAX_WTP > pr_h_theoretical else 0
+    pr_s_demand_opt = pr_s_arrival * (S_MAX_WTP - pr_s_theoretical) / S_MAX_WTP if S_MAX_WTP > pr_s_theoretical else 0
+    pr_h_profit_opt = pr_h_demand_opt * (pr_h_theoretical - MC_PRODUCTION)
+    pr_s_profit_opt = pr_s_demand_opt * (pr_s_theoretical - MC_PRODUCTION)
 
     # Metrics row
     pm1, pm2, pm3, pm4 = st.columns(4)
@@ -987,16 +991,15 @@ elif page == "⚔️ Trial War Room":
     st.metric("Combined Daily Profit", f"${pr_h_profit + pr_s_profit:,.0f}/day")
 
     # Side-by-side profit curves with your chosen price marked
-    price_range = np.arange(MC_PRODUCTION, MAX_WTP, max(1, (MAX_WTP - MC_PRODUCTION) // 80))
-
     fig_h_col, fig_s_col = st.columns(2)
     with fig_h_col:
-        h_profit_arr = pr_h_arrival * (MAX_WTP - price_range) / MAX_WTP * (price_range - MC_PRODUCTION)
+        h_price_range = np.arange(MC_PRODUCTION, H_MAX_WTP, max(1, (H_MAX_WTP - MC_PRODUCTION) // 80))
+        h_profit_arr = pr_h_arrival * (H_MAX_WTP - h_price_range) / H_MAX_WTP * (h_price_range - MC_PRODUCTION)
         fig_h = go.Figure()
-        fig_h.add_trace(go.Scatter(x=price_range, y=h_profit_arr,
+        fig_h.add_trace(go.Scatter(x=h_price_range, y=h_profit_arr,
                                     name="Profit Curve", line=dict(color="#800000", width=3)))
-        fig_h.add_vline(x=pr_theoretical_optimal, line_dash="dot", line_color="gray",
-                         annotation_text=f"Optimal: ${pr_theoretical_optimal:,.0f}",
+        fig_h.add_vline(x=pr_h_theoretical, line_dash="dot", line_color="gray",
+                         annotation_text=f"Optimal: ${pr_h_theoretical:,.0f}",
                          annotation_position="top left", annotation_font_size=10)
         fig_h.add_vline(x=pr_h_price, line_dash="dash", line_color="#ffd700",
                          annotation_text=f"Your price: ${pr_h_price}",
@@ -1004,18 +1007,19 @@ elif page == "⚔️ Trial War Room":
         fig_h.add_trace(go.Scatter(x=[pr_h_price], y=[pr_h_profit], mode="markers",
                                     marker=dict(size=12, color="#ffd700", symbol="star"),
                                     name=f"${pr_h_price} → ${pr_h_profit:,.0f}/day", showlegend=True))
-        fig_h.update_layout(height=300, title="Hormone", xaxis_title="Price ($)",
+        fig_h.update_layout(height=300, title=f"Hormone (WTP: ${H_MAX_WTP:.0f})", xaxis_title="Price ($)",
                              yaxis_title="Daily Profit ($)", yaxis_tickformat="$,.0f",
                              margin=dict(l=0, r=0, t=40, b=0), showlegend=True)
         st.plotly_chart(fig_h, use_container_width=True)
 
     with fig_s_col:
-        s_profit_arr = pr_s_arrival * (MAX_WTP - price_range) / MAX_WTP * (price_range - MC_PRODUCTION)
+        s_price_range = np.arange(MC_PRODUCTION, S_MAX_WTP, max(1, (S_MAX_WTP - MC_PRODUCTION) // 80))
+        s_profit_arr = pr_s_arrival * (S_MAX_WTP - s_price_range) / S_MAX_WTP * (s_price_range - MC_PRODUCTION)
         fig_s = go.Figure()
-        fig_s.add_trace(go.Scatter(x=price_range, y=s_profit_arr,
+        fig_s.add_trace(go.Scatter(x=s_price_range, y=s_profit_arr,
                                     name="Profit Curve", line=dict(color="#1a3c5e", width=3)))
-        fig_s.add_vline(x=pr_theoretical_optimal, line_dash="dot", line_color="gray",
-                         annotation_text=f"Optimal: ${pr_theoretical_optimal:,.0f}",
+        fig_s.add_vline(x=pr_s_theoretical, line_dash="dot", line_color="gray",
+                         annotation_text=f"Optimal: ${pr_s_theoretical:,.0f}",
                          annotation_position="top left", annotation_font_size=10)
         fig_s.add_vline(x=pr_s_price, line_dash="dash", line_color="#ffd700",
                          annotation_text=f"Your price: ${pr_s_price}",
@@ -1023,31 +1027,10 @@ elif page == "⚔️ Trial War Room":
         fig_s.add_trace(go.Scatter(x=[pr_s_price], y=[pr_s_profit], mode="markers",
                                     marker=dict(size=12, color="#ffd700", symbol="star"),
                                     name=f"${pr_s_price} → ${pr_s_profit:,.0f}/day", showlegend=True))
-        fig_s.update_layout(height=300, title="Specialty", xaxis_title="Price ($)",
+        fig_s.update_layout(height=300, title=f"Specialty (WTP: ${S_MAX_WTP:.0f})", xaxis_title="Price ($)",
                              yaxis_title="Daily Profit ($)", yaxis_tickformat="$,.0f",
                              margin=dict(l=0, r=0, t=40, b=0), showlegend=True)
         st.plotly_chart(fig_s, use_container_width=True)
-
-    # Combined sensitivity table
-    with st.expander("**Price Sensitivity Table**"):
-        step = max(25, int((MAX_WTP - MC_PRODUCTION) / 10 / 25) * 25)
-        price_points = list(range(int(MC_PRODUCTION) + step, int(MAX_WTP), step))
-        sens_data = []
-        for p in price_points:
-            h_d = pr_h_arrival * (MAX_WTP - p) / MAX_WTP
-            s_d = pr_s_arrival * (MAX_WTP - p) / MAX_WTP
-            h_prof = h_d * (p - MC_PRODUCTION)
-            s_prof = s_d * (p - MC_PRODUCTION)
-            sens_data.append({
-                "Price": f"${p}",
-                "P(buy)": f"{(MAX_WTP - p) / MAX_WTP:.1%}",
-                "H Demand": f"{h_d:.1f}",
-                "H Profit": f"${h_prof:,.0f}",
-                "S Demand": f"{s_d:.1f}",
-                "S Profit": f"${s_prof:,.0f}",
-                "Combined": f"${h_prof + s_prof:,.0f}",
-            })
-        st.dataframe(pd.DataFrame(sens_data), use_container_width=True, hide_index=True)
 
     st.markdown("---")
 
@@ -1060,6 +1043,8 @@ elif page == "⚔️ Trial War Room":
     td_col1, td_col2, td_col3 = st.columns(3)
     with td_col1:
         st.markdown("**Deal Parameters**")
+        td_product = st.radio("Product", ["Hormone", "Specialty"], horizontal=True, key="td_prod")
+        td_max_wtp = H_MAX_WTP if td_product == "Hormone" else S_MAX_WTP
         td_wholesale = st.number_input("Wholesale Price ($/unit)", value=300, step=25, key="td_wholesale")
         td_ship_mode = st.selectbox("Shipping Mode", list(SHIPPING.keys()), index=1, key="td_ship")
         td_ship_cost = SHIPPING[td_ship_mode]["cost_per_unit"]
@@ -1072,13 +1057,13 @@ elif page == "⚔️ Trial War Room":
     # Buyer's effective cost = wholesale price
     buyer_mc = td_wholesale
     # Buyer optimizes their retail price given their cost
-    buyer_optimal_retail = (MAX_WTP + buyer_mc) / 2
-    buyer_demand = td_buyer_arrival * (MAX_WTP - buyer_optimal_retail) / MAX_WTP
+    buyer_optimal_retail = (td_max_wtp + buyer_mc) / 2
+    buyer_demand = td_buyer_arrival * (td_max_wtp - buyer_optimal_retail) / td_max_wtp
     buyer_daily_profit = buyer_demand * (buyer_optimal_retail - buyer_mc)
 
     # Supply chain optimal (if vertically integrated)
-    sc_optimal_retail = (MAX_WTP + seller_total_cost) / 2
-    sc_demand = td_buyer_arrival * (MAX_WTP - sc_optimal_retail) / MAX_WTP
+    sc_optimal_retail = (td_max_wtp + seller_total_cost) / 2
+    sc_demand = td_buyer_arrival * (td_max_wtp - sc_optimal_retail) / td_max_wtp
     sc_daily_profit = sc_demand * (sc_optimal_retail - seller_total_cost)
 
     # Actual supply chain profit under double marginalization
@@ -1124,13 +1109,13 @@ elif page == "⚔️ Trial War Room":
 
     with dm_col2:
         # Wholesale price sweep
-        ws_range = np.arange(seller_total_cost + 10, MAX_WTP * 0.6, 10)
+        ws_range = np.arange(seller_total_cost + 10, td_max_wtp * 0.6, 10)
         seller_profits = []
         buyer_profits = []
         sc_profits = []
         for w in ws_range:
-            b_retail = (MAX_WTP + w) / 2
-            b_demand = td_buyer_arrival * (MAX_WTP - b_retail) / MAX_WTP
+            b_retail = (td_max_wtp + w) / 2
+            b_demand = td_buyer_arrival * (td_max_wtp - b_retail) / td_max_wtp
             seller_profits.append(b_demand * (w - MC_PRODUCTION - td_ship_cost))
             buyer_profits.append(b_demand * (b_retail - w))
             sc_profits.append(b_demand * (b_retail - seller_total_cost))
@@ -1160,12 +1145,13 @@ elif page == "⚔️ Trial War Room":
     st.caption("Set your current game state — all sections below update automatically")
 
     # ── Shared inputs in a prominent panel ────────────────────────────────────
-    _opt_default = int((MAX_WTP + MC_PRODUCTION) / 2)
+    _h_opt_default = int((H_MAX_WTP + MC_PRODUCTION) / 2)
+    _s_opt_default = int((S_MAX_WTP + MC_PRODUCTION) / 2)
     gs_col1, gs_col2, gs_col3, gs_col4 = st.columns(4)
     with gs_col1:
-        gs_hormone_price = st.number_input("Hormone Retail Price ($)", value=_opt_default, step=25, key="gs_p1")
+        gs_hormone_price = st.number_input("Hormone Retail Price ($)", value=_h_opt_default, step=25, key="gs_p1")
     with gs_col2:
-        gs_specialty_price = st.number_input("Specialty Retail Price ($)", value=_opt_default, step=25, key="gs_p2")
+        gs_specialty_price = st.number_input("Specialty Retail Price ($)", value=_s_opt_default, step=25, key="gs_p2")
     with gs_col3:
         gs_ws_price = st.number_input("Wholesale Price ($/unit)", value=int(MC_PRODUCTION * 2), step=25, key="gs_ws_price")
         gs_ws_units = st.number_input("Wholesale units/day", value=0, step=5, key="gs_ws_units")
@@ -1178,8 +1164,8 @@ elif page == "⚔️ Trial War Room":
     # ── Derived values (shared across all sections) ──────────────────────────
     p1_market = HORMONE_MARKET
     p2_market = SPECIALTY_MARKET
-    p1_demand = ARRIVAL_RATE * p1_market * (MAX_WTP - gs_hormone_price) / MAX_WTP if gs_hormone_price < MAX_WTP else 0
-    p2_demand = ARRIVAL_RATE * p2_market * (MAX_WTP - gs_specialty_price) / MAX_WTP if gs_specialty_price < MAX_WTP else 0
+    p1_demand = ARRIVAL_RATE * p1_market * (H_MAX_WTP - gs_hormone_price) / H_MAX_WTP if gs_hormone_price < H_MAX_WTP else 0
+    p2_demand = ARRIVAL_RATE * p2_market * (S_MAX_WTP - gs_specialty_price) / S_MAX_WTP if gs_specialty_price < S_MAX_WTP else 0
     ws_margin = gs_ws_price - MC_PRODUCTION - gs_ship_cost
     ws_daily_profit = gs_ws_units * ws_margin
     total_demand = p1_demand + p2_demand + gs_ws_units
@@ -1265,8 +1251,9 @@ elif page == "⚔️ Trial War Room":
     inv_daily_demand = p1_demand if inv_product == "Hormone" else p2_demand
 
     inv_lead = BASE_LEAD_TIME * 2 - 1 if both_running else BASE_LEAD_TIME  # 6.0 if both, 3.5 if single
+    inv_max_wtp = H_MAX_WTP if inv_product == "Hormone" else S_MAX_WTP
     inv_N = ARRIVAL_RATE * inv_market  # arrivals per day
-    inv_p = (MAX_WTP - inv_price) / MAX_WTP if inv_price < MAX_WTP else 0
+    inv_p = (inv_max_wtp - inv_price) / inv_max_wtp if inv_price < inv_max_wtp else 0
 
     inv_col1, inv_col2, inv_col3 = st.columns(3)
     with inv_col1:
@@ -1323,7 +1310,8 @@ elif page == "⚔️ Trial War Room":
 
     eg_price = gs_hormone_price if eg_product == "Hormone" else gs_specialty_price
     eg_mkt = p1_market if eg_product == "Hormone" else p2_market
-    eg_demand = ARRIVAL_RATE * eg_mkt * (MAX_WTP - eg_price) / MAX_WTP if eg_price < MAX_WTP else 0
+    eg_max_wtp = H_MAX_WTP if eg_product == "Hormone" else S_MAX_WTP
+    eg_demand = ARRIVAL_RATE * eg_mkt * (eg_max_wtp - eg_price) / eg_max_wtp if eg_price < eg_max_wtp else 0
     eg_units_sellable = eg_demand * gs_days_left
     eg_surplus = eg_total_inv - eg_units_sellable
 
@@ -1334,7 +1322,7 @@ elif page == "⚔️ Trial War Room":
             st.metric("Surplus (will be wasted)", f"{eg_surplus:.0f} units",
                        delta=f"-${eg_surplus * MC_PRODUCTION:,.0f} wasted", delta_color="inverse")
             needed_prob = eg_total_inv / (ARRIVAL_RATE * eg_mkt * gs_days_left) if gs_days_left > 0 else 1
-            fire_sale = max(MC_PRODUCTION, MAX_WTP * (1 - needed_prob))
+            fire_sale = max(MC_PRODUCTION, eg_max_wtp * (1 - needed_prob))
             st.metric("Fire-Sale Price to Clear All", f"${fire_sale:,.0f}")
         else:
             st.metric("Headroom", f"{-eg_surplus:.0f} more units sellable",
