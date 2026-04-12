@@ -284,18 +284,33 @@ if page == "🎮 ISM War Room":
 
     # ── Strategy 2: Inventory ─────────────────────────────────────────────────
     with st.expander("**2. INVENTORY MANAGEMENT — Never Stock Out, Never Over-Stock**"):
-        st.markdown("""
+        st.markdown(r"""
         **From Operations Management (Little's Law, Newsvendor):**
 
         | Parameter | Hormone | Specialty |
         |---|---|---|
         | Market size | 300,000 | 140,000 |
-        | Arrival rate | 30 customers/day | 14 customers/day |
+        | Arrival rate (N) | 30 customers/day | 14 customers/day |
         | Production cycle | 2.5 days | 2.5 days |
         | Transit to DC | 1 day | 1 day |
-        | **Lead time** | **3.5 days** | **3.5 days** |
+        | **Lead time (L)** | **3.5 days** | **3.5 days** |
 
-        **Reorder Point = Daily Demand x Lead Time + Safety Stock**
+        **Demand Model:** Each day, N customers arrive (deterministic). Each has WTP ~ Uniform[0, maxWTP].
+        They buy if WTP ≥ price, so P(buy) = (maxWTP − price) / maxWTP.
+
+        Daily sales ~ **Binomial(N, p)**: mean = Np, variance = Np(1−p)
+
+        Over deterministic lead time L:
+
+        > **Expected demand during lead time** = NpL
+        >
+        > **Std dev of demand during lead time** = $\sqrt{Np(1-p)L}$
+        >
+        > **Safety Stock** = z × $\sqrt{Np(1-p)L}$
+        >
+        > **Reorder Point** = NpL + z × $\sqrt{Np(1-p)L}$
+
+        Where z = service level z-score (1.65 for 95%, 1.96 for 97.5%, 2.33 for 99%)
 
         If both products running, factory alternates batches → effective cycle = 5 days + 1 day transit = **6 days lead time**
 
@@ -313,14 +328,26 @@ if page == "🎮 ISM War Room":
         with rc2:
             calc_market = st.number_input("Market Size", value=300000, step=10000)
             calc_both = st.checkbox("Both products running?", value=True)
+            calc_service = st.selectbox("Service Level", [90, 95, 97.5, 99], index=1,
+                                         format_func=lambda x: f"{x}%")
+        # z-scores for common service levels
+        z_map = {90: 1.28, 95: 1.65, 97.5: 1.96, 99: 2.33}
+        z_score = z_map[calc_service]
         lead_time = 6.0 if calc_both else 3.5
-        daily_demand_calc = 0.0001 * calc_market * (calc_max_wtp - calc_price) / calc_max_wtp if calc_max_wtp > calc_price else 0
-        safety_stock = 50
-        reorder = daily_demand_calc * lead_time + safety_stock
+        N_arrivals = 0.0001 * calc_market
+        p_buy = (calc_max_wtp - calc_price) / calc_max_wtp if calc_max_wtp > calc_price else 0
+        daily_demand_calc = N_arrivals * p_buy
+        # Demand during lead time: Binomial sum over L days
+        demand_during_lt = daily_demand_calc * lead_time
+        std_during_lt = (N_arrivals * p_buy * (1 - p_buy) * lead_time) ** 0.5
+        safety_stock = z_score * std_during_lt
+        reorder = demand_during_lt + safety_stock
         with rc3:
-            st.metric("Daily Demand", f"{daily_demand_calc:,.1f} units")
+            st.metric("Daily Demand (Np)", f"{daily_demand_calc:,.1f} units")
             st.metric("Lead Time", f"{lead_time} days")
+            st.metric("Safety Stock (z×σ)", f"{safety_stock:,.0f} units")
             st.metric("Recommended Reorder Point", f"{reorder:,.0f} units")
+            st.caption(f"z={z_score}, σ_LT={std_during_lt:.1f}, P(buy)={p_buy:.1%}")
 
     # ── Strategy 3: Capacity ──────────────────────────────────────────────────
     with st.expander("**3. CAPACITY AS BOTTLENECK**"):
@@ -1158,6 +1185,7 @@ elif page == "⚔️ Trial War Room":
     # SECTION 3B: INVENTORY (uses shared prices)
     # ══════════════════════════════════════════════════════════════════════════
     st.markdown("#### Inventory & Reorder Points")
+    st.caption("Safety stock formula: z × √(Np(1-p)L) where N=arrivals/day, p=P(buy), L=lead time")
 
     inv_product = st.radio("Product", ["Hormone", "Specialty"], horizontal=True, key="inv_prod")
     inv_price = gs_hormone_price if inv_product == "Hormone" else gs_specialty_price
@@ -1165,15 +1193,27 @@ elif page == "⚔️ Trial War Room":
     inv_daily_demand = p1_demand if inv_product == "Hormone" else p2_demand
 
     inv_lead = 6.0 if both_running else 3.5
-    inv_safety = 50
+    inv_N = 0.0001 * inv_market  # arrivals per day
+    inv_p = (MAX_WTP - inv_price) / MAX_WTP if inv_price < MAX_WTP else 0
 
     inv_col1, inv_col2, inv_col3 = st.columns(3)
     with inv_col1:
         st.markdown(f"**{inv_product}** at **${inv_price}**")
-        st.metric("Daily Demand", f"{inv_daily_demand:.1f} units")
+        inv_service = st.selectbox("Service Level", [90, 95, 97.5, 99], index=1,
+                                    format_func=lambda x: f"{x}%", key="inv_svc")
+        inv_z = {90: 1.28, 95: 1.65, 97.5: 1.96, 99: 2.33}[inv_service]
+
+        # Proper safety stock: z × √(Np(1-p)L)
+        inv_demand_lt = inv_daily_demand * inv_lead
+        inv_std_lt = (inv_N * inv_p * (1 - inv_p) * inv_lead) ** 0.5
+        inv_safety = inv_z * inv_std_lt
+        inv_reorder = inv_demand_lt + inv_safety
+
+        st.metric("Daily Demand (Np)", f"{inv_daily_demand:.1f} units")
         st.metric("Lead Time", f"{inv_lead} days" + (" (both running)" if both_running else ""))
-        inv_reorder = inv_daily_demand * inv_lead + inv_safety
-        st.metric("Recommended Reorder Point", f"{inv_reorder:.0f} units")
+        st.metric("Safety Stock (z×σ)", f"{inv_safety:.0f} units")
+        st.metric("Reorder Point", f"{inv_reorder:.0f} units")
+        st.caption(f"z={inv_z}, σ_LT={inv_std_lt:.1f}, P(buy)={inv_p:.1%}")
 
     with inv_col2:
         st.markdown("**Current Inventory**")
@@ -1187,13 +1227,15 @@ elif page == "⚔️ Trial War Room":
         st.markdown("**Status**")
         st.metric("Total Pipeline", f"{total_pipeline} units")
         st.metric("Days of Coverage", f"{days_cover:.1f} days")
-        st.metric("Pipeline Stock Needed", f"{inv_daily_demand * inv_lead:.0f} units")
-        if days_cover < inv_lead:
-            st.error(f"STOCKOUT RISK: {days_cover:.1f} days vs {inv_lead} day lead time!")
+        st.metric("Demand During Lead Time", f"{inv_demand_lt:.0f} units")
+        if total_pipeline < inv_reorder:
+            st.error(f"BELOW REORDER POINT: {total_pipeline} < {inv_reorder:.0f}. Order now!")
+        elif days_cover < inv_lead:
+            st.error(f"STOCKOUT RISK: {days_cover:.1f} days coverage vs {inv_lead} day lead time!")
         elif days_cover < inv_lead * 1.5:
-            st.warning(f"Thin buffer — consider raising reorder point")
+            st.warning(f"Thin buffer — {days_cover:.1f} days coverage")
         else:
-            st.success(f"Healthy coverage")
+            st.success(f"Healthy: {days_cover:.1f} days coverage")
 
     st.markdown("---")
 
