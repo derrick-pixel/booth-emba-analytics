@@ -944,61 +944,108 @@ elif page == "⚔️ Trial War Room":
     # SECTION 1: PRICING OPTIMIZER
     # ══════════════════════════════════════════════════════════════════════════
     st.subheader("1. Retail Pricing Optimizer")
-    st.caption("Monopoly pricing with uniform WTP distribution [0, MaxWTP] — uses game parameters above")
+    st.caption("Monopoly pricing with uniform WTP distribution [0, MaxWTP] — drag the price sliders to simulate")
 
-    pr_col1, pr_col2 = st.columns([1, 2])
-    with pr_col1:
-        pr_product = st.radio("Product", ["Hormone", "Specialty"], horizontal=True, key="pr_prod")
-        pr_market = HORMONE_MARKET if pr_product == "Hormone" else SPECIALTY_MARKET
-        pr_arrival = ARRIVAL_RATE * pr_market
+    # Optimal reference price
+    pr_theoretical_optimal = (MAX_WTP + MC_PRODUCTION) / 2
 
-        # Optimal price
-        pr_optimal = (MAX_WTP + MC_PRODUCTION) / 2
-        pr_demand_opt = pr_arrival * (MAX_WTP - pr_optimal) / MAX_WTP if MAX_WTP > pr_optimal else 0
-        pr_profit_opt = pr_demand_opt * (pr_optimal - MC_PRODUCTION)
+    pr_h_col, pr_s_col = st.columns(2)
+    with pr_h_col:
+        st.markdown("**Hormone**")
+        pr_h_price = st.slider("Hormone Price ($)", int(MC_PRODUCTION), int(MAX_WTP),
+                                int(pr_theoretical_optimal), step=5, key="pr_h_price")
+    with pr_s_col:
+        st.markdown("**Specialty**")
+        pr_s_price = st.slider("Specialty Price ($)", int(MC_PRODUCTION), int(MAX_WTP),
+                                int(pr_theoretical_optimal), step=5, key="pr_s_price")
 
-        st.markdown("---")
-        st.metric("Optimal Retail Price", f"${pr_optimal:,.0f}")
-        st.metric("Daily Demand", f"{pr_demand_opt:,.1f} units")
-        st.metric("Daily Profit", f"${pr_profit_opt:,.0f}")
-        st.metric("Daily Revenue", f"${pr_demand_opt * pr_optimal:,.0f}")
+    # Compute for both products
+    pr_h_arrival = ARRIVAL_RATE * HORMONE_MARKET
+    pr_s_arrival = ARRIVAL_RATE * SPECIALTY_MARKET
+    pr_h_demand = pr_h_arrival * (MAX_WTP - pr_h_price) / MAX_WTP if pr_h_price < MAX_WTP else 0
+    pr_s_demand = pr_s_arrival * (MAX_WTP - pr_s_price) / MAX_WTP if pr_s_price < MAX_WTP else 0
+    pr_h_profit = pr_h_demand * (pr_h_price - MC_PRODUCTION)
+    pr_s_profit = pr_s_demand * (pr_s_price - MC_PRODUCTION)
+    pr_h_revenue = pr_h_demand * pr_h_price
+    pr_s_revenue = pr_s_demand * pr_s_price
 
-    with pr_col2:
-        price_range = np.arange(MC_PRODUCTION, MAX_WTP, max(1, (MAX_WTP - MC_PRODUCTION) // 80))
-        demand_arr = pr_arrival * (MAX_WTP - price_range) / MAX_WTP
-        revenue_arr = demand_arr * price_range
-        profit_arr = demand_arr * (price_range - MC_PRODUCTION)
+    # Optimal reference
+    pr_h_demand_opt = pr_h_arrival * (MAX_WTP - pr_theoretical_optimal) / MAX_WTP if MAX_WTP > pr_theoretical_optimal else 0
+    pr_s_demand_opt = pr_s_arrival * (MAX_WTP - pr_theoretical_optimal) / MAX_WTP if MAX_WTP > pr_theoretical_optimal else 0
+    pr_h_profit_opt = pr_h_demand_opt * (pr_theoretical_optimal - MC_PRODUCTION)
+    pr_s_profit_opt = pr_s_demand_opt * (pr_theoretical_optimal - MC_PRODUCTION)
 
-        fig_pr = go.Figure()
-        fig_pr.add_trace(go.Scatter(x=price_range, y=profit_arr,
-                                     name="Daily Profit", line=dict(color="#2d6a2e", width=3)))
-        fig_pr.add_trace(go.Scatter(x=price_range, y=revenue_arr,
-                                     name="Daily Revenue", line=dict(color="#800000", width=2, dash="dash")))
-        fig_pr.add_trace(go.Scatter(x=price_range, y=demand_arr * MC_PRODUCTION,
-                                     name="Daily COGS", line=dict(color="#999", width=1, dash="dot")))
-        fig_pr.add_vline(x=pr_optimal, line_dash="dash", line_color="#2d6a2e",
-                          annotation_text=f"Optimal: ${pr_optimal:,.0f}",
-                          annotation_position="top left")
-        fig_pr.update_layout(height=400, xaxis_title="Retail Price ($)", yaxis_title="$ per day",
-                              margin=dict(l=0, r=0, t=30, b=0), yaxis_tickformat="$,.0f")
-        st.plotly_chart(fig_pr, use_container_width=True)
+    # Metrics row
+    pm1, pm2, pm3, pm4 = st.columns(4)
+    pm1.metric("Hormone Demand", f"{pr_h_demand:.1f}/day",
+               delta=f"{(pr_h_profit/pr_h_profit_opt - 1)*100:+.1f}% vs optimal" if pr_h_profit_opt > 0 else None)
+    pm2.metric("Hormone Profit", f"${pr_h_profit:,.0f}/day")
+    pm3.metric("Specialty Demand", f"{pr_s_demand:.1f}/day",
+               delta=f"{(pr_s_profit/pr_s_profit_opt - 1)*100:+.1f}% vs optimal" if pr_s_profit_opt > 0 else None)
+    pm4.metric("Specialty Profit", f"${pr_s_profit:,.0f}/day")
 
-        # Dynamic price sensitivity table
-        st.markdown("**Price Sensitivity Table**")
+    st.metric("Combined Daily Profit", f"${pr_h_profit + pr_s_profit:,.0f}/day")
+
+    # Side-by-side profit curves with your chosen price marked
+    price_range = np.arange(MC_PRODUCTION, MAX_WTP, max(1, (MAX_WTP - MC_PRODUCTION) // 80))
+
+    fig_h_col, fig_s_col = st.columns(2)
+    with fig_h_col:
+        h_profit_arr = pr_h_arrival * (MAX_WTP - price_range) / MAX_WTP * (price_range - MC_PRODUCTION)
+        fig_h = go.Figure()
+        fig_h.add_trace(go.Scatter(x=price_range, y=h_profit_arr,
+                                    name="Profit Curve", line=dict(color="#800000", width=3)))
+        fig_h.add_vline(x=pr_theoretical_optimal, line_dash="dot", line_color="gray",
+                         annotation_text=f"Optimal: ${pr_theoretical_optimal:,.0f}",
+                         annotation_position="top left", annotation_font_size=10)
+        fig_h.add_vline(x=pr_h_price, line_dash="dash", line_color="#ffd700",
+                         annotation_text=f"Your price: ${pr_h_price}",
+                         annotation_position="top right", annotation_font_size=10)
+        fig_h.add_trace(go.Scatter(x=[pr_h_price], y=[pr_h_profit], mode="markers",
+                                    marker=dict(size=12, color="#ffd700", symbol="star"),
+                                    name=f"${pr_h_price} → ${pr_h_profit:,.0f}/day", showlegend=True))
+        fig_h.update_layout(height=300, title="Hormone", xaxis_title="Price ($)",
+                             yaxis_title="Daily Profit ($)", yaxis_tickformat="$,.0f",
+                             margin=dict(l=0, r=0, t=40, b=0), showlegend=True)
+        st.plotly_chart(fig_h, use_container_width=True)
+
+    with fig_s_col:
+        s_profit_arr = pr_s_arrival * (MAX_WTP - price_range) / MAX_WTP * (price_range - MC_PRODUCTION)
+        fig_s = go.Figure()
+        fig_s.add_trace(go.Scatter(x=price_range, y=s_profit_arr,
+                                    name="Profit Curve", line=dict(color="#1a3c5e", width=3)))
+        fig_s.add_vline(x=pr_theoretical_optimal, line_dash="dot", line_color="gray",
+                         annotation_text=f"Optimal: ${pr_theoretical_optimal:,.0f}",
+                         annotation_position="top left", annotation_font_size=10)
+        fig_s.add_vline(x=pr_s_price, line_dash="dash", line_color="#ffd700",
+                         annotation_text=f"Your price: ${pr_s_price}",
+                         annotation_position="top right", annotation_font_size=10)
+        fig_s.add_trace(go.Scatter(x=[pr_s_price], y=[pr_s_profit], mode="markers",
+                                    marker=dict(size=12, color="#ffd700", symbol="star"),
+                                    name=f"${pr_s_price} → ${pr_s_profit:,.0f}/day", showlegend=True))
+        fig_s.update_layout(height=300, title="Specialty", xaxis_title="Price ($)",
+                             yaxis_title="Daily Profit ($)", yaxis_tickformat="$,.0f",
+                             margin=dict(l=0, r=0, t=40, b=0), showlegend=True)
+        st.plotly_chart(fig_s, use_container_width=True)
+
+    # Combined sensitivity table
+    with st.expander("**Price Sensitivity Table**"):
         step = max(25, int((MAX_WTP - MC_PRODUCTION) / 10 / 25) * 25)
         price_points = list(range(int(MC_PRODUCTION) + step, int(MAX_WTP), step))
         sens_data = []
         for p in price_points:
-            d = pr_arrival * (MAX_WTP - p) / MAX_WTP
-            r = d * p
-            prof = d * (p - MC_PRODUCTION)
+            h_d = pr_h_arrival * (MAX_WTP - p) / MAX_WTP
+            s_d = pr_s_arrival * (MAX_WTP - p) / MAX_WTP
+            h_prof = h_d * (p - MC_PRODUCTION)
+            s_prof = s_d * (p - MC_PRODUCTION)
             sens_data.append({
                 "Price": f"${p}",
                 "P(buy)": f"{(MAX_WTP - p) / MAX_WTP:.1%}",
-                "Demand/day": f"{d:.1f}",
-                "Revenue/day": f"${r:,.0f}",
-                "Profit/day": f"${prof:,.0f}",
-                "vs Optimal": f"{(prof / pr_profit_opt - 1) * 100:+.1f}%" if pr_profit_opt > 0 else "—",
+                "H Demand": f"{h_d:.1f}",
+                "H Profit": f"${h_prof:,.0f}",
+                "S Demand": f"{s_d:.1f}",
+                "S Profit": f"${s_prof:,.0f}",
+                "Combined": f"${h_prof + s_prof:,.0f}",
             })
         st.dataframe(pd.DataFrame(sens_data), use_container_width=True, hide_index=True)
 
