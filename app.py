@@ -92,7 +92,8 @@ with st.sidebar:
     page = st.radio(
         "Navigate",
         [
-            "⚔️ Trial War Room",
+            "⚔️ 12 Trial War Room",
+            "🏭 13 Trial War Room",
             "🎮 ISM War Room",
             "📊 Learning Dashboard",
             "🕸️ Knowledge Graph",
@@ -876,9 +877,9 @@ if page == "🎮 ISM War Room":
 # PAGE 0.5: TRIAL WAR ROOM
 # ══════════════════════════════════════════════════════════════════════════════
 
-elif page == "⚔️ Trial War Room":
-    st.markdown('<p class="big-header">Trial War Room</p>', unsafe_allow_html=True)
-    st.markdown('<p class="sub-header">Live calculators for the Monopoly & Trading Game trial (Apr 12-13)</p>',
+elif page == "⚔️ 12 Trial War Room":
+    st.markdown('<p class="big-header">12 Trial War Room</p>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-header">Monopoly & Trading Game — April 12 (WTP, uniform demand, simple pricing)</p>',
                 unsafe_allow_html=True)
     st.markdown("")
 
@@ -1653,6 +1654,553 @@ Dividends option available. Return calculation is more complex.
 | | Uric acid | 90 | $90,000 | $160 |
 
 **Focus Groups:** $20,000, 10 participants, 7 days to complete
+        """)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE 0.6: 13 TRIAL WAR ROOM (Production Game / Gleacher Game)
+# ══════════════════════════════════════════════════════════════════════════════
+
+elif page == "🏭 13 Trial War Room":
+    st.markdown('<p class="big-header">13 Trial War Room</p>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-header">Production Game (Gleacher Game) — April 13 | Bass diffusion, Cobb-Douglas production, 4-year simulation</p>',
+                unsafe_allow_html=True)
+    st.markdown("")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # GAME CONSTANTS (from Gleacher Game Case Brief)
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("Game Parameters")
+    st.caption("Adjust to match your current scenario — all calculators below recalculate")
+
+    pg_col1, pg_col2, pg_col3, pg_col4, pg_col5 = st.columns(5)
+    with pg_col1:
+        PG_STARTING_CASH = st.number_input("Starting Cash ($)", value=4000000, step=100000, key="pg_cash")
+    with pg_col2:
+        PG_SALES_COMMISSION = st.number_input("Sales Commission (%)", value=20.0, step=1.0, key="pg_comm")
+    with pg_col3:
+        PG_HANDLING_COST = st.number_input("Handling Cost ($/unit)", value=10, step=1, key="pg_handling")
+    with pg_col4:
+        PG_FACTORY_LAND = st.number_input("Factory Land ($)", value=100000, step=10000, key="pg_fland")
+    with pg_col5:
+        PG_DC_LAND = st.number_input("DC Land ($)", value=100000, step=10000, key="pg_dcland")
+
+    pg2_col1, pg2_col2, pg2_col3, pg2_col4, pg2_col5 = st.columns(5)
+    with pg2_col1:
+        PG_DC_CAPITAL = st.number_input("DC Capital ($)", value=2500000, step=100000, key="pg_dccap")
+    with pg2_col2:
+        PG_DC_DAILY = st.number_input("DC Daily Cost ($)", value=2000, step=100, key="pg_dcdaily")
+    with pg2_col3:
+        PG_DC_BUILD = st.number_input("DC Build (days)", value=60, step=5, key="pg_dcbuild")
+    with pg2_col4:
+        PG_FACTORY_BUILD = st.number_input("Factory Build (days)", value=90, step=5, key="pg_fbuild")
+    with pg2_col5:
+        PG_DEPRECIATION_YRS = st.number_input("Depreciation (yrs)", value=15, step=1, key="pg_dep")
+
+    # ── Key Insight Banner ────────────────────────────────────────────────────
+    st.markdown(f"""
+<div style="background:linear-gradient(135deg,#0e7c7b,#1a3c5e);color:white;
+    border-radius:12px;padding:1.2rem 1.5rem;margin-bottom:1rem;">
+<h4 style="color:#ffd700;margin:0 0 0.5rem 0;">4-Year Simulation | Bass Diffusion Model | 3 Production Technologies</h4>
+<div style="display:flex;gap:2rem;flex-wrap:wrap;">
+<div><span style="opacity:0.7;">Starting Cash</span><br><b style="font-size:1.3rem;">${PG_STARTING_CASH:,}</b></div>
+<div><span style="opacity:0.7;">Sales Commission</span><br><b style="font-size:1.3rem;">{PG_SALES_COMMISSION:.0f}%</b><br><span style="font-size:0.75rem;opacity:0.6;">of retail price</span></div>
+<div><span style="opacity:0.7;">Handling Cost</span><br><b style="font-size:1.3rem;">${PG_HANDLING_COST}/unit</b></div>
+<div><span style="opacity:0.7;">Raw Materials Payable</span><br><b style="font-size:1.3rem;">30 days</b></div>
+<div><span style="opacity:0.7;">Other Payables</span><br><b style="font-size:1.3rem;">15 days</b></div>
+<div><span style="opacity:0.7;">Tax Rate</span><br><b style="font-size:1.3rem;">35%</b></div>
+<div><span style="opacity:0.7;">Cost of Capital</span><br><b style="font-size:1.3rem;">15% APR</b></div>
+<div><span style="opacity:0.7;">Emergency Loan</span><br><b style="font-size:1.3rem;color:#ff6b6b;">40% APR</b></div>
+</div>
+</div>
+""", unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 1: BASS DIFFUSION MODEL CALCULATOR
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("1. Bass Diffusion Demand Simulator")
+    st.caption("Q_t = [p + q × (A/M)] × (M - A) — innovation + imitation drives arrivals")
+
+    bass_col1, bass_col2 = st.columns([1, 2])
+    with bass_col1:
+        bass_M = st.number_input("Market Size (M)", value=30000, step=1000, key="bass_m")
+        bass_p = st.number_input("Innovation Coefficient (p)", value=0.0002, step=0.00005,
+                                  format="%.5f", key="bass_p",
+                                  help="Typical: 0.0002-0.00025. Higher = faster early adoption.")
+        bass_q = st.number_input("Imitation Coefficient (q)", value=0.0035, step=0.0005,
+                                  format="%.4f", key="bass_q",
+                                  help="Typical: 0.0025-0.004. Higher = faster word-of-mouth.")
+        bass_adv = st.number_input("Advertising $/day", value=0, step=100, key="bass_adv",
+                                    help="Adds incremental p = $adv/$500 × p")
+        bass_days = st.number_input("Simulate Days", value=1460, step=30, key="bass_days",
+                                     help="4 years = 1460 days")
+
+        # Peak sales calculation
+        peak_time = (1 / (bass_p + bass_q)) * np.log(bass_q / bass_p) if bass_p > 0 and bass_q > bass_p else 0
+        peak_sales = bass_M * ((bass_p + bass_q) ** 2) / (4 * bass_q) if bass_q > 0 else 0
+
+        st.markdown("---")
+        st.metric("Time to Peak Sales", f"{peak_time:.0f} days ({peak_time/365:.1f} yrs)")
+        st.metric("Peak Daily Sales (theoretical)", f"{peak_sales:.1f} units/day")
+
+    with bass_col2:
+        # Simulate Bass model
+        adv_p_boost = (bass_adv / 500) * bass_p if bass_adv > 0 else 0
+        effective_p = bass_p + adv_p_boost
+
+        A = 0  # Cumulative sales
+        days = np.arange(int(bass_days))
+        arrivals = []
+        cumulative = []
+        for t in days:
+            if bass_M - A > 0:
+                q_t = (effective_p + bass_q * A / bass_M) * (bass_M - A)
+            else:
+                q_t = 0
+            arrivals.append(q_t)
+            A += q_t
+            cumulative.append(A)
+
+        fig_bass = go.Figure()
+        fig_bass.add_trace(go.Scatter(x=days, y=arrivals, name="Daily Arrivals (Q_t)",
+                                       line=dict(color="#800000", width=2)))
+        fig_bass.add_trace(go.Scatter(x=days, y=cumulative, name="Cumulative (A)",
+                                       line=dict(color="#1a3c5e", width=2, dash="dash"),
+                                       yaxis="y2"))
+        fig_bass.update_layout(
+            height=400, xaxis_title="Days",
+            yaxis=dict(title="Daily Arrivals", tickfont=dict(color="#800000")),
+            yaxis2=dict(title="Cumulative Sales", overlaying="y", side="right",
+                        tickfont=dict(color="#1a3c5e")),
+            margin=dict(l=0, r=0, t=30, b=0),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02),
+        )
+        st.plotly_chart(fig_bass, use_container_width=True)
+
+        if bass_adv > 0:
+            st.info(f"Advertising boost: p = {bass_p:.5f} → {effective_p:.5f} (+{adv_p_boost/bass_p*100:.1f}%)")
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 2: COBB-DOUGLAS PRODUCTION CALCULATOR (3 TECHNOLOGIES)
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("2. Production Technology Comparator")
+    st.caption("λ = A × K^α × (l × 364)^β / 364 — compare Bench, Production Line, Automated Cell")
+
+    PROD_TECH = {
+        "Benches": {"A": 0.009, "alpha": 0.10, "beta": 0.85, "setup": 0.05, "min_K": 0,
+                    "desc": "General-purpose, skilled workers. Labor-intensive."},
+        "Production Line": {"A": 0.010, "alpha": 0.30, "beta": 0.75, "setup": 0.50, "min_K": 500000,
+                            "desc": "Specialized, unskilled workers. Balanced."},
+        "Automated Cell": {"A": 0.020, "alpha": 0.80, "beta": 0.30, "setup": 1.00, "min_K": 3000000,
+                            "desc": "Capital-intensive automation. Robots over humans."},
+    }
+
+    tech_col1, tech_col2 = st.columns([1, 2])
+    with tech_col1:
+        pt_capital = st.number_input("Capital Invested ($)", value=100000, step=50000, key="pt_k")
+        pt_labor = st.number_input("Daily Labor ($/day)", value=2500, step=500, key="pt_l")
+        pt_batch = st.number_input("Batch Size (units)", value=100, step=10, key="pt_batch")
+
+    with tech_col2:
+        tech_data = []
+        for tech_name, params in PROD_TECH.items():
+            if pt_capital < params["min_K"]:
+                tech_data.append({
+                    "Technology": tech_name,
+                    "Daily Throughput": "N/A",
+                    "Batch Time": "N/A",
+                    "Cycle (w/ setup)": "N/A",
+                    "Note": f"Min capital ${params['min_K']:,}",
+                })
+            else:
+                yearly = params["A"] * (pt_capital ** params["alpha"]) * ((pt_labor * 364) ** params["beta"])
+                daily = yearly / 364
+                batch_days = pt_batch / daily if daily > 0 else float("inf")
+                cycle_days = batch_days + params["setup"]
+                tech_data.append({
+                    "Technology": tech_name,
+                    "Daily Throughput": f"{daily:.2f} units/day",
+                    "Batch Time": f"{batch_days:.2f} days",
+                    "Cycle (w/ setup)": f"{cycle_days:.2f} days",
+                    "Note": params["desc"],
+                })
+        st.dataframe(pd.DataFrame(tech_data), use_container_width=True, hide_index=True)
+
+        # Sensitivity: throughput vs labor for each tech
+        labor_range = np.linspace(1000, 15000, 30)
+        fig_tech = go.Figure()
+        for tech_name, params in PROD_TECH.items():
+            if pt_capital >= params["min_K"]:
+                throughputs = params["A"] * (pt_capital ** params["alpha"]) * ((labor_range * 364) ** params["beta"]) / 364
+                fig_tech.add_trace(go.Scatter(x=labor_range, y=throughputs, name=tech_name, mode="lines"))
+        fig_tech.update_layout(height=300, xaxis_title="Daily Labor Spend ($)",
+                                yaxis_title="Daily Throughput (units)",
+                                margin=dict(l=0, r=0, t=30, b=0),
+                                title=f"Throughput vs Labor (K=${pt_capital:,})")
+        st.plotly_chart(fig_tech, use_container_width=True)
+
+    st.info("""
+**Technology choice cheat sheet:**
+- **Benches (β=0.85):** Labor drives output. Cheap capital, expensive labor. Small scale.
+- **Production Line (β=0.75):** Balanced. Moderate capital, moderate labor. Medium scale.
+- **Automated Cell (β=0.30, α=0.80):** Capital drives output. Huge upfront but scales with capex. Large scale.
+    """)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 3: MARKET SEGMENT SELECTOR (from D2 market research)
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("3. Market Segment Analyzer")
+    st.caption("Choose your target market — 5 segments from Production Game Market Research")
+
+    MARKETS = {
+        "Clinical Fertility (LH)": {"wtp_low": 130, "wtp_high": 300, "size_low": 40000, "size_high": 60000,
+                                     "p": 0.00025, "q": 0.004, "dso": 10,
+                                     "feature": "Hormone LH", "dealbreaker": "Bulky battery packs"},
+        "Clinical Fertility (LH/FSH)": {"wtp_low": 230, "wtp_high": 400, "size_low": 40000, "size_high": 60000,
+                                         "p": 0.00025, "q": 0.004, "dso": 10,
+                                         "feature": "Hormone LH/FSH", "dealbreaker": "Bulky battery packs"},
+        "Law (Narcotic)": {"wtp_low": 1100, "wtp_high": 1600, "size_low": 5000, "size_high": 15000,
+                            "p": 0.00025, "q": 0.0025, "dso": 90,
+                            "feature": "Toxicology Narcotic", "dealbreaker": "No GPS or cellular"},
+        "MD Cancer Base": {"wtp_low": 0, "wtp_high": 900, "size_low": 10000, "size_high": 20000,
+                            "p": 0.0002, "q": 0.0035, "dso": 30,
+                            "feature": "Cancer Base Panel", "dealbreaker": "None"},
+        "MD Cancer Breast": {"wtp_low": 900, "wtp_high": 1600, "size_low": 10000, "size_high": 20000,
+                              "p": 0.0002, "q": 0.0035, "dso": 30,
+                              "feature": "Cancer Breast", "dealbreaker": "None"},
+        "MD Fertility (Estrogen)": {"wtp_low": 575, "wtp_high": 965, "size_low": 10000, "size_high": 20000,
+                                     "p": 0.0002, "q": 0.0035, "dso": 30,
+                                     "feature": "Hormone Estrogen", "dealbreaker": "None"},
+        "MD Heart (Pulse)": {"wtp_low": 0, "wtp_high": 115, "size_low": 20000, "size_high": 40000,
+                              "p": 0.0002, "q": 0.0035, "dso": 30,
+                              "feature": "Heartbeat Pulse", "dealbreaker": "None"},
+        "MD Heart (Temporal)": {"wtp_low": 600, "wtp_high": 865, "size_low": 20000, "size_high": 40000,
+                                 "p": 0.0002, "q": 0.0035, "dso": 30,
+                                 "feature": "Heartbeat Temporal", "dealbreaker": "GPS significantly affects WTP"},
+    }
+
+    mkt_col1, mkt_col2 = st.columns([1, 2])
+    with mkt_col1:
+        mkt_sel = st.selectbox("Target Market Segment", list(MARKETS.keys()), key="mkt_sel")
+        mkt = MARKETS[mkt_sel]
+        mkt_wtp_est = st.slider("WTP Estimate ($)",
+                                  int(mkt["wtp_low"]), int(mkt["wtp_high"]),
+                                  int((mkt["wtp_low"] + mkt["wtp_high"]) / 2), step=10, key="mkt_wtp")
+        mkt_size_est = st.slider("Market Size Estimate",
+                                  int(mkt["size_low"]), int(mkt["size_high"]),
+                                  int((mkt["size_low"] + mkt["size_high"]) / 2), step=1000, key="mkt_size")
+        mkt_mc_est = st.number_input("Your Marginal Cost ($/unit)", value=100, step=10, key="mkt_mc")
+
+        # Adjusted MC including handling and commission
+        effective_mc = mkt_mc_est + PG_HANDLING_COST
+        # Optimal price accounting for commission (20% of price)
+        # Profit = (P - P*comm/100 - effective_mc) * demand
+        # = P*(1-comm) - effective_mc
+        # So effective revenue per unit = P*(1-comm), and optimal P* = (WTP + effective_mc/(1-comm))/2
+        comm_frac = PG_SALES_COMMISSION / 100
+        effective_mc_commissioned = effective_mc / (1 - comm_frac)
+        optimal_mkt_price = (mkt_wtp_est + effective_mc_commissioned) / 2
+
+    with mkt_col2:
+        st.markdown(f"""
+**{mkt_sel}**
+- Core feature: **{mkt['feature']}**
+- WTP range: ${mkt['wtp_low']} - ${mkt['wtp_high']}
+- Market size: {mkt['size_low']:,} - {mkt['size_high']:,} per region
+- Bass p: {mkt['p']}, q: {mkt['q']}
+- DSO: {mkt['dso']} days
+- Deal breakers: _{mkt['dealbreaker']}_
+        """)
+
+        mk1, mk2, mk3, mk4 = st.columns(4)
+        mk1.metric("Your WTP Est.", f"${mkt_wtp_est}")
+        mk2.metric("Effective MC (w/ handling & commission)", f"${effective_mc_commissioned:.0f}")
+        mk3.metric("Optimal Price", f"${optimal_mkt_price:.0f}")
+        mk4.metric("Gross Margin %", f"{(optimal_mkt_price - effective_mc_commissioned)/optimal_mkt_price*100:.0f}%")
+
+        # Unit economics breakdown
+        price_at_opt = optimal_mkt_price
+        commission_at_opt = price_at_opt * comm_frac
+        st.markdown(f"""
+**Unit Economics at ${price_at_opt:.0f}:**
+- Retail price: ${price_at_opt:.0f}
+- Sales commission ({PG_SALES_COMMISSION:.0f}%): -${commission_at_opt:.0f}
+- Handling cost: -${PG_HANDLING_COST}
+- Materials cost: -${mkt_mc_est}
+- **Gross profit/unit: ${price_at_opt - commission_at_opt - PG_HANDLING_COST - mkt_mc_est:.0f}**
+        """)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 4: PRODUCT DESIGN ROI CALCULATOR
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("4. Product Design ROI Calculator")
+    st.caption("Evaluate feature combinations for cost, development time, and WTP impact")
+
+    FEATURES = {
+        "Heartbeat": {"None": (3, 1000, 0), "Pulse only": (15, 30000, 15), "Temporal": (90, 135000, 25)},
+        "Blood vessel": {"None": (3, 1000, 0), "Systolic only": (30, 75000, 10),
+                          "Systolic & diastolic": (90, 135000, 15), "Full profile": (120, 180000, 40)},
+        "Dissolved gasses": {"None": (3, 1000, 0), "O2 only": (30, 75000, 15),
+                              "O2, N2, CO2": (90, 135000, 20), "Full C,N,O": (90, 135000, 40)},
+        "Toxicology": {"None": (3, 1000, 0), "Ethanol": (30, 150000, 95),
+                        "Amphetamine": (90, 250000, 140), "THC": (90, 250000, 140),
+                        "Barbiturate": (90, 250000, 140), "Narcotic": (90, 250000, 140)},
+        "Hormone": {"None": (3, 1000, 0), "LH": (30, 45000, 20), "LH and FSH": (60, 75000, 50),
+                     "Estrogen": (60, 75000, 60), "Progesterone": (60, 75000, 60),
+                     "Testosterone": (60, 75000, 50)},
+        "Metabolic": {"None": (3, 1000, 0), "Thyroxine": (90, 90000, 155),
+                       "Bilirubin": (90, 90000, 150), "Proteins": (90, 90000, 170),
+                       "Uric acid": (90, 90000, 160)},
+    }
+
+    pd_col1, pd_col2 = st.columns([1, 1])
+    with pd_col1:
+        st.markdown("**Select Features**")
+        selected_features = {}
+        for attr, options in FEATURES.items():
+            selected_features[attr] = st.selectbox(attr, list(options.keys()), key=f"pd_{attr}")
+
+        total_design_days = max(FEATURES[attr][selected_features[attr]][0] for attr in FEATURES)
+        total_design_cost = sum(FEATURES[attr][selected_features[attr]][1] for attr in FEATURES)
+        total_materials = sum(FEATURES[attr][selected_features[attr]][2] for attr in FEATURES)
+
+    with pd_col2:
+        st.markdown("**Design Cost Summary**")
+        design_df_data = []
+        for attr, feature_name in selected_features.items():
+            days, cost, mat = FEATURES[attr][feature_name]
+            design_df_data.append({
+                "Attribute": attr,
+                "Feature": feature_name,
+                "Days": days,
+                "Design Cost": f"${cost:,}",
+                "Materials $/unit": f"${mat}",
+            })
+        st.dataframe(pd.DataFrame(design_df_data), use_container_width=True, hide_index=True)
+
+        st.metric("Total Design Time", f"{total_design_days} days (max, not sum)")
+        st.metric("Total Design Cost", f"${total_design_cost:,}")
+        st.metric("Materials Cost/Unit", f"${total_materials}")
+
+        # Break-even
+        pd_target_price = st.number_input("Target Retail Price ($)", value=600, step=50, key="pd_price")
+        pd_daily_sales = st.number_input("Est. Daily Sales", value=5, step=1, key="pd_sales")
+        pd_margin_per_unit = pd_target_price * (1 - comm_frac) - PG_HANDLING_COST - total_materials
+        pd_days_to_break = total_design_cost / (pd_margin_per_unit * pd_daily_sales) if pd_margin_per_unit > 0 and pd_daily_sales > 0 else float("inf")
+
+        st.metric("Unit Margin (net of 20% comm + $10 handling)", f"${pd_margin_per_unit:.0f}")
+        if pd_days_to_break < float("inf"):
+            st.metric("Break-even Days (design cost only)", f"{pd_days_to_break:.0f} days ({pd_days_to_break/30:.1f} months)")
+        else:
+            st.error("Negative unit margin — price too low or costs too high")
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 5: BOND ISSUANCE CALCULATOR
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("5. Bond Issuance & Credit Rating Calculator")
+    st.caption("Determine debt capacity based on interest coverage ratio")
+
+    BOND_RATINGS = {
+        "Excellent": {"threshold": 20, "rate": 10.0, "color": "#2d6a2e"},
+        "Good": {"threshold": 7, "rate": 15.0, "color": "#b8860b"},
+        "Poor": {"threshold": 2, "rate": 25.0, "color": "#b22222"},
+    }
+
+    bd_col1, bd_col2 = st.columns([1, 2])
+    with bd_col1:
+        bd_ebit = st.number_input("Yearly EBIT ($)", value=500000, step=50000, key="bd_ebit",
+                                    help="Last full quarter EBIT × 4")
+        bd_existing_interest = st.number_input("Existing Interest ($/yr)", value=0, step=1000, key="bd_ei")
+        bd_new_bonds = st.number_input("New Bonds to Issue (face value)", value=100000, step=10000, key="bd_bonds")
+
+    with bd_col2:
+        st.markdown("**Rating vs Capacity**")
+        bond_data = []
+        for rating, params in BOND_RATINGS.items():
+            # Max total interest at this threshold = EBIT / threshold
+            max_total_interest = bd_ebit / params["threshold"] if params["threshold"] > 0 else 0
+            max_new_interest = max_total_interest - bd_existing_interest
+            # How much bonds at this rate gives this interest?
+            max_bonds = max_new_interest / (params["rate"] / 100) if params["rate"] > 0 else 0
+
+            # Check if our new_bonds fits
+            new_interest = bd_new_bonds * params["rate"] / 100
+            total_interest = bd_existing_interest + new_interest
+            coverage = bd_ebit / total_interest if total_interest > 0 else float("inf")
+
+            bond_data.append({
+                "Rating": rating,
+                "Threshold (coverage)": f"{params['threshold']}×",
+                "Interest Rate": f"{params['rate']:.1f}% APR",
+                "Max Bonds @ Rating": f"${max(0, max_bonds):,.0f}",
+                "Actual Coverage": f"{coverage:.1f}×" if coverage < float("inf") else "∞",
+                "Qualifies": "Yes" if coverage >= params["threshold"] else "No",
+            })
+
+        st.dataframe(pd.DataFrame(bond_data), use_container_width=True, hide_index=True)
+
+        # Recommendation
+        for rating, params in BOND_RATINGS.items():
+            new_interest = bd_new_bonds * params["rate"] / 100
+            total_interest = bd_existing_interest + new_interest
+            coverage = bd_ebit / total_interest if total_interest > 0 else float("inf")
+            if coverage >= params["threshold"]:
+                st.success(f"Your ${bd_new_bonds:,} issuance qualifies for **{rating}** rating at **{params['rate']:.1f}% APR**")
+                st.info(f"Annual interest: ${new_interest:,.0f} | 5-year total cost (interest only): ${new_interest*5:,.0f}")
+                break
+        else:
+            st.error(f"Your ${bd_new_bonds:,} issuance does not qualify at any rating. Reduce bond amount or increase EBIT.")
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 6: NPV CALCULATOR FOR EXPANSION
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("6. Factory / DC Expansion NPV Calculator")
+    st.caption("Evaluate whether new capacity pays back within the 4-year game horizon")
+
+    npv_col1, npv_col2 = st.columns(2)
+    with npv_col1:
+        npv_type = st.radio("Asset Type", ["New Factory", "New DC", "Capital Addition"], key="npv_type")
+        if npv_type == "New Factory":
+            default_capex = 500000  # min for production line
+            default_build = PG_FACTORY_BUILD
+            default_daily = 2500
+            default_rev = 5000
+        elif npv_type == "New DC":
+            default_capex = PG_DC_CAPITAL + PG_DC_LAND
+            default_build = PG_DC_BUILD
+            default_daily = PG_DC_DAILY
+            default_rev = 8000
+        else:
+            default_capex = 100000
+            default_build = 30
+            default_daily = 0
+            default_rev = 500
+
+        npv_capex = st.number_input("Total Capital Investment ($)", value=default_capex, step=50000, key="npv_capex")
+        npv_build = st.number_input("Build Time (days)", value=default_build, step=5, key="npv_build")
+        npv_daily_cost = st.number_input("Incremental Daily Cost ($)", value=default_daily, step=100, key="npv_daily")
+        npv_daily_rev = st.number_input("Incremental Daily Revenue ($)", value=default_rev, step=500, key="npv_rev")
+        npv_remaining_days = st.number_input("Game Days Remaining", value=1460, step=30, key="npv_days")
+        npv_discount = st.number_input("Discount Rate (% APR)", value=15.0, step=0.5, key="npv_dr") / 100
+
+    with npv_col2:
+        # Build period: capex + daily costs, no revenue
+        # Operating period: daily revenue - daily cost
+        operating_days = max(0, npv_remaining_days - npv_build)
+
+        # Simple daily cash flow model
+        daily_discount = (1 + npv_discount) ** (1/365) - 1
+        npv = -npv_capex  # Initial outflow
+
+        for day in range(int(npv_remaining_days)):
+            if day < npv_build:
+                cash_flow = -npv_daily_cost
+            else:
+                cash_flow = (npv_daily_rev - npv_daily_cost) * (1 - 0.35)  # After tax
+            npv += cash_flow / ((1 + daily_discount) ** day)
+
+        # Also compute payback period (undiscounted)
+        cumulative_cash = -npv_capex
+        payback_day = None
+        for day in range(int(npv_remaining_days)):
+            if day < npv_build:
+                cumulative_cash -= npv_daily_cost
+            else:
+                cumulative_cash += (npv_daily_rev - npv_daily_cost) * (1 - 0.35)
+            if cumulative_cash > 0 and payback_day is None:
+                payback_day = day
+                break
+
+        npv_color = "#2d6a2e" if npv > 0 else "#b22222"
+        st.markdown(f"""
+<div style="border:2px solid {npv_color};border-radius:10px;padding:1rem;">
+<h4 style="margin:0;color:{npv_color};">NPV Analysis</h4>
+<table style="width:100%;margin-top:0.5rem;">
+<tr><td>Total Capital Investment</td><td style="text-align:right;">-${npv_capex:,}</td></tr>
+<tr><td>Build Period</td><td style="text-align:right;">{npv_build} days</td></tr>
+<tr><td>Operating Period</td><td style="text-align:right;">{operating_days} days</td></tr>
+<tr><td>Annual Operating Profit (after tax)</td><td style="text-align:right;">${(npv_daily_rev - npv_daily_cost) * 365 * 0.65:,.0f}</td></tr>
+<tr><td><b>NPV (at {npv_discount*100:.1f}% APR)</b></td><td style="text-align:right;font-size:1.3rem;font-weight:700;color:{npv_color};">${npv:,.0f}</td></tr>
+<tr><td>Payback Period</td><td style="text-align:right;">{payback_day if payback_day else "Never"} days</td></tr>
+</table>
+</div>
+""", unsafe_allow_html=True)
+
+        if npv > 0:
+            st.success(f"✓ Positive NPV — investment creates value of ${npv:,.0f}")
+        else:
+            st.error(f"✗ Negative NPV — avoid this investment")
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 7: CHEAT SHEET
+    # ══════════════════════════════════════════════════════════════════════════
+    with st.expander("**Production Game Cheat Sheet — Key Differences from Monopoly Game**", expanded=False):
+        st.markdown("""
+| Aspect | Monopoly Game (Apr 12) | Production Game (Apr 13+) |
+|---|---|---|
+| **Demand Model** | Uniform WTP + constant arrival | **Bass diffusion** (p + q × A/M) × (M - A) |
+| **Horizon** | 91 days | **4 years (1,460 days)** |
+| **Starting Cash** | $1.5M | **$4M** (you own 50% after paying $2M) |
+| **Products** | 1 specialty + 1 hormone | **Design your own** via features |
+| **Production** | Fixed batch/time | **Cobb-Douglas**: Y = A × K^α × L^β |
+| **Technologies** | 1 | **3** (Benches, Production Line, Automated Cell) |
+| **Handling Cost** | None | **$10/unit** |
+| **Sales Commission** | None | **20% of price** |
+| **Markets** | Simple | **5+ segments** (Clinical, Medical, Law, Military) |
+| **Financing** | None | **Bonds** (Excellent/Good/Poor ratings) |
+| **Cost of Capital** | 10% | **15% APR** |
+| **Raw Materials Payable** | 15 days | **30 days** |
+| **Build Times** | DC: 60d, Factory: 90d | Same |
+| **Depreciation** | 15 years | 15 years |
+
+**Critical strategic differences:**
+1. **Bass model means early investments pay off much later** — demand ramps slowly
+2. **20% commission is a massive cost** — always factor into pricing
+3. **4-year horizon justifies bigger investments** — factory/DC NPV works
+4. **Product design is a strategic lever** — pick markets with best WTP/cost ratio
+5. **Advertising shifts the Bass curve** — not just short-term demand
+6. **Debt is available** at 10-25% APR depending on credit rating
+        """)
+
+    with st.expander("**Strategic Playbook for Tonight**", expanded=False):
+        st.markdown("""
+### Early Game (Days 1-90): Foundation
+1. **Run a focus group** ($20K, 7 days) for market research before designing products
+2. **Don't rush product design** — pick your target market carefully
+3. **Start small**: Stick with Benches technology until you have sales validation
+4. **Low retail prices initially** to seed the Bass curve (innovators → imitators)
+
+### Mid Game (Days 90-900): Growth
+1. **Add advertising** once you have a product selling — amplifies p coefficient
+2. **Consider Production Line** if daily demand > 10 units/day consistently
+3. **Build DC in second region** if market research shows higher WTP there
+4. **Issue bonds** at Excellent/Good rating to fund expansion (10-15% vs 15% cost of capital)
+
+### Late Game (Days 900+): Scale
+1. **Automated Cell** only if you're producing >50 units/day
+2. **Multi-product portfolio** — cover different market segments
+3. **Defend market share** against imitator teams
+4. **Wind down inventory** in final 30 days to convert to cash
+
+### Watch-Outs
+- **Don't over-invest in capex early** — payback period matters with 4-year horizon
+- **Commission (20%) + handling ($10) + materials** are the real cost base
+- **DSO varies wildly** (10-90 days) — cash flow matters
+- **Emergency loans at 40%** will destroy you — always keep cash buffer
         """)
 
 
