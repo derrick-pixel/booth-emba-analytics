@@ -944,6 +944,103 @@ elif page == "⚔️ Trial War Room":
     st.markdown("---")
 
     # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 0: WTP DISCOVERY FROM PRICE RESPONSE DATA
+    # ══════════════════════════════════════════════════════════════════════════
+    with st.expander("**WTP Discovery Tool** — estimate Max WTP from Price Response data", expanded=False):
+        st.markdown("""
+Enter observed (Price, Units Sold per Day) data points from the **Price Response** report.
+The demand model is `Q = N × (maxWTP − P) / maxWTP`, which is linear: `P = a − bQ`.
+Linear regression gives **a = Max WTP** (the price intercept where demand hits zero).
+        """)
+
+        wtp_disc_product = st.radio("Discover WTP for", ["Hormone", "Specialty"],
+                                     horizontal=True, key="wtp_disc_prod")
+
+        st.markdown("**Enter observed data points** (from Price Response report)")
+        wtp_col1, wtp_col2 = st.columns([1, 2])
+        with wtp_col1:
+            wtp_n_points = st.number_input("Number of observations", min_value=2, max_value=20,
+                                            value=4, step=1, key="wtp_npts")
+            wtp_prices = []
+            wtp_demands = []
+            for i in range(int(wtp_n_points)):
+                pc1, pc2 = st.columns(2)
+                with pc1:
+                    p_val = st.number_input(f"Price {i+1} ($)", value=200 + i * 100, step=25,
+                                             key=f"wtp_p_{i}")
+                with pc2:
+                    q_val = st.number_input(f"Qty/day {i+1}", value=max(0.0, 15.0 - i * 4.0),
+                                             step=0.5, format="%.1f", key=f"wtp_q_{i}")
+                wtp_prices.append(p_val)
+                wtp_demands.append(q_val)
+
+        with wtp_col2:
+            prices_arr = np.array(wtp_prices)
+            demands_arr = np.array(wtp_demands)
+
+            # Filter out zero-demand points for regression (they're censored)
+            mask = demands_arr > 0
+            if mask.sum() >= 2:
+                # Fit P = a - bQ (linear regression of P on Q)
+                coeffs = np.polyfit(demands_arr[mask], prices_arr[mask], 1)
+                b_slope = coeffs[0]  # negative slope
+                a_intercept = coeffs[1]  # = estimated Max WTP
+
+                # Also fit Q = α + βP to get x-intercept
+                coeffs_qp = np.polyfit(prices_arr[mask], demands_arr[mask], 1)
+                beta_qp = coeffs_qp[0]
+                alpha_qp = coeffs_qp[1]
+                wtp_from_q = -alpha_qp / beta_qp if beta_qp != 0 else 0  # price where Q=0
+
+                estimated_wtp = max(a_intercept, wtp_from_q)  # take the more conservative
+                r_squared = 1 - np.sum((prices_arr[mask] - np.polyval(coeffs, demands_arr[mask]))**2) / \
+                            np.sum((prices_arr[mask] - np.mean(prices_arr[mask]))**2) if len(prices_arr[mask]) > 1 else 0
+
+                # Plot
+                fig_wtp = go.Figure()
+                # Data points
+                fig_wtp.add_trace(go.Scatter(x=demands_arr, y=prices_arr, mode="markers",
+                                              marker=dict(size=10, color="#800000"),
+                                              name="Observed"))
+                # Fitted line extended to Q=0
+                q_fit = np.linspace(0, max(demands_arr) * 1.2, 100)
+                p_fit = a_intercept + b_slope * q_fit
+                fig_wtp.add_trace(go.Scatter(x=q_fit, y=p_fit, mode="lines",
+                                              line=dict(color="#2d6a2e", width=2, dash="dash"),
+                                              name=f"Fitted: P = {a_intercept:.0f} − {abs(b_slope):.1f}Q"))
+                # Max WTP marker
+                fig_wtp.add_trace(go.Scatter(x=[0], y=[a_intercept], mode="markers",
+                                              marker=dict(size=14, color="#ffd700", symbol="star"),
+                                              name=f"Max WTP = ${a_intercept:,.0f}"))
+                fig_wtp.add_hline(y=a_intercept, line_dash="dot", line_color="rgba(255,200,50,0.5)")
+                fig_wtp.update_layout(height=350, xaxis_title="Quantity (units/day)",
+                                       yaxis_title="Price ($)", yaxis_tickformat="$,.0f",
+                                       margin=dict(l=0, r=0, t=30, b=0))
+                st.plotly_chart(fig_wtp, use_container_width=True)
+
+                # Results
+                wtp_color = "#2d6a2e" if r_squared > 0.8 else ("#b8860b" if r_squared > 0.5 else "#b22222")
+                st.markdown(f"""
+<div style="border:2px solid {wtp_color};border-radius:10px;padding:1rem;">
+<div style="display:flex;gap:2rem;align-items:center;">
+<div><span style="opacity:0.7;">Estimated Max WTP</span><br>
+<b style="font-size:1.8rem;color:{wtp_color};">${a_intercept:,.0f}</b></div>
+<div><span style="opacity:0.7;">Optimal Price</span><br>
+<b style="font-size:1.3rem;">${(a_intercept + MC_PRODUCTION)/2:,.0f}</b><br>
+<span style="font-size:0.75rem;opacity:0.6;">({a_intercept:.0f}+{MC_PRODUCTION})/2</span></div>
+<div><span style="opacity:0.7;">R²</span><br>
+<b style="font-size:1.3rem;">{r_squared:.3f}</b></div>
+<div><span style="opacity:0.7;">Demand Slope</span><br>
+<b style="font-size:1.3rem;">{b_slope:.1f}</b><br>
+<span style="font-size:0.75rem;opacity:0.6;">units/day per $1</span></div>
+</div>
+</div>
+""", unsafe_allow_html=True)
+                st.caption(f"Update the **{wtp_disc_product} Max WTP** parameter above to ${a_intercept:,.0f} to use this estimate across all sections.")
+            else:
+                st.info("Enter at least 2 data points with positive demand to fit the demand curve.")
+
+    # ══════════════════════════════════════════════════════════════════════════
     # SECTION 1: PRICING OPTIMIZER
     # ══════════════════════════════════════════════════════════════════════════
     st.subheader("1. Retail Pricing Optimizer")
