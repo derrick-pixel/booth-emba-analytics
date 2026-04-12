@@ -886,29 +886,29 @@ elif page == "⚔️ Trial War Room":
     st.subheader("Game Parameters")
     st.caption("Adjust these to match the current game scenario — all sections below recalculate automatically")
 
-    gp_col1, gp_col1b, gp_col2, gp_col3, gp_col4 = st.columns(5)
+    gp_col1, gp_col2, gp_col3, gp_col4, gp_col5 = st.columns(5)
     with gp_col1:
         H_MAX_WTP = st.number_input("Hormone Max WTP ($)", value=500, step=50, key="gp_hmaxwtp")
-    with gp_col1b:
+    with gp_col2:
         S_MAX_WTP = st.number_input("Specialty Max WTP ($)", value=800, step=50, key="gp_smaxwtp",
                                      help="Proprietary product — likely higher than Hormone. Discover via Price Response report.")
-    with gp_col2:
-        MC_PRODUCTION = st.number_input("Materials Cost ($/unit)", value=100, step=10, key="gp_mc")
     with gp_col3:
-        BATCH_SIZE = st.number_input("Batch Size (units)", value=100, step=10, key="gp_batch")
+        MC_PRODUCTION = st.number_input("Materials Cost ($/unit)", value=100, step=10, key="gp_mc")
     with gp_col4:
-        PRODUCTION_DAYS = st.number_input("Production Time (days)", value=2.5, step=0.5, key="gp_proddays")
+        BATCH_SIZE = st.number_input("Batch Size (units)", value=100, step=10, key="gp_batch")
     with gp_col5:
-        ARRIVAL_RATE = st.number_input("Arrival Rate", value=0.0001, step=0.00001, format="%.5f", key="gp_arrival")
+        PRODUCTION_DAYS = st.number_input("Production Time (days)", value=2.5, step=0.5, key="gp_proddays")
 
-    gp2_col1, gp2_col2, gp2_col3, gp2_col4 = st.columns(4)
+    gp2_col1, gp2_col2, gp2_col3, gp2_col4, gp2_col5 = st.columns(5)
     with gp2_col1:
-        HORMONE_MARKET = st.number_input("Hormone Market Size", value=300000, step=10000, key="gp_hmkt")
+        ARRIVAL_RATE = st.number_input("Arrival Rate", value=0.0001, step=0.00001, format="%.5f", key="gp_arrival")
     with gp2_col2:
-        SPECIALTY_MARKET = st.number_input("Specialty Market Size", value=140000, step=10000, key="gp_smkt")
+        HORMONE_MARKET = st.number_input("Hormone Market Size", value=300000, step=10000, key="gp_hmkt")
     with gp2_col3:
-        BASE_LEAD_TIME = st.number_input("Lead Time (days, single product)", value=3.5, step=0.5, key="gp_lt")
+        SPECIALTY_MARKET = st.number_input("Specialty Market Size", value=140000, step=10000, key="gp_smkt")
     with gp2_col4:
+        BASE_LEAD_TIME = st.number_input("Lead Time (days)", value=3.5, step=0.5, key="gp_lt")
+    with gp2_col5:
         COST_OF_CAPITAL = st.number_input("Cost of Capital (%)", value=10.0, step=1.0, key="gp_coc")
 
     CAPACITY_PER_DAY = BATCH_SIZE / PRODUCTION_DAYS if PRODUCTION_DAYS > 0 else 40
