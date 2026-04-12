@@ -176,7 +176,7 @@ if page == "🎮 ISM War Room":
          "Game (7-9pm)": "COMPETITION", "Assignment": "A4 due by 9am (Group)"},
         {"Day": "Thursday Apr 16", "Class (3-6pm)": "Game Analysis",
          "Game (7-9pm)": "COMPETITION", "Assignment": "A5 due by 9am (Group)"},
-        {"Day": "Friday Apr 17", "Class": "Wrap-Up",
+        {"Day": "Friday Apr 17", "Class (3-6pm)": "Wrap-Up (11am-1pm)",
          "Game (7-9pm)": "—", "Assignment": "A6 + Final Project due May 3"},
     ]
     st.dataframe(pd.DataFrame(schedule_data), use_container_width=True, hide_index=True)
@@ -186,28 +186,28 @@ if page == "🎮 ISM War Room":
     with grade_col1:
         st.subheader("Grading Breakdown")
         grade_data = {
-            "Component": ["Assignments 1-3 (Group)", "Assignments 4-5 (Group)", "Assignment 6 (Individual)",
-                          "Final Project (Group)", "Participation", "Game Performance"],
-            "Points": [30, 10, 10, 30, 10, 10],
+            "Component": ["Assignment 1 (Individual)", "Assignments 2-4 (Group)", "Assignment 5 (Group)",
+                          "Assignment 6 (Individual)", "Final Project (Group)", "Participation", "Game Performance"],
+            "Points": [10, 25, 5, 10, 30, 15, 5],
         }
         grade_df = pd.DataFrame(grade_data)
         fig_grade = px.pie(grade_df, values="Points", names="Component",
                            color_discrete_sequence=["#800000", "#b22222", "#cd5c5c",
-                                                     "#1a3c5e", "#2d6a2e", "#b8860b"],
+                                                     "#e8967a", "#1a3c5e", "#2d6a2e", "#b8860b"],
                            hole=0.4)
         fig_grade.update_layout(height=300, margin=dict(l=0, r=0, t=10, b=0))
         st.plotly_chart(fig_grade, use_container_width=True)
 
     with grade_col2:
-        st.subheader("Game Performance = 10% of grade")
+        st.subheader("Game Performance = 5% of grade")
         st.markdown("""
         The **final project** (30%) is the biggest single component — it requires:
         - Summary & analysis of your decisions and outcomes during the simulation
         - A projection for the future
         - A **valuation of the business**
 
-        **Key insight:** Game Performance is only 10%, but the Final Project (30%) depends on
-        how well you played. Playing well = better story to tell = higher combined score (40%).
+        **Key insight:** Game Performance is only 5%, but the Final Project (30%) depends on
+        how well you played. Playing well = better story to tell = higher combined score (35%).
         """)
 
     st.markdown("---")
@@ -1370,6 +1370,154 @@ Given: MC=$100, Shipping=$40, Max WTP=$1,000, Footfall=10/day
 **Q19:** Ideal: charge W at cost ($140) + use franchise fees to split profit.
 In practice: W=$200-300 with revenue sharing. Key insight: **double marginalization
 destroys 25% of supply chain profit** when W=$570.
+        """)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 7: PRODUCTION GAME REFERENCE (for Monday)
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("7. Production Game Reference (Monday)")
+    st.caption("Key parameters for the Production Game — different from Monopoly/Trading!")
+
+    with st.expander("**Production Function (Cobb-Douglas)**", expanded=False):
+        st.markdown(r"""
+**Factory throughput:** Y = AK$^{\alpha}$L$^{\beta}$ (yearly), daily: $\lambda$ = AK$^{\alpha}$(l×364)$^{\beta}$ / 364
+
+| Parameter | Value |
+|---|---|
+| A | 0.009 |
+| α (capital exponent) | 0.10 |
+| β (labor exponent) | 0.85 |
+| Starting capital (K) | $100,000 |
+| Starting daily labor (l) | $2,500 |
+| Setup time | 0.05 days |
+| Add-on capex lead time | 30 days |
+| Capital depreciation | 15 years |
+
+**Key insight:** β >> α means labor spending drives throughput far more than capital.
+Increasing daily labor from $2,500 to $5,000 has a much bigger impact than doubling capital.
+        """)
+
+        st.markdown("#### Throughput Calculator")
+        cd_col1, cd_col2 = st.columns(2)
+        with cd_col1:
+            cd_capital = st.number_input("Capital ($)", value=100000, step=10000, key="cd_k")
+            cd_labor = st.number_input("Daily Labor ($/day)", value=2500, step=500, key="cd_l")
+        cd_A, cd_alpha, cd_beta = 0.009, 0.10, 0.85
+        yearly_labor = cd_labor * 364
+        yearly_throughput = cd_A * (cd_capital ** cd_alpha) * (yearly_labor ** cd_beta)
+        daily_throughput = yearly_throughput / 364
+        with cd_col2:
+            st.metric("Daily Throughput", f"{daily_throughput:.2f} units/day")
+            st.metric("Yearly Throughput", f"{yearly_throughput:,.0f} units/year")
+            st.metric("Overhead per Unit", f"${(cd_labor + cd_capital * 0.15/364) / daily_throughput:,.0f}/unit" if daily_throughput > 0 else "N/A")
+
+    with st.expander("**DC & Shipping Costs**", expanded=False):
+        st.markdown("""
+**Distribution Center:**
+
+| Parameter | Value |
+|---|---|
+| Capital | $2,500,000 |
+| Land | $100,000 |
+| Build time | 60 days |
+| Daily expenditure | $2,000 |
+| Handling cost | $10/unit |
+| **Sales commission** | **20% of revenue** |
+| Depreciation | 15 years |
+
+**Shipping (Factory→DC and DC→DC):**
+
+| Mode | Cost | Transit |
+|---|---|---|
+| Container in region | $5,000 / 1,000 units | 7 days |
+| Container between regions | $10,000 / 1,000 units | 21 days |
+| Mail in region | $200 / 10 units | 1 day |
+| Mail between regions | $400 / 10 units | 3 days |
+
+**Key difference from Monopoly Game:** DC takes 20% revenue commission — this significantly
+affects optimal pricing. Effective MC = materials + handling + 20% × price.
+        """)
+
+    with st.expander("**Financial Parameters**", expanded=False):
+        st.markdown("""
+| Parameter | Production Game | Monopoly Game |
+|---|---|---|
+| **Asset cost of capital** | **15% APR** | 10% APR |
+| Emergency loan | 40% APR | 40% APR |
+| Cash interest | 3% APR | 3% APR |
+| Raw materials payable | **30 days** | 15 days |
+| Other payables | 15 days | 30 days |
+| Tax rate | 35% | 35% |
+| Dividends | **6.5% APR after-tax** | N/A |
+| **Return to Investors** | Cash + debt − dividends paid + after-tax return | Cash balance |
+
+**Key differences:** Higher cost of capital (15% vs 10%) makes expansion NPV harder to justify.
+Dividends option available. Return calculation is more complex.
+        """)
+
+    with st.expander("**Market Research — Specialty Markets**", expanded=False):
+        st.markdown("""
+**5 Specialty Market Segments:**
+
+| Market | Core Feature | WTP Range | Market Size/Region | Bass p | Bass q | DSO |
+|---|---|---|---|---|---|---|
+| Clinical Fertility | Hormone (LH) | $130-300 | 40K-60K | 0.00025 | 0.004 | 10 |
+| Clinical Fertility | Hormone (LH/FSH) | $230-400 | 40K-60K | 0.00025 | 0.004 | 10 |
+| Law (Narcotic) | Toxicology | $1,100-1,600 | 5K-15K | 0.00025 | 0.0025 | 90 |
+| MD Cancer (Breast) | Cancer (Base) | $0-900 | 10K-20K | 0.0002 | 0.0035 | 30 |
+| MD Cancer (Breast) | Cancer (Breast) | $900-1,600 | 10K-20K | 0.0002 | 0.0035 | 30 |
+| MD Fertility (Estrogen) | Hormone | $575-965 | 10K-20K | 0.0002 | 0.0035 | 30 |
+| MD Heart (Pulse) | Heartbeat | $0-115 | 20K-40K | 0.0002 | 0.0035 | 30 |
+| MD Heart (Temporal) | Heartbeat | $600-865 | 20K-40K | 0.0002 | 0.0035 | 30 |
+
+**Deal Breakers by Market:**
+- **Fertility:** No battery packs (bulky), slight wrist preference
+- **Law (Narcotic):** MUST have GPS + cellular network
+- **Cancer:** None
+- **Heart:** GPS significantly affects perceived value (safety mechanism)
+
+**Bass Model:** Demand = [p + q × F(t)] × [1 − F(t)] × market_size
+- p = innovation (base adoption rate)
+- q = imitation (word-of-mouth)
+- Advertising adds incremental p per $500/day spent
+        """)
+
+    with st.expander("**Product Design Guide**", expanded=False):
+        st.markdown("""
+| Attribute | Feature | Design Days | Design Cost | Materials $/unit |
+|---|---|---|---|---|
+| **Heartbeat** | None | 3 | $1,000 | $0 |
+| | Pulse only | 15 | $30,000 | $15 |
+| | Temporal | 90 | $135,000 | $25 |
+| **Blood vessel** | None | 3 | $1,000 | $0 |
+| | Systolic only | 30 | $75,000 | $10 |
+| | Systolic & diastolic | 90 | $135,000 | $15 |
+| | Full profile | 120 | $180,000 | $40 |
+| **Dissolved gasses** | None | 3 | $1,000 | $0 |
+| | O2 only | 30 | $75,000 | $15 |
+| | O2, N2, CO2 | 90 | $135,000 | $20 |
+| | Full C, N, O | 90 | $135,000 | $40 |
+| **Toxicology** | None | 3 | $1,000 | $0 |
+| | Ethanol | 30 | $150,000 | $95 |
+| | Amphetamine | 90 | $250,000 | $140 |
+| | THC | 90 | $250,000 | $140 |
+| | Barbiturate | 90 | $250,000 | $140 |
+| | Narcotic | 90 | $250,000 | $140 |
+| **Hormone** | None | 3 | $1,000 | $0 |
+| | LH | 30 | $45,000 | $20 |
+| | LH and FSH | 60 | $75,000 | $50 |
+| | Estrogen | 60 | $75,000 | $60 |
+| | Progesterone | 60 | $75,000 | $60 |
+| | Testosterone | 60 | $75,000 | $50 |
+| **Metabolic** | None | 3 | $1,000 | $0 |
+| | Thyroxine | 90 | $90,000 | $155 |
+| | Bilirubin | 90 | $90,000 | $150 |
+| | Proteins | 90 | $90,000 | $170 |
+| | Uric acid | 90 | $90,000 | $160 |
+
+**Focus Groups:** $20,000, 10 participants, 7 days to complete
         """)
 
 
