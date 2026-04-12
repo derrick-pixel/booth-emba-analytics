@@ -95,13 +95,26 @@ with st.sidebar:
             "⚔️ 12 Trial War Room",
             "🏭 13 Trial War Room",
             "🎮 ISM War Room",
-            "📊 Learning Dashboard",
+            "📖 War Room Prep",
             "🕸️ Knowledge Graph",
+        ],
+        index=0,
+    )
+    st.markdown("")
+    st.caption("📁 Misc")
+    misc_page = st.radio(
+        "Misc",
+        [
+            "— none —",
+            "📊 Learning Dashboard",
             "📈 Content Analytics",
             "🎯 Capstone Prep Hub",
         ],
         index=0,
+        label_visibility="collapsed",
     )
+    if misc_page != "— none —":
+        page = misc_page
     st.markdown("---")
     st.markdown("*Derrick Teo*")
     st.markdown("*Class of 2026*")
@@ -2812,7 +2825,609 @@ elif page == "📈 Content Analytics":
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# PAGE 5: CAPSTONE PREP HUB
+# PAGE: WAR ROOM PREP (ISM Day 0 Readings - 14 docs summarized)
+# ══════════════════════════════════════════════════════════════════════════════
+
+elif page == "📖 War Room Prep":
+    st.markdown('<p class="big-header">War Room Prep</p>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-header">Summarized learnings from 14 ISM Day 0 readings — apply directly to the Gleacher Game</p>',
+                unsafe_allow_html=True)
+    st.markdown("")
+
+    # ── Category Overview ────────────────────────────────────────────────────
+    st.markdown("""
+<div style="background:linear-gradient(135deg,#1a3c5e,#2d5a8e);color:white;
+    border-radius:12px;padding:1.2rem 1.5rem;margin-bottom:1rem;">
+<h4 style="color:#ffd700;margin:0 0 0.5rem 0;">14 readings organized into 4 disciplines</h4>
+<div style="display:flex;gap:2rem;flex-wrap:wrap;">
+<div><b>Strategy</b> (5 docs)<br><span style="opacity:0.8;font-size:0.85rem;">What is Strategy, Strategy Statement, Positioning, 5 Forces, Competitive Advantage</span></div>
+<div><b>Market Dynamics</b> (3 docs)<br><span style="opacity:0.8;font-size:0.85rem;">Corporate Scope, Entry Decisions, Commitment, Price Competition</span></div>
+<div><b>Finance</b> (3 docs)<br><span style="opacity:0.8;font-size:0.85rem;">Capital Allocation, Financial Statements, APV Valuation</span></div>
+<div><b>Operations</b> (2 docs)<br><span style="opacity:0.8;font-size:0.85rem;">Newsvendor Model, Production Inventories</span></div>
+</div>
+</div>
+""", unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # ═══ STRATEGY (5 documents) ═══
+    st.markdown("## 📘 Strategy")
+
+    with st.expander("**1. What Is Strategy? — Michael Porter (HBR 1996)**", expanded=False):
+        st.markdown("""
+### Core Thesis
+**Operational effectiveness ≠ strategy.** Companies compete on both productivity frontier (OE) and strategic positioning.
+OE is necessary but not sufficient — everyone can imitate best practices.
+
+### Key Concepts
+- **Strategic positioning** = performing different activities than rivals OR performing similar activities in different ways
+- **Three bases of positioning:**
+  1. **Variety-based** — subset of industry's products/services (e.g., Jiffy Lube = only oil changes)
+  2. **Needs-based** — serve most needs of a particular customer group (e.g., IKEA for young urban shoppers)
+  3. **Access-based** — reach customers in unusual ways (e.g., rural vs urban)
+- **Trade-offs** are essential — you can't be all things to all people. Activities incompatible with one strategy must be rejected.
+- **Fit** across activities creates sustainable advantage (three types: simple consistency, reinforcing, optimization of effort)
+
+### Gleacher Game Application
+- **Don't chase every market segment** — pick a strategic position (e.g., law enforcement only, or cancer premium only)
+- **Make trade-offs explicit**: If you go premium (Automated Cell, high-WTP markets), you can't also serve low-WTP markets
+- **Activity fit matters**: Your factory technology, product design, pricing, and advertising must all reinforce one strategy
+- **Avoid competitive convergence**: If all 8 teams copy each other's pricing, margins collapse (Bertrand)
+        """)
+
+    with st.expander("**2. Can You Say What Your Strategy Is? — Collis & Rukstad (HBR 2008)**", expanded=False):
+        st.markdown("""
+### Core Thesis
+Most executives cannot articulate their company's strategy in 35 words or fewer. A good strategy statement has three components:
+**Objective + Scope + Advantage**.
+
+### The Framework
+**1. Objective** — Ends (measurable, time-bound goal)
+- Example: "Grow to $1B revenue by 2030" (not "maximize shareholder value")
+
+**2. Scope** — Where you compete
+- Customer segment
+- Geography
+- Vertical integration (how much of value chain)
+
+**3. Competitive Advantage** — Why customers choose you
+- Customer value proposition
+- Unique activities that enable it
+
+### Hierarchy of Company Statements
+- **Mission** (why we exist) → **Values** (what we believe) → **Vision** (what we want to be) → **Strategy** (how we win) → **Balanced scorecard** (implementation)
+
+### Gleacher Game Application
+- **Write your team's strategy statement in 35 words before the game starts**
+- Example: "We will achieve $10M cash by Year 4 by dominating the high-margin law enforcement market in 3 regions through premium-designed narcotic monitors manufactured via Production Line technology."
+- Every decision should reinforce the strategy — if debating a trade deal, ask: "does this fit our 35-word strategy?"
+        """)
+
+    with st.expander("**3. Note on Competitive Positioning**", expanded=False):
+        st.markdown("""
+### Porter's Three Generic Strategies
+Firms must choose one — trying to straddle leads to being "stuck in the middle."
+
+**1. Cost Leadership** — lowest cost producer
+- Tight cost controls, efficient scale facilities, minimization of overhead
+- Works when: price-sensitive customers, commoditized product, large market share possible
+
+**2. Differentiation** — unique product dimensions valued by customers
+- Brand, design, technology, customer service, dealer network
+- Works when: customers value uniqueness, willing to pay premium, imitation is difficult
+
+**3. Focus** — narrow market segment with either cost or differentiation advantage
+- Geographic, demographic, product-use focus
+- Works when: segment has distinct preferences, broad players underserving, size of segment justifies
+
+### Value Chain Analysis
+Every firm performs a collection of activities. Competitive advantage comes from how these activities are linked.
+- **Primary activities:** Inbound logistics → Operations → Outbound logistics → Marketing → Service
+- **Support activities:** Firm infrastructure, HR, technology development, procurement
+
+### Gleacher Game Application
+- **Cost leadership** = Automated Cell, minimal product features, low prices, single market
+- **Differentiation** = premium features, multiple hormones/toxicology, higher WTP markets
+- **Focus** = pick 1-2 market segments (e.g., Law + Military only) and dominate
+- Map your **value chain** — which activities give you advantage? Production tech? Shipping network? Product design?
+        """)
+
+    with st.expander("**4. Note on the Structural Analysis of Industries — Porter's 5 Forces**", expanded=False):
+        st.markdown("""
+### The Five Forces That Shape Industry Competition
+
+**1. Threat of New Entrants**
+- Entry barriers: economies of scale, capital requirements, brand identity, switching costs, distribution access, govt policy
+- **Game relevance:** DC build cost ($2.6M), factory build cost, learning curve on product design
+
+**2. Bargaining Power of Suppliers**
+- High when: few suppliers, no substitutes, buyer is unimportant customer, differentiated inputs
+- **Game relevance:** Materials cost is fixed $100/unit — no supplier power variation
+
+**3. Bargaining Power of Buyers**
+- High when: concentrated buyers, standardized products, low switching costs, price-sensitive
+- **Game relevance:** In the Gleacher Game, retail customers have low power (atomistic), but other teams buying from you in Trading Game have moderate power
+
+**4. Threat of Substitutes**
+- Substitutes limit industry pricing power
+- **Game relevance:** Your product competes against "not buying at all" (customer reservation price)
+
+**5. Rivalry Among Existing Competitors**
+- High when: many/similar competitors, slow growth, high fixed costs, exit barriers, low differentiation
+- **Game relevance:** 8 similar teams, slow-growing market (Bass model caps at M), high fixed costs (factory depreciation) → intense rivalry
+
+### Strategic Implication
+Industry profitability depends on these 5 forces. Defend against forces or shift them in your favor.
+
+### Gleacher Game Application
+- You're in a HIGH-rivalry industry (8 identical teams)
+- **Defensive moves:** product differentiation, geographic focus, long-term trade agreements, brand/advertising
+- **Shift the industry:** first-mover in automated cell, lock in exclusive markets via product features
+        """)
+
+    with st.expander("**5. Creating Competitive Advantage**", expanded=False):
+        st.markdown("""
+### What Creates Competitive Advantage?
+A firm has competitive advantage when it creates **more economic value** than rivals.
+**Economic Value = Willingness to Pay (WTP) − Supplier Opportunity Cost**
+
+### The Value-Price-Cost Framework
+```
+WTP (customer willingness to pay)
+ ↓ captured by customer as consumer surplus
+Price (what customer pays)
+ ↓ captured by firm as producer surplus
+Cost (firm's costs)
+ ↓ captured by suppliers
+Supplier Opportunity Cost
+```
+Firms can gain advantage by:
+1. **Lowering cost** (below rivals)
+2. **Raising WTP** (above rivals through differentiation)
+3. **Both simultaneously** (dual advantage — rare)
+
+### VRIN Resources
+For a resource to create sustainable advantage, it must be:
+- **V**aluable (customer values it)
+- **R**are (rivals don't have it)
+- **I**nimitable (hard to copy)
+- **N**on-substitutable (no alternatives)
+
+### Gleacher Game Application
+- **Your specialty product** (in the Trading Game) has rare/inimitable quality — your region is protected
+- **Raising WTP:** Add more features to products (at cost of design $/day and materials $/unit)
+- **Lowering cost:** Scale up production (Cobb-Douglas shows increasing returns with labor)
+- **Dual advantage:** Only achievable via superior product design AND efficient production technology
+        """)
+
+    st.markdown("---")
+
+    # ═══ MARKET DYNAMICS (3 documents) ═══
+    st.markdown("## 🌐 Market Dynamics")
+
+    with st.expander("**6. Choosing Corporate and Global Scope**", expanded=False):
+        st.markdown("""
+### Three Scope Decisions
+
+**1. Horizontal Scope** — How broad a product/service range?
+- Related diversification → share resources, leverage capabilities
+- Unrelated diversification → risk mitigation, financial synergies only
+
+**2. Vertical Scope** — How much of the value chain to own?
+- Transaction cost economics: make vs. buy depends on asset specificity, uncertainty, frequency
+- Vertical integration reduces transaction costs but adds complexity
+
+**3. Geographic Scope** — How many countries/regions?
+- Entry modes: export, license, JV, wholly-owned subsidiary
+- Trade-offs: local responsiveness vs. global integration
+
+### Corporate Advantage
+Parent must add value beyond what business units could achieve standalone.
+- **Portfolio management:** Cash allocation across BUs
+- **Restructuring:** Turn around underperformers
+- **Transferring skills:** Share capabilities across units
+- **Sharing activities:** Joint operations, distribution
+
+### Gleacher Game Application
+- **Horizontal**: Design multiple products (cancer + heart + fertility) → diversification via features
+- **Vertical**: You own factory + DC — consider building more DCs vs. selling wholesale to other teams (make vs. buy)
+- **Geographic**: Expand DCs to 2-3 regions? NPV depends on 4-year horizon and demand Bass curve timing
+- **Synergy check**: Do new markets share factory capacity? (Yes — factory produces any developed design)
+        """)
+
+    with st.expander("**7. The Pros and Cons of Entering a Market — Chevalier (FT 1999)**", expanded=False):
+        st.markdown("""
+### When to Enter a Market
+Entry creates value if:
+1. Market is growing and profitable
+2. Entry barriers are surmountable
+3. Incumbents will not retaliate aggressively
+4. Your cost or differentiation advantage is sustainable
+
+### Assessing Incumbent Retaliation
+Incumbents retaliate aggressively when:
+- They have **high sunk costs** (can't exit) → fight to defend share
+- Entrant is **small** (cheap to drive out)
+- **Excess capacity** exists (marginal cost pricing possible)
+- **Reputation at stake** (other markets watching)
+
+### Types of Entry
+- **De novo** (build from scratch)
+- **Acquisition** (buy existing player)
+- **Joint venture / alliance** (shared risk)
+
+### Timing Considerations
+- **First-mover advantages:** learning curve, network effects, customer switching costs
+- **First-mover disadvantages:** R&D costs, market education, technology uncertainty
+- **Fast-follower:** learn from pioneer's mistakes, wait for technology to stabilize
+
+### Gleacher Game Application
+- **Entering a new region (DC build) = market entry**: Does the region already have competitors? What's their capacity?
+- **Product design = product line entry**: Adding a new feature creates a "new market"
+- **First-mover in automated cell**: Huge capex commitment ($3M+), but signals permanence and scales with volume
+- **Retaliation**: Be cautious about entering regions where competitors have excess capacity — they'll drop prices
+        """)
+
+    with st.expander("**8. When It Can Be Good to Burn Your Boats — Chevalier (FT 1999)**", expanded=False):
+        st.markdown("""
+### Core Thesis
+**Commitment creates competitive advantage through credibility.** By making irreversible investments, you signal to rivals that you won't back down — which can deter their investment.
+
+### The Logic
+- **Reversible investments** → rivals may doubt your resolve
+- **Sunk costs + capacity** → signal "we're here to stay, compete with us at your peril"
+- In game theory: **credible commitment** changes the equilibrium
+
+### Historic Examples
+- Cortés burning his ships at Vera Cruz (1519) to prevent his men from retreating
+- Airbus's huge capital commitments to A380 to deter Boeing from building competitor
+- Retail chains overbuilding capacity to deter entry
+
+### When to Commit
+- When industry has **winner-take-most** dynamics
+- When you have **superior execution capability**
+- When rival's **best response** to your commitment is to back off
+
+### When Not to Commit
+- Uncertain demand
+- Volatile technology
+- Weak balance sheet (can't weather war of attrition)
+
+### Gleacher Game Application
+- **Building an Automated Cell factory ($3M+ capex)** = burning your boats
+  - Signals you're serious about scale
+  - Irrevocable — cannot recover capex if demand disappoints
+  - Makes competitors think twice before entering your region
+- **Multi-region DC expansion** = commitment to national presence
+- **Product design investment** ($135K+ for Temporal heartbeat) = commitment to that feature set
+- **Warning**: Don't burn boats without demand certainty — with 4-year horizon and Bass uncertainty, wait for signals before huge capex
+        """)
+
+    with st.expander("**9. The Dynamics of Price Competition — Garicano & Gertner (FT 1999)**", expanded=False):
+        st.markdown("""
+### How Price Wars Start
+Price wars emerge from:
+1. **Oversupply** (too much capacity chasing too little demand)
+2. **Perishable inventory** (use-it-or-lose-it)
+3. **Customer heterogeneity** (some willing to shop, others loyal)
+4. **Signaling errors** (misreading competitor's pricing as aggression)
+
+### Price War Dynamics
+- **Bertrand competition**: When products are identical, price → marginal cost (zero economic profit)
+- **Tacit coordination** is fragile — small shocks can trigger defection cascade
+- **Asymmetric firms** (different costs) lead to more stable pricing: low-cost firm sets price
+
+### How to Avoid Price Wars
+1. **Differentiate** — make direct price comparison impossible
+2. **Multi-market contact** — punish defectors across markets
+3. **Meet-the-competition clauses** — signal matching willingness
+4. **Volume discounts** — make pricing less transparent
+5. **Communicate non-aggressively** via industry channels
+
+### How to End a Price War
+- **Recognize** you're in one (many don't)
+- **Signal willingness to cooperate** without explicit collusion
+- **Differentiate quickly** to exit commoditization
+- **Exit the market** if rivals have sustainable cost advantage
+
+### Gleacher Game Application
+- **With 8 similar teams, you're AT RISK of price war every day**
+- **Defensive moves:**
+  - Product differentiation via unique feature combinations
+  - Multi-region presence (deter price cuts in your home)
+  - Wholesale/trade relationships (give competitors skin in the game)
+- **If a price war starts:**
+  - Don't retaliate immediately — may be noise
+  - Consider **inventory/demand signals** before reacting
+  - If prolonged — exit the commoditizing market, focus on high-WTP segments
+        """)
+
+    st.markdown("---")
+
+    # ═══ FINANCE (3 documents) ═══
+    st.markdown("## 💰 Finance")
+
+    with st.expander("**10. Capital Allocation — Morgan Stanley (Dec 2022)**", expanded=False):
+        st.markdown("""
+### The Five Capital Allocation Choices
+Every dollar of free cash flow must be allocated to one of:
+
+**1. Mergers & Acquisitions (M&A)**
+- Should be evaluated on NPV basis — beware overpayment
+- Synergy estimates often overstated
+- Success rate: 50-70% of deals destroy value
+
+**2. Capital Expenditures (CAPEX)**
+- Maintenance capex (replace depreciation) vs. growth capex
+- Hurdle rate: must exceed WACC for value creation
+- Watch for capital cycle — overinvest during booms, underinvest in downturns
+
+**3. Research & Development (R&D)**
+- Long-duration investments with uncertain payoff
+- Firms with high R&D intensity should have longer-term orientation
+
+**4. Share Buybacks**
+- Good when: stock undervalued, excess cash, limited growth options
+- Bad when: using debt to fund buybacks for short-term EPS boost
+- Signals management's view of intrinsic value
+
+**5. Dividends**
+- Signals stability and cash generation
+- Sticky — cutting dividends is painful, seen as distress signal
+
+### The Ranking Matters
+**Best to worst (generally):**
+1. High-NPV organic growth (CAPEX, R&D)
+2. Accretive M&A with clear synergies
+3. Share buybacks below intrinsic value
+4. Dividends
+5. Dilutive M&A, buybacks above value
+
+### Gleacher Game Application
+**Your capital allocation choices:**
+- **Organic CAPEX**: Build new factory / DC / upgrade technology
+- **R&D**: Product design (use focus groups, develop features)
+- **Debt vs Equity**: Issue bonds (10-25% APR) vs. retain earnings
+- **Dividends**: 6.5% after-tax return on dividends paid — small positive adjustment to return to investors
+
+**Rule of thumb:** Only invest if NPV > 0 at 15% cost of capital AND payback within remaining game horizon.
+        """)
+
+    with st.expander("**11. Financial Statement Analysis**", expanded=False):
+        st.markdown("""
+### The Three Statements
+**Income Statement** — Performance over a period
+- Revenue → Gross Profit → Operating Income (EBIT) → Net Income
+
+**Balance Sheet** — Position at a moment
+- Assets = Liabilities + Equity
+- Working capital = Current assets - Current liabilities
+
+**Cash Flow Statement** — Reconciles net income to cash
+- Operating + Investing + Financing = Change in cash
+
+### Key Ratios to Monitor
+
+**Profitability:**
+- Gross Margin = (Revenue - COGS) / Revenue
+- Operating Margin = EBIT / Revenue
+- Net Margin = Net Income / Revenue
+- ROA = Net Income / Total Assets
+- ROE = Net Income / Shareholders' Equity
+
+**Efficiency:**
+- Inventory Turnover = COGS / Inventory
+- Days Inventory Outstanding = 365 / Inventory Turnover
+- Days Sales Outstanding (DSO) = AR / (Revenue / 365)
+- Asset Turnover = Revenue / Total Assets
+
+**Liquidity:**
+- Current Ratio = Current Assets / Current Liabilities (> 1.0 is healthy)
+- Quick Ratio = (Cash + AR) / Current Liabilities
+- Cash Ratio = Cash / Current Liabilities
+
+**Leverage:**
+- Debt/Equity = Total Debt / Equity
+- Interest Coverage = EBIT / Interest Expense (>= 7× for Good rating in Gleacher)
+
+### DuPont Decomposition
+**ROE = Net Margin × Asset Turnover × Financial Leverage**
+= (Net Income/Revenue) × (Revenue/Assets) × (Assets/Equity)
+
+### Gleacher Game Application
+- **Monitor your quarterly income statement** — see which markets drive profit
+- **Watch interest coverage** — Gleacher uses this for bond rating (20× = Excellent, 7× = Good, 2× = Poor)
+- **DSO management** — Law market has 90 days, Medical has 30 days — affects working capital
+- **Current ratio > 1.0** always — avoid emergency loans at 40% APR
+        """)
+
+    with st.expander("**12. Note on Adjusted Present Value (APV)**", expanded=False):
+        st.markdown("""
+### APV vs. WACC Valuation
+Two methods for valuing a leveraged firm:
+
+**WACC Method:**
+- Discount unlevered FCF at WACC
+- WACC reflects benefit of debt (via lower tax-adjusted rate)
+- **Assumes constant capital structure**
+
+**APV Method:**
+- Step 1: Value as if all-equity (discount at unlevered cost of capital)
+- Step 2: Add PV of interest tax shields separately
+- **Formula: APV = NPV(all-equity) + PV(tax shield)**
+
+### When APV is Better
+- When capital structure changes over time (LBOs, project finance)
+- When the firm has significant net operating losses
+- When debt is tied to specific projects
+
+### The Tax Shield Value
+- Interest expense is tax-deductible
+- PV of tax shield = Debt × Tax rate (Modigliani-Miller)
+- In reality: tax shield depends on ability to use deductions, risk of financial distress
+
+### Practical Steps
+1. Calculate unlevered FCF
+2. Find unlevered cost of equity (remove debt effect from beta)
+3. Discount FCF at unlevered cost → get unlevered value
+4. Calculate PV of tax shields (often at debt's cost, not unlevered)
+5. Sum: APV = Unlevered Value + PV(Tax Shield)
+
+### Gleacher Game Application
+- **Valuing your firm for the final project report** — use APV
+- **Unlevered value** = PV of operating cash flows at 15% (asset cost of capital)
+- **Tax shield** = PV of (interest × 35%) — straightforward with bonds
+- **Capital structure changes** as you issue/retire bonds — APV handles this cleanly
+- **Distress risk** is real with emergency loans at 40% — apply a distress discount in final year projection
+        """)
+
+    st.markdown("---")
+
+    # ═══ OPERATIONS (2 documents) ═══
+    st.markdown("## ⚙️ Operations")
+
+    with st.expander("**13. Managing Inventories: The Newsvendor Model**", expanded=False):
+        st.markdown("""
+### The Core Problem
+How much inventory to order when:
+- Demand is uncertain
+- Overages (too much inventory) cost money
+- Underages (stockouts) cost money
+- Only one order is possible before demand realizes
+
+### The Critical Fractile Formula
+Optimal order quantity Q* satisfies:
+
+> **P(demand ≤ Q*) = Cu / (Cu + Co)**
+
+Where:
+- **Cu** = underage cost (lost margin per unsold unit) = Price − Cost
+- **Co** = overage cost (cost per unsold unit) = Cost − Salvage Value
+- **P(demand ≤ Q*)** = service level
+
+### Interpretation
+- If Cu >> Co → order a lot (high service level, say 95%)
+- If Co >> Cu → order little (low service level)
+
+### Extension: Normal Demand
+If demand ~ N(μ, σ), then Q* = μ + z × σ
+- z is the z-score for the critical fractile
+- z = 1.65 for 95% service level
+- z = 1.96 for 97.5%
+- z = 2.33 for 99%
+
+### Service Level Decision
+- **Higher SL = more safety stock = more holding cost but fewer stockouts**
+- **Optimal SL = Cu / (Cu + Co)**
+- Example: margin=$200, cost=$100, salvage=$0 → SL = 200/(200+100) = 67%
+
+### Gleacher Game Application
+- **Reorder point** is the newsvendor extension to continuous review:
+  - Reorder Point = μ_demand_during_lead_time + z × σ_demand_during_lead_time
+  - This is exactly what the Trial War Room calculates!
+- **End-of-game wind-down**: Newsvendor problem with salvage = $0
+  - At game end, all inventory obsolete → Co = full cost
+  - Cu = foregone margin
+  - Optimal order: minimal buffer in last lead-time window
+- **Fire-sale pricing**: If you have excess inventory late-game, drop price to move units before Co realizes
+        """)
+
+    with st.expander("**14. Note on Production Inventories**", expanded=False):
+        st.markdown("""
+### Types of Inventory
+1. **Raw materials** — inputs waiting to be processed
+2. **Work-in-process (WIP)** — partially completed goods
+3. **Finished goods** — ready for sale
+
+### Why Hold Inventory? (Four Reasons)
+1. **Pipeline (transit) inventory** — needed due to lead time
+2. **Cycle stock** — economies of scale in ordering/producing
+3. **Safety stock** — buffer against demand/supply uncertainty
+4. **Anticipation inventory** — planned for future demand peaks
+
+### The EOQ (Economic Order Quantity) Model
+When demand is constant and known, optimal order size balances:
+- Ordering cost (fixed cost per order)
+- Holding cost (per unit per period)
+
+**EOQ = √(2 × D × S / H)**
+Where D = annual demand, S = ordering cost, H = holding cost per unit per year
+
+### Little's Law
+**Inventory = Throughput × Cycle Time**
+
+Corollaries:
+- Want lower inventory? Reduce cycle time
+- Want higher throughput? Relax inventory constraint
+
+### Key Cost Trade-offs
+- **Ordering frequency vs. batch size** (EOQ)
+- **Safety stock vs. stockout cost** (newsvendor)
+- **Cycle time vs. inventory levels** (Little's Law)
+- **Inventory vs. capacity** (add capacity to reduce cycle time)
+
+### Inventory Performance Metrics
+- **Inventory Turnover** = COGS / Avg Inventory (higher = more efficient)
+- **Days of Supply** = Inventory / Daily Demand
+- **Fill Rate** = Orders fulfilled from stock / Total orders
+
+### Gleacher Game Application
+- **Pipeline inventory**: WIP + in-transit is real inventory — your system tracks this
+- **Cycle stock**: Batch size of 100 units (changeable) — balances setup cost vs holding
+- **Safety stock**: Use newsvendor formula — already built into the Trial War Room
+- **Little's Law**: Factory throughput × cycle time = WIP inventory
+  - Cobb-Douglas gives you throughput
+  - Cycle time = batch time + setup
+  - WIP = throughput × cycle time
+- **Inventory costs in Gleacher**: No explicit holding cost in game, BUT obsolescence at game end IS the ultimate holding cost
+        """)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # INTEGRATED GAME PLAYBOOK
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("Integrated Game Playbook — Apply All 14 Readings")
+
+    st.markdown("""
+<div style="background:linear-gradient(135deg,#800000,#b22222);color:white;
+    border-radius:12px;padding:1.5rem;margin:1rem 0;">
+<h4 style="color:#ffd700;margin-top:0;">Your 35-Word Strategy Template (Collis & Rukstad)</h4>
+<p style="font-style:italic;opacity:0.9;">"We will [OBJECTIVE: measurable goal by Year X]
+by [SCOPE: which markets, which products, which regions]
+through [ADVANTAGE: how you win — cost? differentiation? focus?]."</p>
+<p style="margin-bottom:0;"><b>Example for Team Panem:</b><br>
+"We will reach $15M cash by end of Year 4 by dominating the high-margin Law Enforcement
+market in 3 regions through premium narcotic monitors produced via Automated Cell technology."</p>
+</div>
+""", unsafe_allow_html=True)
+
+    st.markdown("""
+### Decision Checklist — Run Every Major Move Through This
+
+| Decision | Key Reading | Test |
+|---|---|---|
+| Market selection | Competitive Positioning, 5 Forces | Is this a focused position with low rivalry? |
+| Entering new region | Entry Decisions | Will incumbents retaliate? Can we win? |
+| Product design | Creating Competitive Advantage | Does it raise WTP vs rivals? VRIN? |
+| Factory tech choice | Production Inventories, Burn Boats | Does scale justify commitment? |
+| Pricing | Price Competition | Avoid Bertrand — differentiate |
+| Reorder point | Newsvendor | z × √(Np(1-p)L) at chosen service level |
+| CAPEX decision | Capital Allocation | NPV > 0 at 15%? Payback in horizon? |
+| Debt issuance | Financial Statements | Coverage ratio for Excellent rating? |
+| End-game wind-down | Newsvendor (Co = full cost) | Fire-sale before obsolescence |
+| Final valuation | APV | Unlevered FCF + PV(tax shield) |
+    """)
+
+    st.info("""
+**The capstone insight:** These 14 readings are not separate topics — they're lenses on the same problem.
+Every game decision touches strategy + finance + operations + market dynamics simultaneously.
+That's why ISM exists — to force you to integrate.
+    """)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE 5: CAPSTONE PREP HUB (now in Misc)
 # ══════════════════════════════════════════════════════════════════════════════
 
 elif page == "🎯 Capstone Prep Hub":
