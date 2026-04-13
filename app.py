@@ -1985,12 +1985,14 @@ Accounts receivable growing from $0 → $240K — customers pay after some DSO.
     st.markdown("---")
 
     # ══════════════════════════════════════════════════════════════════════════
-    # SECTION 2: COBB-DOUGLAS PRODUCTION CALCULATOR (3 TECHNOLOGIES)
+    # SECTION 2: COBB-DOUGLAS PRODUCTION CALCULATOR (custom α,β + Little's Law)
     # ══════════════════════════════════════════════════════════════════════════
-    st.subheader("2. Production Technology Comparator")
-    st.caption("λ = A × K^α × (l × 364)^β / 364 — compare Bench, Production Line, Automated Cell")
+    st.subheader("2. Cobb-Douglas Production + Little's Law Calculator")
+    st.caption("Custom α, β, K, L inputs → yearly & daily throughput → cycle time → inventory via Little's Law")
 
     PROD_TECH = {
+        "Custom": {"A": 0.009, "alpha": 0.10, "beta": 0.85, "setup": 0.05, "min_K": 0,
+                    "desc": "Set your own A, α, β, setup time."},
         "Benches": {"A": 0.009, "alpha": 0.10, "beta": 0.85, "setup": 0.05, "min_K": 0,
                     "desc": "General-purpose, skilled workers. Labor-intensive."},
         "Production Line": {"A": 0.010, "alpha": 0.30, "beta": 0.75, "setup": 0.50, "min_K": 500000,
@@ -1999,55 +2001,200 @@ Accounts receivable growing from $0 → $240K — customers pay after some DSO.
                             "desc": "Capital-intensive automation. Robots over humans."},
     }
 
-    tech_col1, tech_col2 = st.columns([1, 2])
-    with tech_col1:
-        pt_capital = st.number_input("Capital Invested ($)", value=100000, step=50000, key="pt_k")
-        pt_labor = st.number_input("Daily Labor ($/day)", value=2500, step=500, key="pt_l")
-        pt_batch = st.number_input("Batch Size (units)", value=100, step=10, key="pt_batch")
+    # ── Preset selector + custom overrides ───────────────────────────────────
+    preset_col1, preset_col2 = st.columns([1, 3])
+    with preset_col1:
+        cd_preset = st.selectbox("Technology Preset", list(PROD_TECH.keys()),
+                                   index=1, key="cd_preset")
+    with preset_col2:
+        st.caption(f"**{PROD_TECH[cd_preset]['desc']}** — You can override A, α, β, setup below to model a custom technology.")
 
-    with tech_col2:
-        tech_data = []
-        for tech_name, params in PROD_TECH.items():
-            if pt_capital < params["min_K"]:
-                tech_data.append({
-                    "Technology": tech_name,
-                    "Daily Throughput": "N/A",
-                    "Batch Time": "N/A",
-                    "Cycle (w/ setup)": "N/A",
-                    "Note": f"Min capital ${params['min_K']:,}",
-                })
-            else:
-                yearly = params["A"] * (pt_capital ** params["alpha"]) * ((pt_labor * 364) ** params["beta"])
-                daily = yearly / 364
-                batch_days = pt_batch / daily if daily > 0 else float("inf")
-                cycle_days = batch_days + params["setup"]
-                tech_data.append({
-                    "Technology": tech_name,
-                    "Daily Throughput": f"{daily:.2f} units/day",
-                    "Batch Time": f"{batch_days:.2f} days",
-                    "Cycle (w/ setup)": f"{cycle_days:.2f} days",
-                    "Note": params["desc"],
-                })
-        st.dataframe(pd.DataFrame(tech_data), use_container_width=True, hide_index=True)
+    preset = PROD_TECH[cd_preset]
 
-        # Sensitivity: throughput vs labor for each tech
-        labor_range = np.linspace(1000, 15000, 30)
-        fig_tech = go.Figure()
-        for tech_name, params in PROD_TECH.items():
-            if pt_capital >= params["min_K"]:
-                throughputs = params["A"] * (pt_capital ** params["alpha"]) * ((labor_range * 364) ** params["beta"]) / 364
-                fig_tech.add_trace(go.Scatter(x=labor_range, y=throughputs, name=tech_name, mode="lines"))
-        fig_tech.update_layout(height=300, xaxis_title="Daily Labor Spend ($)",
-                                yaxis_title="Daily Throughput (units)",
-                                margin=dict(l=0, r=0, t=30, b=0),
-                                title=f"Throughput vs Labor (K=${pt_capital:,})")
-        st.plotly_chart(fig_tech, use_container_width=True)
+    # ── Custom parameter inputs ──────────────────────────────────────────────
+    st.markdown("**Cobb-Douglas Parameters** (Y = A × K^α × L^β)")
+    cd_p_col1, cd_p_col2, cd_p_col3, cd_p_col4 = st.columns(4)
+    with cd_p_col1:
+        cd_A = st.number_input("A (total factor productivity)",
+                                 value=float(preset["A"]), step=0.001, format="%.4f", key="cd_A")
+    with cd_p_col2:
+        cd_alpha = st.number_input("α (capital exponent)",
+                                     value=float(preset["alpha"]), step=0.05, format="%.2f", key="cd_alpha",
+                                     help="Sensitivity of output to capital. 0=none, 1=linear.")
+    with cd_p_col3:
+        cd_beta = st.number_input("β (labor exponent)",
+                                    value=float(preset["beta"]), step=0.05, format="%.2f", key="cd_beta",
+                                    help="Sensitivity of output to labor. 0=none, 1=linear.")
+    with cd_p_col4:
+        cd_setup = st.number_input("Setup time (days)",
+                                     value=float(preset["setup"]), step=0.05, format="%.2f", key="cd_setup")
 
-    st.info("""
-**Technology choice cheat sheet:**
-- **Benches (β=0.85):** Labor drives output. Cheap capital, expensive labor. Small scale.
-- **Production Line (β=0.75):** Balanced. Moderate capital, moderate labor. Medium scale.
-- **Automated Cell (β=0.30, α=0.80):** Capital drives output. Huge upfront but scales with capex. Large scale.
+    # ── Inputs ────────────────────────────────────────────────────────────────
+    st.markdown("**Factory Inputs**")
+    cd_col1, cd_col2, cd_col3, cd_col4 = st.columns(4)
+    with cd_col1:
+        cd_K = st.number_input("K — Capital ($)", value=100000, step=10000, key="cd_K")
+    with cd_col2:
+        cd_l = st.number_input("l — Daily Labor ($/day)", value=2500, step=100, key="cd_l")
+    with cd_col3:
+        cd_batch = st.number_input("Batch Size (units)", value=100, step=10, key="cd_batch")
+    with cd_col4:
+        cd_days_per_year = st.number_input("Days per Year", value=364, step=1, key="cd_dpy")
+
+    # ── Core Cobb-Douglas calculations ───────────────────────────────────────
+    cd_L_yearly = cd_l * cd_days_per_year  # L = l × 364 (yearly labor)
+    cd_Y_yearly = cd_A * (cd_K ** cd_alpha) * (cd_L_yearly ** cd_beta)  # yearly output
+    cd_lambda_raw = cd_Y_yearly / cd_days_per_year  # daily throughput before setup
+
+    # Little's Law + setup time
+    cd_batch_time = cd_batch / cd_lambda_raw if cd_lambda_raw > 0 else float("inf")
+    cd_CT = cd_batch_time + cd_setup  # cycle time = batch time + setup
+    cd_lambda_eff = cd_batch / cd_CT if cd_CT > 0 else 0  # daily throughput with setup
+    cd_WIP = cd_lambda_eff * cd_CT  # Little's Law: inventory = throughput × cycle time
+
+    # Returns to scale
+    cd_alpha_plus_beta = cd_alpha + cd_beta
+
+    # ── Results display ──────────────────────────────────────────────────────
+    st.markdown("---")
+    result_col1, result_col2, result_col3 = st.columns(3)
+
+    with result_col1:
+        st.markdown("### 📐 Cobb-Douglas Output")
+        st.metric("Yearly Production (Y)", f"{cd_Y_yearly:,.0f} units/yr",
+                   help="Y = A × K^α × L^β where L = daily labor × 364")
+        st.metric("Daily Throughput Raw (λ)", f"{cd_lambda_raw:.2f} units/day",
+                   help="λ = Y / 364 — before setup time adjustment")
+        st.caption(f"Formula: Y = {cd_A:.4f} × {cd_K:,}^{cd_alpha:.2f} × ({cd_l:,}×{cd_days_per_year})^{cd_beta:.2f}")
+        st.caption(f"= {cd_A:.4f} × {cd_K**cd_alpha:,.2f} × {cd_L_yearly**cd_beta:,.0f}")
+        st.caption(f"= {cd_Y_yearly:,.0f} units/year")
+
+        # Returns to scale interpretation
+        if cd_alpha_plus_beta > 1.02:
+            rts_color = "#2d6a2e"
+            rts_label = "Increasing returns"
+        elif cd_alpha_plus_beta < 0.98:
+            rts_color = "#b22222"
+            rts_label = "Decreasing returns"
+        else:
+            rts_color = "#b8860b"
+            rts_label = "Constant returns"
+        st.markdown(f'<div style="color:{rts_color};font-weight:bold;">α + β = {cd_alpha_plus_beta:.2f} → {rts_label}</div>',
+                     unsafe_allow_html=True)
+
+    with result_col2:
+        st.markdown("### ⏱️ Cycle Time")
+        st.metric("Batch Production Time", f"{cd_batch_time:.3f} days",
+                   help=f"batch / λ_raw = {cd_batch} / {cd_lambda_raw:.2f}")
+        st.metric("Setup Time", f"{cd_setup:.3f} days")
+        st.metric("Cycle Time (CT)", f"{cd_CT:.3f} days",
+                   help="CT = batch time + setup time")
+        st.caption("The total time from when one batch starts production until the next batch can start.")
+
+    with result_col3:
+        st.markdown("### 📦 Little's Law: INV = λ × CT")
+        st.metric("Daily Throughput w/ Setup (λ)", f"{cd_lambda_eff:.2f} units/day",
+                   help="λ_effective = batch / CT")
+        st.metric("Average WIP Inventory", f"{cd_WIP:.1f} units",
+                   help="INV = λ × CT — average units in the production system")
+        # Compare to batch size
+        if cd_WIP < cd_batch:
+            st.caption(f"WIP ({cd_WIP:.1f}) < batch ({cd_batch}) → factory doesn't accumulate backlog")
+        else:
+            st.caption(f"WIP ({cd_WIP:.1f}) ≈ batch ({cd_batch}) → factory runs continuously")
+
+    # ── Step-by-step formula trace ───────────────────────────────────────────
+    with st.expander("**Step-by-step formula trace**", expanded=False):
+        st.markdown(f"""
+### Cobb-Douglas Production Function
+
+**Yearly production** (the textbook form):
+$$Y = A \\cdot K^{{\\alpha}} \\cdot L^{{\\beta}}$$
+
+where:
+- Y = yearly output (units/year)
+- A = {cd_A:.4f} (total factor productivity)
+- K = ${cd_K:,} (capital invested in factory, excludes land)
+- α = {cd_alpha:.2f} (capital exponent)
+- L = ${cd_L_yearly:,} (yearly labor = daily labor × {cd_days_per_year})
+- β = {cd_beta:.2f} (labor exponent)
+
+**Calculation:**
+Y = {cd_A:.4f} × ({cd_K:,})^{cd_alpha:.2f} × ({cd_L_yearly:,})^{cd_beta:.2f}
+Y = {cd_A:.4f} × {cd_K**cd_alpha:,.2f} × {cd_L_yearly**cd_beta:,.2f}
+Y = **{cd_Y_yearly:,.0f} units/year**
+
+**Daily throughput (raw, without setup):**
+$$\\lambda_{{raw}} = \\frac{{Y}}{{364}} = \\frac{{{cd_Y_yearly:,.0f}}}{{{cd_days_per_year}}} = {cd_lambda_raw:.4f} \\text{{ units/day}}$$
+
+---
+
+### Little's Law: INV = λ × CT
+
+**Cycle Time** (time to produce one batch + setup):
+$$CT = \\frac{{batch}}{{\\lambda_{{raw}}}} + setup = \\frac{{{cd_batch}}}{{{cd_lambda_raw:.2f}}} + {cd_setup:.2f} = {cd_CT:.3f} \\text{{ days}}$$
+
+**Effective daily throughput** (accounting for setup):
+$$\\lambda_{{eff}} = \\frac{{batch}}{{CT}} = \\frac{{{cd_batch}}}{{{cd_CT:.3f}}} = {cd_lambda_eff:.2f} \\text{{ units/day}}$$
+
+**Average WIP Inventory** (Little's Law):
+$$INV = \\lambda_{{eff}} \\times CT = {cd_lambda_eff:.2f} \\times {cd_CT:.3f} = {cd_WIP:.1f} \\text{{ units}}$$
+
+*Note: INV ≈ batch size by construction when factory runs continuously with this model.*
+        """)
+
+    # ── Sensitivity: Daily throughput and WIP over K and L ───────────────────
+    sens_col1, sens_col2 = st.columns(2)
+    with sens_col1:
+        # Throughput vs Labor
+        labor_range = np.linspace(max(500, cd_l * 0.2), cd_l * 4, 30)
+        thp_vs_l = [(cd_A * (cd_K ** cd_alpha) * ((l * cd_days_per_year) ** cd_beta) / cd_days_per_year)
+                     for l in labor_range]
+        # Apply setup correction
+        eff_thp_vs_l = [(cd_batch / (cd_batch / t + cd_setup)) if t > 0 else 0 for t in thp_vs_l]
+
+        fig_l = go.Figure()
+        fig_l.add_trace(go.Scatter(x=labor_range, y=thp_vs_l, name="Raw λ",
+                                     line=dict(color="#1a3c5e", width=2, dash="dash")))
+        fig_l.add_trace(go.Scatter(x=labor_range, y=eff_thp_vs_l, name="Effective λ (w/ setup)",
+                                     line=dict(color="#800000", width=2.5)))
+        fig_l.add_vline(x=cd_l, line_dash="dot", line_color="gray",
+                         annotation_text=f"Current L=${cd_l}")
+        fig_l.update_layout(height=300, xaxis_title="Daily Labor ($)",
+                             yaxis_title="Daily Throughput (units)",
+                             title="Throughput vs Labor",
+                             margin=dict(l=0, r=0, t=40, b=0),
+                             legend=dict(orientation="h", yanchor="bottom", y=1.02))
+        st.plotly_chart(fig_l, use_container_width=True)
+
+    with sens_col2:
+        # Throughput vs Capital
+        k_range = np.linspace(max(50000, cd_K * 0.2), cd_K * 4, 30)
+        thp_vs_k = [(cd_A * (k ** cd_alpha) * ((cd_l * cd_days_per_year) ** cd_beta) / cd_days_per_year)
+                     for k in k_range]
+        eff_thp_vs_k = [(cd_batch / (cd_batch / t + cd_setup)) if t > 0 else 0 for t in thp_vs_k]
+
+        fig_k = go.Figure()
+        fig_k.add_trace(go.Scatter(x=k_range, y=thp_vs_k, name="Raw λ",
+                                     line=dict(color="#1a3c5e", width=2, dash="dash")))
+        fig_k.add_trace(go.Scatter(x=k_range, y=eff_thp_vs_k, name="Effective λ (w/ setup)",
+                                     line=dict(color="#800000", width=2.5)))
+        fig_k.add_vline(x=cd_K, line_dash="dot", line_color="gray",
+                         annotation_text=f"Current K=${cd_K:,}")
+        fig_k.update_layout(height=300, xaxis_title="Capital ($)",
+                             yaxis_title="Daily Throughput (units)",
+                             title="Throughput vs Capital",
+                             margin=dict(l=0, r=0, t=40, b=0),
+                             legend=dict(orientation="h", yanchor="bottom", y=1.02),
+                             xaxis_tickformat="$,.0f")
+        st.plotly_chart(fig_k, use_container_width=True)
+
+    st.info(f"""
+**Interpretation for current inputs:**
+- **α + β = {cd_alpha_plus_beta:.2f}** → {"Increasing" if cd_alpha_plus_beta > 1.02 else ("Decreasing" if cd_alpha_plus_beta < 0.98 else "Constant")} returns to scale
+- **α/β = {cd_alpha/cd_beta if cd_beta > 0 else 0:.2f}** → {"Capital-dominant" if cd_alpha > cd_beta else "Labor-dominant"} technology. Invest more in {"capital" if cd_alpha > cd_beta else "labor"}.
+- **Setup drag:** {cd_setup / cd_CT * 100:.1f}% of cycle time is setup. To reduce drag, increase batch size.
+- **WIP = {cd_WIP:.1f} units** — this is what you'll see as "Inventory in Process" in your HQ panel.
     """)
 
     st.markdown("---")
