@@ -2020,46 +2020,148 @@ elif page == "🏭 13 Trial War Room":
                        "Uric acid": (90, 90000, 160)},
     }
 
-    pd_col1, pd_col2 = st.columns([1, 1])
-    with pd_col1:
-        st.markdown("**Select Features**")
-        selected_features = {}
-        for attr, options in FEATURES.items():
-            selected_features[attr] = st.selectbox(attr, list(options.keys()), key=f"pd_{attr}")
+    # Global settings row
+    pd_config_col1, pd_config_col2 = st.columns([1, 3])
+    with pd_config_col1:
+        pd_n = st.number_input("Products to design", min_value=1, max_value=4,
+                                value=2, step=1, key="pd_n")
+    with pd_config_col2:
+        st.caption("Design multiple product variants side-by-side. Pick different feature "
+                   "combinations, see break-even comparison, and decide which product to develop.")
 
-        total_design_days = max(FEATURES[attr][selected_features[attr]][0] for attr in FEATURES)
-        total_design_cost = sum(FEATURES[attr][selected_features[attr]][1] for attr in FEATURES)
-        total_materials = sum(FEATURES[attr][selected_features[attr]][2] for attr in FEATURES)
+    # Default presets for quick comparison
+    PRESETS = {
+        "A — Heart View (flagship)": {
+            "Heartbeat": "Temporal", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "price": 700,
+        },
+        "B — Estrogen monitor (minimal)": {
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "Estrogen", "Metabolic": "None",
+            "price": 731,
+        },
+        "C — Narcotic law device": {
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "Narcotic",
+            "Hormone": "None", "Metabolic": "None",
+            "price": 1350,
+        },
+        "D — Cancer premium": {
+            "Heartbeat": "Pulse only", "Blood vessel": "Systolic only",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "price": 1200,
+        },
+    }
+    preset_keys = list(PRESETS.keys())
 
-    with pd_col2:
-        st.markdown("**Design Cost Summary**")
-        design_df_data = []
-        for attr, feature_name in selected_features.items():
-            days, cost, mat = FEATURES[attr][feature_name]
-            design_df_data.append({
-                "Attribute": attr,
-                "Feature": feature_name,
-                "Days": days,
-                "Design Cost": f"${cost:,}",
-                "Materials $/unit": f"${mat}",
+    st.markdown("---")
+    pd_cols = st.columns(int(pd_n))
+    pd_results = []
+    for i, col in enumerate(pd_cols):
+        with col:
+            # Preset picker
+            preset_default_idx = min(i, len(preset_keys) - 1)
+            preset_sel = st.selectbox(f"Preset for Product {i+1}", preset_keys,
+                                       index=preset_default_idx, key=f"pd_preset_{i}")
+            preset = PRESETS[preset_sel]
+
+            st.markdown(f"**Product {i+1} Features**")
+            selected = {}
+            for attr, options in FEATURES.items():
+                default_feat = preset[attr]
+                default_idx = list(options.keys()).index(default_feat) if default_feat in options else 0
+                selected[attr] = st.selectbox(attr, list(options.keys()),
+                                               index=default_idx,
+                                               key=f"pd_{attr}_{i}")
+
+            total_days = max(FEATURES[attr][selected[attr]][0] for attr in FEATURES)
+            total_cost = sum(FEATURES[attr][selected[attr]][1] for attr in FEATURES)
+            total_mat = sum(FEATURES[attr][selected[attr]][2] for attr in FEATURES)
+
+            pd_target_price = st.number_input("Target Retail Price ($)",
+                                                value=preset["price"], step=25,
+                                                key=f"pd_price_{i}")
+            pd_daily_sales = st.number_input("Est. Daily Sales",
+                                               value=5, step=1,
+                                               key=f"pd_sales_{i}")
+
+            pd_margin = pd_target_price * (1 - comm_frac) - PG_HANDLING_COST - total_mat
+            pd_break_days = (total_cost / (pd_margin * pd_daily_sales)
+                              if pd_margin > 0 and pd_daily_sales > 0 else float("inf"))
+
+            st.metric("Design Time", f"{total_days} days")
+            st.metric("Design Cost", f"${total_cost:,}")
+            st.metric("Materials / Unit", f"${total_mat}")
+            st.metric("Unit Margin", f"${pd_margin:.0f}",
+                       help=f"Price × 80% − ${PG_HANDLING_COST} handling − ${total_mat} materials")
+            if pd_break_days < float("inf"):
+                st.metric("Break-even", f"{pd_break_days:.0f} days",
+                           delta=f"{pd_break_days/30:.1f} months",
+                           delta_color="off")
+            else:
+                st.error("Negative margin")
+
+            # Feature summary in expander
+            with st.expander("Feature breakdown", expanded=False):
+                feat_df = []
+                for attr, feat in selected.items():
+                    d, c, m = FEATURES[attr][feat]
+                    feat_df.append({"Attribute": attr, "Feature": feat,
+                                     "Days": d, "Cost": f"${c:,}", "Mat $/u": f"${m}"})
+                st.dataframe(pd.DataFrame(feat_df), use_container_width=True, hide_index=True)
+
+            pd_results.append({
+                "Product": f"P{i+1}: {preset_sel}",
+                "Features": ", ".join(f"{a[:4]}:{f}" for a, f in selected.items() if f != "None") or "None",
+                "Days": total_days,
+                "Design $": f"${total_cost:,}",
+                "Mat/u": f"${total_mat}",
+                "Price": f"${pd_target_price}",
+                "Margin/u": f"${pd_margin:.0f}",
+                "Break-even": f"{pd_break_days:.0f}d" if pd_break_days < float("inf") else "N/A",
             })
-        st.dataframe(pd.DataFrame(design_df_data), use_container_width=True, hide_index=True)
 
-        st.metric("Total Design Time", f"{total_design_days} days (max, not sum)")
-        st.metric("Total Design Cost", f"${total_design_cost:,}")
-        st.metric("Materials Cost/Unit", f"${total_materials}")
+    # Side-by-side summary comparison
+    st.markdown("---")
+    st.markdown("**Product Comparison Summary**")
+    st.dataframe(pd.DataFrame(pd_results), use_container_width=True, hide_index=True)
 
-        # Break-even
-        pd_target_price = st.number_input("Target Retail Price ($)", value=600, step=50, key="pd_price")
-        pd_daily_sales = st.number_input("Est. Daily Sales", value=5, step=1, key="pd_sales")
-        pd_margin_per_unit = pd_target_price * (1 - comm_frac) - PG_HANDLING_COST - total_materials
-        pd_days_to_break = total_design_cost / (pd_margin_per_unit * pd_daily_sales) if pd_margin_per_unit > 0 and pd_daily_sales > 0 else float("inf")
-
-        st.metric("Unit Margin (net of 20% comm + $10 handling)", f"${pd_margin_per_unit:.0f}")
-        if pd_days_to_break < float("inf"):
-            st.metric("Break-even Days (design cost only)", f"{pd_days_to_break:.0f} days ({pd_days_to_break/30:.1f} months)")
-        else:
-            st.error("Negative unit margin — price too low or costs too high")
+    # Visualize: Design cost vs break-even days
+    if len(pd_results) > 1:
+        viz_data = []
+        for i, r in enumerate(pd_results):
+            try:
+                design_val = int(r["Design $"].replace("$", "").replace(",", ""))
+                be_str = r["Break-even"]
+                if be_str != "N/A":
+                    be_val = int(be_str.replace("d", ""))
+                    viz_data.append({"product": f"P{i+1}",
+                                      "design_cost": design_val,
+                                      "break_even_days": be_val,
+                                      "name": r["Product"]})
+            except Exception:
+                pass
+        if viz_data:
+            fig_pd = go.Figure()
+            fig_pd.add_trace(go.Scatter(
+                x=[d["design_cost"] for d in viz_data],
+                y=[d["break_even_days"] for d in viz_data],
+                mode="markers+text",
+                marker=dict(size=16, color=["#800000", "#1a3c5e", "#b8860b", "#2d6a2e"][:len(viz_data)]),
+                text=[d["product"] for d in viz_data],
+                textposition="top center",
+                hovertext=[d["name"] for d in viz_data],
+            ))
+            fig_pd.update_layout(height=300, xaxis_title="Design Cost ($)",
+                                  yaxis_title="Break-even (days)",
+                                  title="Design Cost vs Break-even Speed (lower-left = best)",
+                                  margin=dict(l=0, r=0, t=40, b=0),
+                                  xaxis_tickformat="$,.0f")
+            st.plotly_chart(fig_pd, use_container_width=True)
 
     st.markdown("---")
 
