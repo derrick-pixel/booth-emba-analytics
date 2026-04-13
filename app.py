@@ -1578,15 +1578,20 @@ Increasing daily labor from $2,500 to $5,000 has a much bigger impact than doubl
 
 **Shipping (Factory→DC and DC→DC):**
 
-| Mode | Cost | Transit |
-|---|---|---|
-| Container in region | $5,000 / 1,000 units | 7 days |
-| Container between regions | $10,000 / 1,000 units | 21 days |
-| Mail in region | $200 / 10 units | 1 day |
-| Mail between regions | $400 / 10 units | 3 days |
+| Mode | Cost / Unit | Cost / Shipment | Transit |
+|---|---|---|---|
+| Mail in region | **$20/unit** | $200 / 10 units | 1 day |
+| Mail between regions | **$40/unit** | $400 / 10 units | 3 days |
+| Container in region | $5/unit | $5,000 / 1,000 units | 7 days |
+| Container between regions | $10/unit | $10,000 / 1,000 units | 21 days |
+
+**Mail vs Container trade-off:**
+- Mail = faster (1-3 days) but 4× the per-unit cost
+- Container = cheaper but 7-21 days; fixed cost whether 1 or 1,000 units sent
+- A container costs $5,000 (in-region) regardless of volume → only cheap at scale (≥ 500 units)
 
 **Key difference from Monopoly Game:** DC takes 20% revenue commission — this significantly
-affects optimal pricing. Effective MC = materials + handling + 20% × price.
+affects optimal pricing. Effective MC = materials + handling + 20% × price + shipping.
         """)
 
     with st.expander("**Financial Parameters**", expanded=False):
@@ -2216,8 +2221,8 @@ $$INV = \\lambda_{{eff}} \\times CT = {cd_lambda_eff:.2f} \\times {cd_CT:.3f} = 
         cm_materials = st.number_input("Materials Cost ($/unit)", value=100, step=10, key="cm_materials",
                                           help="Sum of materials costs from product features")
     with cm_col3:
-        cm_shipping = st.number_input("Shipping Cost ($/unit)", value=50, step=5, key="cm_shipping",
-                                        help="Container in-region: $5K/1000 units=$5/u. Container between regions: $10K/1000=$10/u. At batch 100: $50/u (same region) or $100/u (different).")
+        cm_shipping = st.number_input("Shipping Cost ($/unit)", value=20, step=5, key="cm_shipping",
+                                        help="Production Game rates: Mail in region $20/u (1 day) | Mail between regions $40/u (3 days) | Container in region $5/u min 1000u (7 days) | Container between regions $10/u min 1000u (21 days). Default $20 = mail in-region.")
     with cm_col4:
         cm_commission_pct = st.number_input("Commission (%)", value=PG_SALES_COMMISSION,
                                               step=1.0, key="cm_comm",
