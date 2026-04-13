@@ -92,6 +92,7 @@ with st.sidebar:
     page = st.radio(
         "Navigate",
         [
+            "🚀 14 Trial War Room",
             "🏭 13 Trial War Room",
             "⚔️ 12 Trial War Room",
             "🎮 ISM War Room",
@@ -1673,6 +1674,595 @@ Dividends option available. Return calculation is more complex.
 
 **Focus Groups:** $20,000, 10 participants, 7 days to complete
         """)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE 0.55: 14 TRIAL WAR ROOM (Day 3 — Bass Model deep dive + Debt + Scenarios)
+# ══════════════════════════════════════════════════════════════════════════════
+
+elif page == "🚀 14 Trial War Room":
+    st.markdown('<p class="big-header">14 Trial War Room</p>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-header">Day 3 Practice Game — April 14 | Normal-WTP Bass Model, Advertising Strategy, Debt Capacity, Scenario Analysis</p>',
+                unsafe_allow_html=True)
+    st.markdown("")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # WHAT'S NEW (vs 13 War Room)
+    # ══════════════════════════════════════════════════════════════════════════
+    st.info("""
+**What's new today (from D3 materials):**
+
+1. **WTP is NORMALLY distributed** — mean + std dev, not uniform [0, max]. Focus groups reveal mean/max.
+2. **Three arrival streams:** Innovators (decay over time) + Imitators (grow over time) + **Advertising-attracted** (same-day arrivals)
+3. **Advertising decision framework** — when to advertise, when not to, strategic use
+4. **Debt issuance is tranche-based** — must exhaust Excellent before issuing Good, then Poor
+5. **Scenario comparison** — model 4-year cumulative contribution under price × advertising combinations
+
+**Today's game:** Practice Game 7-9pm. Plays forward, you execute strategy.
+**Tomorrow (Wed):** Competition begins. Today is your last practice.
+    """)
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # GAME PARAMETERS (shared with 13 War Room)
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("Game Parameters")
+    st.caption("Production Game (oligopoly, 8 teams, 4-year horizon starting day 365)")
+
+    r1c1, r1c2, r1c3, r1c4, r1c5 = st.columns(5)
+    with r1c1:
+        W14_STARTING_CASH = st.number_input("Starting Cash ($)", value=1579530, step=10000, key="w14_cash")
+    with r1c2:
+        W14_COMMISSION = st.number_input("Sales Commission (%)", value=20.0, step=1.0, key="w14_comm")
+    with r1c3:
+        W14_HANDLING = st.number_input("Handling ($/unit)", value=10, step=1, key="w14_handling")
+    with r1c4:
+        W14_SHIPPING = st.number_input("Shipping Mail in-region ($/u)", value=20, step=5, key="w14_ship")
+    with r1c5:
+        W14_TAX = st.number_input("Tax Rate (%)", value=35.0, step=1.0, key="w14_tax")
+
+    w14_comm_frac = W14_COMMISSION / 100
+    w14_tax_frac = W14_TAX / 100
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 1: ADVANCED BASS MODEL with NORMAL WTP + ADVERTISING
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("1. Advanced Bass Model — Normal WTP + Advertising")
+    st.caption("Three arrival streams: Innovators (p) + Imitators (q, from cumulative adopters) + Advertising-attracted (same-day)")
+
+    bass_col1, bass_col2 = st.columns([1, 2])
+    with bass_col1:
+        st.markdown("**Market Parameters** (from focus group)")
+        b14_mean = st.number_input("Mean WTP ($)", value=1300, step=50, key="b14_mean",
+                                     help="Center of the normal WTP distribution")
+        b14_std = st.number_input("Std Dev WTP ($)", value=130, step=10, key="b14_std",
+                                    help="Spread of WTP. Typically mean/10.")
+        b14_M = st.number_input("Market Size (M)", value=15000, step=1000, key="b14_M")
+        b14_p = st.number_input("Innovation coef (p)", value=0.0002, step=0.00005,
+                                  format="%.5f", key="b14_p")
+        b14_q = st.number_input("Imitation coef (q)", value=0.0035, step=0.0005,
+                                  format="%.4f", key="b14_q")
+
+        st.markdown("**Pricing & Costs**")
+        b14_price = st.number_input("Retail Price ($)", value=900, step=25, key="b14_price")
+        b14_materials = st.number_input("Materials ($/u)", value=375, step=10, key="b14_mat")
+        b14_mfg_oh = st.number_input("Mfg Overhead ($/u)", value=80, step=10, key="b14_oh")
+
+        st.markdown("**Advertising**")
+        b14_ad_daily = st.number_input("Ad Spend ($/day)", value=0, step=500, key="b14_ad")
+        b14_ad_duration = st.number_input("Ad Duration (days)", value=364, step=30, key="b14_ad_days")
+        b14_p_ad_per_500 = st.number_input("Incremental p per $500 ad/day",
+                                              value=0.0002, step=0.00005, format="%.5f",
+                                              key="b14_p_ad")
+        b14_sim_days = st.number_input("Simulate Days", value=1460, step=30, key="b14_sim")
+
+    # Simulate the Bass model with three arrival types
+    import math
+
+    def normal_cdf(x, mu, sigma):
+        """Standard normal CDF using erf approximation."""
+        if sigma <= 0:
+            return 1.0 if x < mu else 0.0
+        z = (x - mu) / sigma
+        return 0.5 * (1 + math.erf(z / math.sqrt(2)))
+
+    # P(WTP > price) = 1 - CDF(price) for Normal distribution
+    p_buy = 1 - normal_cdf(b14_price, b14_mean, b14_std)
+
+    # Simulate day by day
+    days = list(range(1, int(b14_sim_days) + 1))
+    innovators_list = []
+    imitators_list = []
+    advertising_list = []
+    total_arrivals = []
+    purchases_list = []
+    cumulative_adopters = 0  # A in Bass model — only PURCHASES deplete pool
+    cumulative_purchases = []
+
+    for t in days:
+        remaining = max(0, b14_M - cumulative_adopters)
+
+        # Innovators: p × remaining (no A/M dependence — they're first adopters)
+        innovators = b14_p * remaining
+
+        # Imitators: q × (A/M) × remaining
+        imitators = b14_q * (cumulative_adopters / b14_M) * remaining if b14_M > 0 else 0
+
+        # Advertising-attracted customers (same-day effect)
+        if t <= b14_ad_duration and b14_ad_daily > 0:
+            # Additional p from ad = (ad_daily / 500) × p_ad_per_500
+            p_ad_boost = (b14_ad_daily / 500) * b14_p_ad_per_500
+            ad_customers = p_ad_boost * remaining
+        else:
+            ad_customers = 0
+
+        arrivals = innovators + imitators + ad_customers
+        # Each arrival buys with probability p_buy (if surplus > 0)
+        buys = arrivals * p_buy
+
+        innovators_list.append(innovators)
+        imitators_list.append(imitators)
+        advertising_list.append(ad_customers)
+        total_arrivals.append(arrivals)
+        purchases_list.append(buys)
+
+        cumulative_adopters += buys
+        cumulative_purchases.append(cumulative_adopters)
+
+    with bass_col2:
+        # Plot 3 arrival streams over time
+        fig_arrivals = go.Figure()
+        fig_arrivals.add_trace(go.Scatter(x=days, y=innovators_list, name="Innovators (p)",
+                                            line=dict(color="#1a3c5e", width=2)))
+        fig_arrivals.add_trace(go.Scatter(x=days, y=imitators_list, name="Imitators (q × A/M)",
+                                            line=dict(color="#800000", width=2)))
+        if b14_ad_daily > 0:
+            fig_arrivals.add_trace(go.Scatter(x=days, y=advertising_list,
+                                                name=f"Advertising (${b14_ad_daily}/day, {b14_ad_duration}d)",
+                                                line=dict(color="#b8860b", width=2)))
+        fig_arrivals.add_trace(go.Scatter(x=days, y=total_arrivals, name="Total arrivals",
+                                            line=dict(color="#2d6a2e", width=2.5, dash="dash")))
+        fig_arrivals.update_layout(
+            height=350, xaxis_title="Day",
+            yaxis_title="Daily Arrivals",
+            title=f"Daily Customer Arrivals (P(buy at ${b14_price}) = {p_buy:.1%})",
+            margin=dict(l=0, r=0, t=40, b=0),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02),
+        )
+        st.plotly_chart(fig_arrivals, use_container_width=True)
+
+        # Key check metrics at specific days (matching exercise)
+        st.markdown("**Arrivals at Key Days** (Day 1, 364, 728)")
+        check_days = [0, 363, 727]  # 0-indexed: day 1, day 364, day 728
+        check_data = []
+        for dx in check_days:
+            if dx < len(days):
+                check_data.append({
+                    "Day": days[dx],
+                    "Innovators": f"{innovators_list[dx]:.2f}",
+                    "Imitators": f"{imitators_list[dx]:.2f}",
+                    "Ad-attracted": f"{advertising_list[dx]:.2f}",
+                    "Total arrivals": f"{total_arrivals[dx]:.2f}",
+                    "Purchases": f"{purchases_list[dx]:.2f}",
+                })
+        st.dataframe(pd.DataFrame(check_data), use_container_width=True, hide_index=True)
+
+    # Cumulative contribution (4-year)
+    cum_cm = 0
+    var_cost = b14_materials + W14_SHIPPING + W14_HANDLING + b14_mfg_oh
+    cm_per_unit = b14_price * (1 - w14_comm_frac) - var_cost
+    daily_cm = [cm_per_unit * p for p in purchases_list]
+    cumulative_cm = []
+    cum = 0
+    total_ad_spend = 0
+    for t, d_cm in zip(days, daily_cm):
+        cum += d_cm
+        if t <= b14_ad_duration:
+            cum -= b14_ad_daily
+            total_ad_spend += b14_ad_daily
+        cumulative_cm.append(cum)
+
+    st.markdown("---")
+    summary_col1, summary_col2 = st.columns([2, 1])
+    with summary_col1:
+        fig_cum = go.Figure()
+        fig_cum.add_trace(go.Scatter(x=days, y=cumulative_cm, name="Cumulative Contribution",
+                                       line=dict(color="#2d6a2e", width=2.5),
+                                       fill="tozeroy", fillcolor="rgba(45,106,46,0.1)"))
+        fig_cum.add_hline(y=0, line_dash="dot", line_color="gray")
+        fig_cum.update_layout(height=300, xaxis_title="Day",
+                               yaxis_title="Cumulative Contribution ($)",
+                               yaxis_tickformat="$,.0f",
+                               title="4-Year Cumulative Contribution (net of advertising)",
+                               margin=dict(l=0, r=0, t=40, b=0))
+        st.plotly_chart(fig_cum, use_container_width=True)
+
+    with summary_col2:
+        total_purchases = sum(purchases_list)
+        final_cum_cm = cumulative_cm[-1] if cumulative_cm else 0
+        st.metric("P(buy) at your price", f"{p_buy:.1%}")
+        st.metric("Total Purchases (4yr)", f"{total_purchases:,.0f} units")
+        st.metric("Market Served", f"{total_purchases/b14_M*100:.1f}% of {b14_M:,}")
+        st.metric("Total Ad Spend", f"${total_ad_spend:,}")
+        st.metric("Cumulative CM (net)", f"${final_cum_cm:,.0f}",
+                   delta=f"${final_cum_cm/1000:.0f}K")
+        st.metric("CM / unit sold", f"${cm_per_unit:.2f}")
+
+    # D3 Exercise verification
+    with st.expander("**D3 Exercise Verification** (default params: MD Cancer Bladder/Kidney)", expanded=False):
+        st.markdown("""
+**D3 Solutions check** (market size 15K, mean WTP $1,300, std $130, materials $375, OH $80, ship $20):
+
+| Scenario | Expected Year 4 Cumulative CM |
+|---|---|
+| P=$900, no ad | **$3,249K** |
+| P=$900, $3,000/day for 364 days | **$2,391K** |
+| P=$1,200, no ad | **$4,597K** (BEST) |
+| P=$1,200, $3,000/day for 364 days | **$4,287K** |
+
+**Key insight:** At $900 retail, advertising HURTS profit ($2,391K < $3,249K). Why?
+- At $900, P(buy) ≈ 99.9% (well above 3σ below mean), so nearly all arrivals buy anyway
+- Advertising just accelerates when they arrive, doesn't increase total demand
+- $3,000 × 364 = $1.09M in ad spend minus minor value = net loss
+
+**Better to price at $1,200** (P(buy) ≈ 22%) without ad:
+- More profit per sale covers slower cumulative adoption
+- Ad at $1,200 provides marginal benefit but still loses to no-ad
+        """)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 2: SCENARIO COMPARISON (Price × Advertising)
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("2. Scenario Comparison — Price × Advertising")
+    st.caption("Compare 4 scenarios side-by-side: 2 price points × (no ad vs with ad)")
+
+    scc1, scc2, scc3 = st.columns([1, 1, 2])
+    with scc1:
+        sc_p_low = st.number_input("Price Low", value=900, step=25, key="sc_p_low")
+        sc_p_high = st.number_input("Price High", value=1200, step=25, key="sc_p_high")
+    with scc2:
+        sc_ad_amount = st.number_input("Ad Spend ($/day)", value=3000, step=500, key="sc_ad_amount")
+        sc_ad_days = st.number_input("Ad Duration (days)", value=364, step=30, key="sc_ad_days")
+    with scc3:
+        st.caption("Uses market params from Section 1. Adjust mean WTP, std, market size, etc. above to match your target market.")
+
+    # Simulate each scenario
+    def simulate_scenario(price, ad_daily, ad_duration, days_total=1460):
+        p_buy_sc = 1 - normal_cdf(price, b14_mean, b14_std)
+        cum_adopters = 0
+        cum_cm_local = 0
+        var_cost_local = b14_materials + W14_SHIPPING + W14_HANDLING + b14_mfg_oh
+        cm_per_unit_local = price * (1 - w14_comm_frac) - var_cost_local
+        for t in range(1, days_total + 1):
+            remaining = max(0, b14_M - cum_adopters)
+            innov = b14_p * remaining
+            imit = b14_q * (cum_adopters / b14_M) * remaining if b14_M > 0 else 0
+            if t <= ad_duration and ad_daily > 0:
+                ad_cust = (ad_daily / 500) * b14_p_ad_per_500 * remaining
+            else:
+                ad_cust = 0
+            arrivals = innov + imit + ad_cust
+            buys = arrivals * p_buy_sc
+            cum_adopters += buys
+            cum_cm_local += cm_per_unit_local * buys
+            if t <= ad_duration:
+                cum_cm_local -= ad_daily
+        return {
+            "price": price, "ad": ad_daily, "p_buy": p_buy_sc,
+            "cum_cm": cum_cm_local, "cum_units": cum_adopters,
+            "cm_per_unit": cm_per_unit_local,
+        }
+
+    scenarios = [
+        ("A", sc_p_low, 0, "Low price, no ad"),
+        ("B", sc_p_low, sc_ad_amount, f"Low price, ${sc_ad_amount}/day ad for {sc_ad_days}d"),
+        ("C", sc_p_high, 0, "High price, no ad"),
+        ("D", sc_p_high, sc_ad_amount, f"High price, ${sc_ad_amount}/day ad for {sc_ad_days}d"),
+    ]
+    sc_results = []
+    for label, price, ad, desc in scenarios:
+        r = simulate_scenario(price, ad, sc_ad_days)
+        sc_results.append({
+            "Scenario": f"{label}: {desc}",
+            "Price": f"${price:,}",
+            "Ad Spend Total": f"${ad * sc_ad_days:,}",
+            "P(buy)": f"{r['p_buy']:.1%}",
+            "Units Sold (4yr)": f"{r['cum_units']:,.0f}",
+            "CM/unit": f"${r['cm_per_unit']:.0f}",
+            "Cumulative CM": f"${r['cum_cm']:,.0f}",
+            "vs Best": "",
+        })
+
+    # Identify best
+    best_cm = max(r["cum_cm"] for r in [simulate_scenario(p, a, sc_ad_days) for _, p, a, _ in scenarios])
+    for i, r_row in enumerate(sc_results):
+        label, price, ad, _ = scenarios[i]
+        r = simulate_scenario(price, ad, sc_ad_days)
+        delta = r["cum_cm"] - best_cm
+        r_row["vs Best"] = f"${delta:,.0f}" if delta < 0 else "🏆 Best"
+
+    st.dataframe(pd.DataFrame(sc_results), use_container_width=True, hide_index=True)
+
+    # Visualize
+    fig_sc = go.Figure()
+    for label, price, ad, desc in scenarios:
+        r = simulate_scenario(price, ad, sc_ad_days)
+        # Also get full trajectory for plotting
+        cum_adopters_traj = 0
+        cum_cm_traj = 0
+        p_buy_sc = 1 - normal_cdf(price, b14_mean, b14_std)
+        var_cost_local = b14_materials + W14_SHIPPING + W14_HANDLING + b14_mfg_oh
+        cm_per_unit_local = price * (1 - w14_comm_frac) - var_cost_local
+        traj = []
+        for t in range(1, 1461):
+            remaining = max(0, b14_M - cum_adopters_traj)
+            innov = b14_p * remaining
+            imit = b14_q * (cum_adopters_traj / b14_M) * remaining if b14_M > 0 else 0
+            if t <= sc_ad_days and ad > 0:
+                ad_cust = (ad / 500) * b14_p_ad_per_500 * remaining
+            else:
+                ad_cust = 0
+            buys = (innov + imit + ad_cust) * p_buy_sc
+            cum_adopters_traj += buys
+            cum_cm_traj += cm_per_unit_local * buys
+            if t <= sc_ad_days:
+                cum_cm_traj -= ad
+            traj.append(cum_cm_traj)
+        fig_sc.add_trace(go.Scatter(x=list(range(1, 1461)), y=traj, name=f"{label}: ${price} {'w/ ad' if ad > 0 else ''}",
+                                      mode="lines"))
+    fig_sc.add_hline(y=0, line_dash="dot", line_color="gray")
+    fig_sc.update_layout(height=400, xaxis_title="Day",
+                          yaxis_title="Cumulative CM ($)", yaxis_tickformat="$,.0f",
+                          title="Cumulative Contribution over 4 Years",
+                          margin=dict(l=0, r=0, t=40, b=0),
+                          legend=dict(orientation="h", yanchor="bottom", y=1.02))
+    st.plotly_chart(fig_sc, use_container_width=True)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 3: ADVERTISING DECISION FRAMEWORK
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("3. Advertising Decision Framework")
+
+    adv_col1, adv_col2 = st.columns(2)
+    with adv_col1:
+        st.markdown("**✅ Advertise when...**")
+        st.markdown("""
+- **Early in product lifecycle** — most arrivals are innovators, maximum leverage on future imitators
+- **Product is profitable** at current price — otherwise advertising amplifies losses
+- **You have supply capacity** — customers arrive same day $ is spent; stockouts = lost forever
+- **To stave off competitor entry** — signal commitment, build brand loyalty
+- **To avoid price wars** — differentiated demand via advertising buys you time
+- **Low P(buy)** at current price — advertising creates new arrivals that wouldn't come organically
+        """)
+    with adv_col2:
+        st.markdown("**❌ Don't advertise when...**")
+        st.markdown("""
+- **Late in product lifecycle** — few customers remain, most arrivals are imitators (already coming)
+- **Unprofitable product** — ad spend compounds losses
+- **At stockout risk** — you'll turn away paying customers
+- **At low prices (high P(buy))** — customers arrive anyway, ad just pulls demand forward
+- **When competitors match** — Bertrand-like race to zero
+- **Short horizon remaining** — not enough time to recoup ad investment via imitator cascade
+        """)
+
+    st.markdown("#### Advertising ROI Calculator")
+    ar_col1, ar_col2, ar_col3 = st.columns(3)
+    with ar_col1:
+        ar_current_price = st.number_input("Current Price ($)", value=1200, step=50, key="ar_price")
+        ar_cm_per_unit = st.number_input("CM per Unit ($)", value=500, step=25, key="ar_cm")
+    with ar_col2:
+        ar_cur_arrivals = st.number_input("Current Arrivals/day (from Bass)", value=5, step=1, key="ar_arr")
+        ar_p_buy_cur = st.number_input("Current P(buy)", value=0.22, step=0.05, format="%.2f", key="ar_pbuy")
+    with ar_col3:
+        ar_ad_spend = st.number_input("Proposed Ad $/day", value=3000, step=500, key="ar_spend")
+        ar_ad_incr_p = st.number_input("Incremental customers/day", value=18, step=1, key="ar_incr",
+                                          help="Ad customers = (ad/$500) × p_inc × remaining market. Check Bass model above.")
+
+    ar_incremental_daily_cm = ar_ad_incr_p * ar_p_buy_cur * ar_cm_per_unit - ar_ad_spend
+    ar_breakeven_incr = ar_ad_spend / (ar_p_buy_cur * ar_cm_per_unit) if ar_p_buy_cur * ar_cm_per_unit > 0 else float("inf")
+
+    if ar_incremental_daily_cm > 0:
+        st.success(f"✅ Advertising adds ${ar_incremental_daily_cm:.0f}/day in net CM. "
+                    f"Need {ar_breakeven_incr:.1f} incremental customers/day to break even — currently projecting {ar_ad_incr_p}.")
+    else:
+        st.error(f"❌ Advertising costs ${-ar_incremental_daily_cm:.0f}/day in net CM. "
+                  f"Need {ar_breakeven_incr:.1f} incremental customers/day to break even — currently only {ar_ad_incr_p}. "
+                  f"Either raise price to increase CM per unit, or skip ads.")
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 4: ENHANCED DEBT MODEL (Tranche-based)
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("4. Debt Capacity & Bond Issuance")
+    st.caption("Zero-coupon bonds, $1,000 face, 5-year maturity, semi-annual compounding. Sequential tranche: Excellent → Good → Poor.")
+
+    debt_col1, debt_col2 = st.columns([1, 2])
+    with debt_col1:
+        d_ebit = st.number_input("Yearly EBIT / Operating Income ($)", value=100000, step=10000, key="d_ebit",
+                                   help="Last full quarter × 4")
+        d_existing_interest = st.number_input("Existing Interest ($/yr)", value=0, step=500, key="d_exist")
+
+    RATES = {"Excellent": (20, 0.10), "Good": (7, 0.15), "Poor": (2, 0.25)}
+
+    # Calculate debt capacity by tranche
+    # Rule: exhaust Excellent first, then Good, then Poor
+    # At each rating, max total interest = EBIT / hurdle
+    # EAR = (1 + APR/2)^2 - 1
+    def ear(apr):
+        return (1 + apr/2) ** 2 - 1
+
+    def bond_price(apr, years=5):
+        # Zero-coupon price from face $1000
+        return 1000 / (1 + apr/2) ** (2 * years)
+
+    tranche_data = []
+    used_interest = d_existing_interest
+    cum_bonds_face = 0
+    cum_bonds_cash = 0
+    for rating, (hurdle, apr) in RATES.items():
+        max_total_interest_for_this_rating = d_ebit / hurdle if hurdle > 0 else 0
+        incremental_interest = max(0, max_total_interest_for_this_rating - used_interest)
+        # Each bond face $1000 at APR rate → annual imputed interest ≈ $1000 × EAR
+        interest_per_bond = 1000 * ear(apr) / 5  # approx — actually accreting, use simple avg
+        # For simplicity, use total interest over 5 years = 1000 - price, then divide by 5
+        price = bond_price(apr)
+        total_interest_per_bond_5yr = 1000 - price
+        annual_interest_per_bond = total_interest_per_bond_5yr / 5
+        # But the EAR formula is more accurate
+        # Use simple: num bonds × APR × face = annual interest
+        # Actually zero-coupon bonds don't pay coupons — imputed interest accretes
+        # Game uses: yearly_interest = face × APR (approximation per assignment)
+        yearly_interest_per_bond = 1000 * apr  # per game convention (approx)
+        num_bonds = incremental_interest / yearly_interest_per_bond if yearly_interest_per_bond > 0 else 0
+        face_value = num_bonds * 1000
+        cash_received = num_bonds * price
+
+        tranche_data.append({
+            "Rating": rating,
+            "Coverage Hurdle": f"{hurdle}×",
+            "APR": f"{apr*100:.0f}%",
+            "EAR": f"{ear(apr)*100:.2f}%",
+            "Max Cumulative Interest": f"${max_total_interest_for_this_rating:,.0f}",
+            "Incremental Interest": f"${incremental_interest:,.0f}",
+            "# Bonds Issuable": f"{num_bonds:.1f}",
+            "Face Value": f"${face_value:,.0f}",
+            "Cash Received": f"${cash_received:,.0f}",
+        })
+        used_interest = max_total_interest_for_this_rating
+        cum_bonds_face += face_value
+        cum_bonds_cash += cash_received
+
+    with debt_col2:
+        st.dataframe(pd.DataFrame(tranche_data), use_container_width=True, hide_index=True)
+
+        st.markdown(f"""
+<div style="background:rgba(26,60,94,0.15); border-left:4px solid #1a3c5e;
+    border-radius:6px; padding:0.8rem 1rem;">
+<b>Total Debt Capacity</b><br>
+<span style="font-size:1.2em;">Face Value: <b>${cum_bonds_face:,.0f}</b> | Cash Received: <b>${cum_bonds_cash:,.0f}</b></span>
+</div>
+""", unsafe_allow_html=True)
+
+        st.caption(f"""
+Bond price formula: P = $1,000 / (1 + APR/2)^10 (semi-annual compounding, 5 years).
+Prices: Excellent={bond_price(0.10):,.2f} | Good={bond_price(0.15):,.2f} | Poor={bond_price(0.25):,.2f}
+To go from no debt to maximum: cash received = ${cum_bonds_cash:,.0f}, but you commit to
+${cum_bonds_face:,.0f} face value due in 5 years + interest expense reducing future flexibility.
+        """)
+
+    with st.expander("**Debt Decision Guide**", expanded=False):
+        st.markdown(f"""
+### When to Issue Bonds
+
+**Rating-specific guidance:**
+
+**Excellent ({RATES['Excellent'][0]}× coverage, {RATES['Excellent'][1]*100:.0f}% APR):**
+- Cheapest debt, lowest risk. Issue aggressively if NPV > 0 at 15% cost of capital.
+- Rule: coverage stays ≥ 20× → rating protected
+
+**Good ({RATES['Good'][0]}× coverage, {RATES['Good'][1]*100:.0f}% APR):**
+- Same as cost of capital (15%) — neutral NPV threshold
+- Only issue if project NPV > 0 AT 15% (i.e., returns > 15%)
+
+**Poor ({RATES['Poor'][0]}× coverage, {RATES['Poor'][1]*100:.0f}% APR):**
+- 25% APR > 15% cost of capital → destroys value unless project IRR > 25%
+- Usually a bad idea; emergency loans at 40% are even worse
+
+### Strategic Moves
+
+1. **Build to EBIT before issuing** — higher EBIT → bigger Excellent tranche at 10%
+2. **Use for growth capex, not operating losses** — NPV-positive projects only
+3. **Avoid Poor rating** unless you're confident of a big payoff
+4. **Plan for 5-year maturity** — bonds come due at game end (day 1460). Match cash flows.
+
+### Tranche Logic (per D3 model)
+
+The simulation **automatically** fills tranches in order:
+1. First bonds go at Excellent rate (cheapest) until 20× coverage breached
+2. Next bonds go at Good rate until 7× coverage breached
+3. Final bonds at Poor rate until 2× coverage breached
+4. Beyond: no more issuance possible
+
+**Current tranche result for your EBIT (${d_ebit:,}):**
+- Excellent tranche face: **${float(tranche_data[0]['Face Value'].replace('$','').replace(',','')):,.0f}**
+- Good tranche face: **${float(tranche_data[1]['Face Value'].replace('$','').replace(',','')):,.0f}**
+- Poor tranche face: **${float(tranche_data[2]['Face Value'].replace('$','').replace(',','')):,.0f}**
+        """)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 5: NORMAL WTP vs UNIFORM WTP COMPARISON
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("5. Normal WTP vs Uniform WTP — Pricing Implications")
+    st.caption("Pricing formulas differ by distribution assumption. Know which you're using.")
+
+    with st.expander("**When to use which distribution**", expanded=False):
+        st.markdown("""
+### Normal Distribution (New per D3)
+- Focus group reveals **mean and std dev** (or median and max, where mean ≈ median)
+- WTP ~ N(μ, σ²) — most customers cluster near mean, tails on both sides
+- P(buy at price P) = 1 − Φ((P − μ) / σ) where Φ is standard normal CDF
+- No explicit min/max — theoretically unbounded
+- Practical min/max: μ ± 3σ captures 99.7% of customers
+- For the MD Cancer Bladder example: μ=$1,300, σ=$130 → practical range [$910, $1,690]
+
+### Uniform Distribution [min, max] (V1 assumption)
+- Focus group reveals **min and max** (or derive from median)
+- WTP ~ Uniform[a, b] — equal mass everywhere in range
+- P(buy at P) = (b − P) / (b − a) for P in (a, b)
+- Optimal P = b/2 + var_fixed/1.6 (with 20% commission)
+
+### Which is Right for the Gleacher Game?
+
+The D3 Bass Model Exercise uses **Normal WTP** (mean $1,300, std $130).
+The focus group UI screenshot showed **median and max** — which could indicate either:
+- Normal: median = mean (for symmetric distribution)
+- Uniform: median = (min+max)/2
+
+Given the D3 Exercise uses Normal, **we should assume Normal distribution** going forward.
+        """)
+
+        # Side-by-side comparison at same price
+        comp_col1, comp_col2, comp_col3 = st.columns(3)
+        with comp_col1:
+            comp_price = st.number_input("Test Price ($)", value=1200, step=50, key="comp_price")
+            comp_mean = st.number_input("Normal: Mean WTP", value=1300, step=50, key="comp_mean")
+            comp_std = st.number_input("Normal: Std Dev", value=130, step=10, key="comp_std")
+        with comp_col2:
+            comp_min = st.number_input("Uniform: Min WTP", value=1000, step=50, key="comp_min")
+            comp_max = st.number_input("Uniform: Max WTP", value=1600, step=50, key="comp_max")
+
+        p_buy_normal = 1 - normal_cdf(comp_price, comp_mean, comp_std)
+        if comp_price <= comp_min:
+            p_buy_unif = 1.0
+        elif comp_price >= comp_max:
+            p_buy_unif = 0.0
+        else:
+            p_buy_unif = (comp_max - comp_price) / (comp_max - comp_min)
+
+        with comp_col3:
+            st.metric("P(buy) — Normal", f"{p_buy_normal:.1%}")
+            st.metric("P(buy) — Uniform", f"{p_buy_unif:.1%}")
+            diff = p_buy_normal - p_buy_unif
+            st.metric("Difference", f"{diff:+.1%}",
+                       help="Positive = Normal predicts higher demand than Uniform")
+
+    st.markdown("---")
+    st.success("""
+**🎯 Key Takeaways from D3 Practice:**
+1. Use **Normal WTP distribution** with mean/std (not uniform)
+2. Advertising has **diminishing returns** at high P(buy) — skip at low prices
+3. Price higher → fewer sales but more profit per sale. Usually wins over 4 years.
+4. Issue debt at **Excellent rate first** (10% APR < 15% cost of capital = NPV positive)
+5. Customers attracted by advertising arrive **same day** — don't advertise without inventory
+    """)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
