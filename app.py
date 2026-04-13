@@ -1820,6 +1820,76 @@ Cash Balance − Unsecured Debt + Paid Dividends + Subsequent Returns
 **Restrictions:** No new factories until Tuesday. Catherine and Kathleen will not trade with us tonight.
         """)
 
+    # Y1 Quarterly Progression (shows business is turning corner)
+    with st.expander("**Year 1 Quarterly Progression — the Bass curve is kicking in**", expanded=False):
+        st.markdown("""
+| Quarter | Sales Revenue | COGS | Gross Profit | Op Income | Net Loss | Cash EOP |
+|---|---|---|---|---|---|---|
+| **Q1** | $303,800 | $185,949 | $117,851 | $(170,916) | $(101,057) | $1,909,244 |
+| **Q2** | $456,400 | $279,352 | $177,048 | $(158,788) | $(94,402) | $1,723,448 |
+| **Q3** | $543,200 | $332,481 | $210,719 | $(145,279) | $(86,327) | $1,613,017 |
+| **Q4** | $682,500 | $417,743 | $264,757 | $(105,160) | $(60,611) | **$1,579,530** |
+
+**Growth rate:** Revenue doubling from Q1 to Q4. Losses shrinking by ~40%.
+The Bass curve is ramping — Y2 should be closer to breakeven.
+Sales growth is Bass-driven (innovators → imitators), not from price changes.
+Accounts receivable growing from $0 → $240K — customers pay after some DSO.
+        """)
+
+    # Product Development Workflow
+    with st.expander("**Building New Products — Mandatory Workflow (per Class 2)**", expanded=False):
+        st.markdown("""
+### 6-Step Workflow
+
+1. **Research** — Study Market Research PDF, decide which market to target
+2. **Design** — Pick features in Product Design panel, save the design
+3. **🔴 Run a Focus Group** — $20K, 10 participants, 7 days. **CRITICAL: validates WTP before committing to development cost**
+4. **Start Development** — Incurs development cost and design days
+5. **Determine Price** — Based on focus group + competitor pricing
+6. **Set Up Shipping Agreements** — Factory → DC (internal), or Factory → other teams' DCs (external trade)
+
+### Today's 5 Markets
+| Market | WTP Range | Size/Region | Bass p | Notes |
+|---|---|---|---|---|
+| **MD Heart** | $600-865 | 20-40K | 0.0002 | ⚠ **Heart View already covers this — do NOT build redundant product** |
+| **Clinical Fertility (LH/FSH)** | $230-400 | 40-60K | 0.00025 | Largest market, lowest WTP |
+| **MD Fertility (Estrogen)** | $575-965 | 10-20K | 0.0002 | Mid WTP, mid size |
+| **MD Cancer (Breast)** | $900-1,600 | 10-20K | 0.0002 | Premium WTP |
+| **Law (Narcotic)** | $1,100-1,600 | 5-15K | 0.00025 | Highest WTP, smallest size, **needs GPS + cellular** |
+
+**Strategic implication:** Pick 1-2 markets to pursue beyond MD Heart. Premium markets (Cancer, Narcotic) offer higher margins; volume markets (Clinical Fertility) offer scale.
+        """)
+
+    # Bench Factory Reference Table (instructor-provided check figures)
+    with st.expander("**Bench Factory Reference Table — Check Figures from Class 2**", expanded=False):
+        st.markdown("Per the lecture, these are the expected throughput and overhead values for the Bench factory. Use to verify your Assignment 3 spreadsheet calculations.")
+
+        st.markdown("**Daily Throughput (units/day, including setup time)**")
+        st.markdown("""
+| K ↓ / L → | $500 | $1,000 | $2,500 | $3,000 | $4,000 | $8,000 | $16,000 |
+|---|---|---|---|---|---|---|---|
+| **$100,000** | 2.310 | 4.461 | 9.044 | 10.552 | 13.455 | 24.123 | 43.065 |
+| **$200,000** | 2.476 | 4.459 | 9.690 | 11.305 | 14.414 | 25.832 | 46.085 |
+| **$500,000** | 2.713 | 4.886 | 10.615 | 12.383 | 15.786 | 28.276 | 50.396 |
+| **$1,000,000** | 2.908 | 5.235 | 11.372 | 13.266 | 16.910 | 30.275 | 53.915 |
+| **$3,000,000** | 3.245 | 5.841 | 12.685 | 14.795 | 18.855 | 33.731 | 59.998 |
+| **$5,000,000** | 3.415 | 6.147 | 13.345 | 15.564 | 19.833 | 35.467 | 63.033 |
+        """)
+
+        st.markdown("**Manufacturing Overhead per Unit ($)**")
+        st.markdown("""
+| K ↓ / L → | $500 | $1,000 | $2,500 | $3,000 | $4,000 | $8,000 | $16,000 |
+|---|---|---|---|---|---|---|---|
+| **$100,000** | $224.33 | $244.74 | $278.45 | $286.04 | $298.64 | $332.39 | $371.96 |
+| **$200,000** | $216.73 | $232.50 | $261.78 | $268.61 | $280.05 | $311.11 | $347.98 |
+| **$500,000** | $218.02 | $223.43 | $244.15 | $249.66 | $259.18 | $286.17 | $319.31 |
+| **$1,000,000** | $234.93 | $226.00 | $235.94 | $239.95 | $247.38 | $270.30 | $300.16 |
+| **$3,000,000** | $323.41 | $265.25 | $240.41 | $239.91 | $241.29 | $253.46 | $275.88 |
+| **$5,000,000** | $414.60 | $311.68 | $255.96 | $251.58 | $247.85 | $251.38 | $268.36 |
+
+**Key insight:** Lowest overhead/unit on Bench factory is at K=$500K-$1M, L=$2,500-$4,000 — around $220-245/unit. Going too high on K without matching labor wastes depreciation. Going too high on L alone hits diminishing returns.
+        """)
+
     st.markdown("---")
 
     # ══════════════════════════════════════════════════════════════════════════
