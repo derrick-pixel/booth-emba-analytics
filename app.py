@@ -2481,9 +2481,77 @@ $$INV = \\lambda_{{eff}} \\times CT = {cd_lambda_eff:.2f} \\times {cd_CT:.3f} = 
     # SECTION 4: PRODUCT DESIGN ROI CALCULATOR
     # ══════════════════════════════════════════════════════════════════════════
     st.subheader("4. Product Design ROI Calculator")
-    st.caption("Evaluate feature combinations for cost, development time, and WTP impact")
+    st.caption("Step 1: Base features (platform, GPS, network, power, finish). Step 2: Detection agenda. Together they determine WTP, design cost, time, and materials.")
 
-    FEATURES = {
+    # ── Feature descriptions reference (from Production Game Market Research) ─
+    with st.expander("**📘 Base Feature Descriptions** — what each attribute means", expanded=False):
+        st.markdown("""
+**Platform** — Form factor (how the monitor is worn)
+- Smaller wearables (wristbands) preferred by general pop, fashion-conscious consumers
+- Chest-worn for clinical/medical applications where larger devices are OK
+- Market preferences: MD Estrogen & Clinical Fertility slightly prefer wrist; Heart View is chest-band
+
+**GPS** — Location correlation
+- Imperative for **Law (Narcotic)** — deal breaker if missing
+- Drives perceived safety in **MD Heart** — affects WTP
+- Nice-to-have for others
+
+**Network** — Data transmission mode
+- **Bluetooth** (to smartphone) — lowest bandwidth, short range
+- **2.4 GHz cellular** — medium range, cheaper
+- **5 GHz cellular** — higher bandwidth (slightly more for Law market)
+- **Law (Narcotic)** requires cellular (Bluetooth insufficient) — deal breaker
+
+**Power** — Battery type
+- **Ni-Cd battery** — small/basic, few hours on full charge
+- **Polymer battery** — similar size to Ni-Cd, lasts several days
+- **Two-battery pack (Ni-Cd or polymer)** — worn around waist, ~10× battery life but bulky
+- **Clinical Fertility** & similar markets hate bulky packs (deal breaker)
+
+**Finish** — Material appearance
+- **Utilitarian plastic** (original) — functional but bland
+- **Dyed/painted plastic** — matches platform garment
+- Small WTP premium for athletic/fashion markets
+
+---
+
+**Detection Agenda (Core Features)** — what the monitor actually measures:
+- Heartbeat, Blood vessel, Dissolved gasses, Toxicology, Hormone, Metabolic
+- Market match: Heart View → Heartbeat; Fertility → Hormone; Law → Toxicology; Cancer → specific biomarkers
+""")
+
+    # ── Base features (Platform, GPS, Network, Power, Finish) ────────────────
+    # Costs for base features aren't published in the design guide; user can override.
+    BASE_FEATURES = {
+        "Platform": {
+            "Wristband (small)": (0, 0, 0, "General pop / fashion / fertility prefer this"),
+            "Chest-worn band": (0, 0, 0, "Heart View default. OK for clinical."),
+            "Ankle/leg band": (0, 0, 0, "Law Narcotic — monitors parolees"),
+        },
+        "GPS": {
+            "No GPS": (0, 0, 0, "Fine for Fertility, Clinical. DEAL BREAKER for Law"),
+            "GPS enabled": (0, 0, 5, "Required for Law Narcotic. Raises WTP for MD Heart"),
+        },
+        "Network": {
+            "Bluetooth": (0, 0, 0, "Phone-connected only. NOT enough for Law"),
+            "2.4 GHz cellular": (0, 0, 10, "Standard for medical. Good for all markets."),
+            "5 GHz cellular": (0, 0, 15, "Higher bandwidth. Slight edge in Law."),
+        },
+        "Power": {
+            "Ni-Cd battery": (0, 0, 0, "Few hours — basic"),
+            "Polymer battery": (0, 0, 5, "Several days — general recommendation"),
+            "Two-battery pack (Ni-Cd)": (0, 0, 10, "10× life BUT bulky — DEAL BREAKER for Fertility"),
+            "Two-battery pack (polymer)": (0, 0, 15, "10× life + lighter but still bulky"),
+        },
+        "Finish": {
+            "Original plastic": (0, 0, 0, "Utilitarian"),
+            "Dyed plastic": (0, 0, 2, "Color-matched to platform"),
+            "Painted plastic": (0, 0, 3, "Premium look — small WTP boost for athletic/fashion"),
+        },
+    }
+
+    # ── Detection features (with published costs from Design Guide) ──────────
+    DETECTION_FEATURES = {
         "Heartbeat": {"None": (3, 1000, 0), "Pulse only": (15, 30000, 15), "Temporal": (90, 135000, 25)},
         "Blood vessel": {"None": (3, 1000, 0), "Systolic only": (30, 75000, 10),
                           "Systolic & diastolic": (90, 135000, 15), "Full profile": (120, 180000, 40)},
@@ -2506,30 +2574,38 @@ $$INV = \\lambda_{{eff}} \\times CT = {cd_lambda_eff:.2f} \\times {cd_CT:.3f} = 
         pd_n = st.number_input("Products to design", min_value=1, max_value=4,
                                 value=2, step=1, key="pd_n")
     with pd_config_col2:
-        st.caption("Design multiple product variants side-by-side. Pick different feature "
-                   "combinations, see break-even comparison, and decide which product to develop.")
+        st.caption("⚠ Base feature development costs aren't published in the Design Guide — defaults are $0/0 days. "
+                   "Materials $/unit are our estimates. Verify in-game and override if needed.")
 
-    # Default presets for quick comparison
+    # Default presets — now include base features + detection
     PRESETS = {
         "A — Heart View (flagship)": {
+            "Platform": "Chest-worn band", "GPS": "GPS enabled", "Network": "2.4 GHz cellular",
+            "Power": "Polymer battery", "Finish": "Original plastic",
             "Heartbeat": "Temporal", "Blood vessel": "None",
             "Dissolved gasses": "None", "Toxicology": "None",
             "Hormone": "None", "Metabolic": "None",
             "price": 700,
         },
-        "B — Estrogen monitor (minimal)": {
+        "B — Estrogen monitor (wrist)": {
+            "Platform": "Wristband (small)", "GPS": "No GPS", "Network": "Bluetooth",
+            "Power": "Polymer battery", "Finish": "Original plastic",
             "Heartbeat": "None", "Blood vessel": "None",
             "Dissolved gasses": "None", "Toxicology": "None",
             "Hormone": "Estrogen", "Metabolic": "None",
             "price": 731,
         },
         "C — Narcotic law device": {
+            "Platform": "Ankle/leg band", "GPS": "GPS enabled", "Network": "5 GHz cellular",
+            "Power": "Two-battery pack (polymer)", "Finish": "Original plastic",
             "Heartbeat": "None", "Blood vessel": "None",
             "Dissolved gasses": "None", "Toxicology": "Narcotic",
             "Hormone": "None", "Metabolic": "None",
             "price": 1350,
         },
-        "D — Cancer premium": {
+        "D — Cancer breast premium": {
+            "Platform": "Chest-worn band", "GPS": "GPS enabled", "Network": "2.4 GHz cellular",
+            "Power": "Polymer battery", "Finish": "Dyed plastic",
             "Heartbeat": "Pulse only", "Blood vessel": "Systolic only",
             "Dissolved gasses": "None", "Toxicology": "None",
             "Hormone": "None", "Metabolic": "None",
@@ -2549,18 +2625,39 @@ $$INV = \\lambda_{{eff}} \\times CT = {cd_lambda_eff:.2f} \\times {cd_CT:.3f} = 
                                        index=preset_default_idx, key=f"pd_preset_{i}")
             preset = PRESETS[preset_sel]
 
-            st.markdown(f"**Product {i+1} Features**")
-            selected = {}
-            for attr, options in FEATURES.items():
+            # ── Base Features ─────────────────────────────────────────────────
+            st.markdown(f"**Product {i+1} — Base Features**")
+            selected_base = {}
+            for attr, options in BASE_FEATURES.items():
+                default_feat = preset.get(attr, list(options.keys())[0])
+                default_idx = list(options.keys()).index(default_feat) if default_feat in options else 0
+                selected_base[attr] = st.selectbox(attr, list(options.keys()),
+                                                     index=default_idx,
+                                                     key=f"pd_base_{attr}_{i}",
+                                                     help=options[default_feat][3] if len(options[default_feat]) > 3 else "")
+
+            # ── Detection Agenda ──────────────────────────────────────────────
+            st.markdown(f"**Product {i+1} — Detection Agenda**")
+            selected_det = {}
+            for attr, options in DETECTION_FEATURES.items():
                 default_feat = preset[attr]
                 default_idx = list(options.keys()).index(default_feat) if default_feat in options else 0
-                selected[attr] = st.selectbox(attr, list(options.keys()),
-                                               index=default_idx,
-                                               key=f"pd_{attr}_{i}")
+                selected_det[attr] = st.selectbox(attr, list(options.keys()),
+                                                    index=default_idx,
+                                                    key=f"pd_det_{attr}_{i}")
 
-            total_days = max(FEATURES[attr][selected[attr]][0] for attr in FEATURES)
-            total_cost = sum(FEATURES[attr][selected[attr]][1] for attr in FEATURES)
-            total_mat = sum(FEATURES[attr][selected[attr]][2] for attr in FEATURES)
+            # ── Calculate totals from both base + detection ───────────────────
+            base_days = max((BASE_FEATURES[a][selected_base[a]][0] for a in BASE_FEATURES), default=0)
+            base_cost = sum(BASE_FEATURES[a][selected_base[a]][1] for a in BASE_FEATURES)
+            base_mat = sum(BASE_FEATURES[a][selected_base[a]][2] for a in BASE_FEATURES)
+
+            det_days = max(DETECTION_FEATURES[a][selected_det[a]][0] for a in DETECTION_FEATURES)
+            det_cost = sum(DETECTION_FEATURES[a][selected_det[a]][1] for a in DETECTION_FEATURES)
+            det_mat = sum(DETECTION_FEATURES[a][selected_det[a]][2] for a in DETECTION_FEATURES)
+
+            total_days = max(base_days, det_days)  # parallel development
+            total_cost = base_cost + det_cost
+            total_mat = base_mat + det_mat
 
             pd_target_price = st.number_input("Target Retail Price ($)",
                                                 value=preset["price"], step=25,
@@ -2576,10 +2673,10 @@ $$INV = \\lambda_{{eff}} \\times CT = {cd_lambda_eff:.2f} \\times {cd_CT:.3f} = 
             st.metric("Design Time", f"{total_days} days")
             st.metric("Design Cost", f"${total_cost:,}")
             st.metric("Materials / Unit", f"${total_mat}")
-            st.metric("Unit Margin", f"${pd_margin:.0f}",
+            st.metric("Unit Margin (before tax)", f"${pd_margin:.0f}",
                        help=f"Price × 80% − ${PG_HANDLING_COST} handling − ${total_mat} materials")
             if pd_break_days < float("inf"):
-                st.metric("Break-even", f"{pd_break_days:.0f} days",
+                st.metric("Break-even (design cost)", f"{pd_break_days:.0f} days",
                            delta=f"{pd_break_days/30:.1f} months",
                            delta_color="off")
             else:
@@ -2588,15 +2685,31 @@ $$INV = \\lambda_{{eff}} \\times CT = {cd_lambda_eff:.2f} \\times {cd_CT:.3f} = 
             # Feature summary in expander
             with st.expander("Feature breakdown", expanded=False):
                 feat_df = []
-                for attr, feat in selected.items():
-                    d, c, m = FEATURES[attr][feat]
-                    feat_df.append({"Attribute": attr, "Feature": feat,
+                for attr, feat in selected_base.items():
+                    d, c, m = BASE_FEATURES[attr][feat][:3]
+                    feat_df.append({"Type": "Base", "Attribute": attr, "Feature": feat,
+                                     "Days": d, "Cost": f"${c:,}", "Mat $/u": f"${m}"})
+                for attr, feat in selected_det.items():
+                    d, c, m = DETECTION_FEATURES[attr][feat]
+                    feat_df.append({"Type": "Detection", "Attribute": attr, "Feature": feat,
                                      "Days": d, "Cost": f"${c:,}", "Mat $/u": f"${m}"})
                 st.dataframe(pd.DataFrame(feat_df), use_container_width=True, hide_index=True)
 
+            # Deal-breaker flag check
+            db_warnings = []
+            if selected_det["Toxicology"] != "None" and selected_base["GPS"] == "No GPS":
+                db_warnings.append("Law Narcotic: needs GPS")
+            if selected_det["Toxicology"] != "None" and selected_base["Network"] == "Bluetooth":
+                db_warnings.append("Law Narcotic: needs cellular")
+            if selected_det["Hormone"] != "None" and "Two-battery pack" in selected_base["Power"]:
+                db_warnings.append("Fertility: avoid bulky battery packs")
+            if db_warnings:
+                st.warning("⚠ Potential deal breakers:\n" + "\n".join(f"- {w}" for w in db_warnings))
+
             pd_results.append({
                 "Product": f"P{i+1}: {preset_sel}",
-                "Features": ", ".join(f"{a[:4]}:{f}" for a, f in selected.items() if f != "None") or "None",
+                "Platform": selected_base["Platform"].split(" ")[0],
+                "Detection": ", ".join(f"{a[:4]}:{f}" for a, f in selected_det.items() if f != "None") or "None",
                 "Days": total_days,
                 "Design $": f"${total_cost:,}",
                 "Mat/u": f"${total_mat}",
