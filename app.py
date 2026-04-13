@@ -2252,7 +2252,6 @@ $$INV = \\lambda_{{eff}} \\times CT = {cd_lambda_eff:.2f} \\times {cd_CT:.3f} = 
         cm_pct_of_rev = lambda v: f"{v/cm_price*100:.1f}%" if cm_price > 0 else "—"
 
         color_pre = "#2d6a2e" if cm_before_tax > 0 else "#b22222"
-        color_post = "#2d6a2e" if cm_after_tax > 0 else "#b22222"
 
         st.markdown(f"""
 <div style="border:1px solid rgba(128,128,128,0.3); border-radius:8px; padding:1rem;">
@@ -2293,45 +2292,32 @@ $$INV = \\lambda_{{eff}} \\times CT = {cd_lambda_eff:.2f} \\times {cd_CT:.3f} = 
 <td style="text-align:right;color:#b22222;">$({cm_day_commission:,.2f})</td>
 <td style="text-align:right;">{cm_pct_of_rev(cm_commission_per_unit)}</td>
 </tr>
-<tr style="border-bottom:1px solid rgba(128,128,128,0.3);">
+<tr style="border-bottom:2px solid rgba(128,128,128,0.5);">
 <td>(−) Shipping</td>
 <td style="text-align:right;color:#b22222;">$({cm_shipping:,.2f})</td>
 <td style="text-align:right;color:#b22222;">$({cm_day_shipping:,.2f})</td>
 <td style="text-align:right;">{cm_pct_of_rev(cm_shipping)}</td>
 </tr>
-<tr style="background:rgba(255,215,0,0.15);">
+<tr style="background:rgba({'45,106,46' if cm_before_tax > 0 else '178,34,34'},0.2);">
 <td><b>= Contribution Margin (before tax)</b></td>
-<td style="text-align:right;color:{color_pre};"><b>${cm_before_tax:,.2f}</b></td>
-<td style="text-align:right;color:{color_pre};"><b>${cm_day_before_tax:,.2f}</b></td>
+<td style="text-align:right;color:{color_pre};font-size:1.15em;"><b>${cm_before_tax:,.2f}</b></td>
+<td style="text-align:right;color:{color_pre};font-size:1.15em;"><b>${cm_day_before_tax:,.2f}</b></td>
 <td style="text-align:right;color:{color_pre};"><b>{cm_pct_of_rev(cm_before_tax)}</b></td>
-</tr>
-<tr>
-<td>(−) Tax (35%)</td>
-<td style="text-align:right;color:#b22222;">$({cm_tax:,.2f})</td>
-<td style="text-align:right;color:#b22222;">$({cm_day_tax:,.2f})</td>
-<td style="text-align:right;">{cm_pct_of_rev(cm_tax)}</td>
-</tr>
-<tr style="background:rgba({'45,106,46' if cm_after_tax > 0 else '178,34,34'},0.2);border-top:2px solid rgba(128,128,128,0.5);">
-<td><b>= Contribution Margin (after tax)</b></td>
-<td style="text-align:right;color:{color_post};font-size:1.1em;"><b>${cm_after_tax:,.2f}</b></td>
-<td style="text-align:right;color:{color_post};font-size:1.1em;"><b>${cm_day_after_tax:,.2f}</b></td>
-<td style="text-align:right;color:{color_post};"><b>{cm_pct_of_rev(cm_after_tax)}</b></td>
 </tr>
 </table>
 </div>
 """, unsafe_allow_html=True)
+        st.caption("Focus is on CM before tax. Tax (35%) applies at entity level on aggregate income, not on CM per unit — it's not a decision-relevant cost when comparing pricing/product options.")
 
     with cm_chart_col:
-        # Waterfall chart showing the margin decomposition
+        # Waterfall chart showing the margin decomposition (pre-tax focus)
         fig_cm = go.Figure(go.Waterfall(
             name="Per Unit",
             orientation="v",
-            measure=["absolute", "relative", "relative", "relative", "relative", "relative",
-                     "total", "relative", "total"],
-            x=["Revenue", "Mfg OH", "Materials", "Handling", "Commission", "Shipping",
-               "CM pre-tax", "Tax", "CM after tax"],
+            measure=["absolute", "relative", "relative", "relative", "relative", "relative", "total"],
+            x=["Revenue", "Mfg OH", "Materials", "Handling", "Commission", "Shipping", "CM"],
             y=[cm_price, -cd_mfg_overhead_per_unit, -cm_materials, -cm_handling,
-               -cm_commission_per_unit, -cm_shipping, 0, -cm_tax, 0],
+               -cm_commission_per_unit, -cm_shipping, 0],
             connector={"line": {"color": "rgb(63, 63, 63)"}},
             increasing={"marker": {"color": "#2d6a2e"}},
             decreasing={"marker": {"color": "#b22222"}},
@@ -2340,31 +2326,26 @@ $$INV = \\lambda_{{eff}} \\times CT = {cd_lambda_eff:.2f} \\times {cd_CT:.3f} = 
         fig_cm.update_layout(height=400, yaxis_title="$ per unit",
                               yaxis_tickformat="$,.0f",
                               margin=dict(l=0, r=0, t=30, b=0),
-                              title=f"Waterfall: ${cm_price} price → ${cm_after_tax:,.2f} CM after tax")
+                              title=f"Waterfall: ${cm_price} price → ${cm_before_tax:,.2f} CM before tax")
         st.plotly_chart(fig_cm, use_container_width=True)
 
-    # Break-even analysis
+    # Break-even analysis (all pre-tax)
     st.markdown("---")
     be_col1, be_col2, be_col3 = st.columns(3)
     with be_col1:
-        # Break-even price given current costs
-        # 0 = P - OH - Mat - Ship - Hand - P*(comm%)
-        # P*(1-comm%) = OH + Mat + Ship + Hand
-        # P = (OH + Mat + Ship + Hand) / (1 - comm%)
+        # Break-even price given current costs (where CM before tax = 0)
         be_fixed_per_unit = cd_mfg_overhead_per_unit + cm_materials + cm_shipping + cm_handling
         be_price = be_fixed_per_unit / (1 - cm_commission_pct / 100) if cm_commission_pct < 100 else 0
         st.metric("Break-even Price", f"${be_price:,.2f}",
-                   help="Minimum price for zero contribution margin")
+                   help="Minimum price where CM before tax = $0")
 
     with be_col2:
-        # Break-even volume given current price (covers DC opex of $2K/day from game)
-        st.metric("Unit CM After Tax", f"${cm_after_tax:,.2f}",
-                   delta=f"{cm_after_tax/cm_price*100:.1f}% of price" if cm_price > 0 else "—",
-                   delta_color="normal" if cm_after_tax > 0 else "inverse")
+        st.metric("Unit CM (before tax)", f"${cm_before_tax:,.2f}",
+                   delta=f"{cm_before_tax/cm_price*100:.1f}% of price" if cm_price > 0 else "—",
+                   delta_color="normal" if cm_before_tax > 0 else "inverse")
 
     with be_col3:
-        # Daily CM contribution to fixed costs (DC daily + factory daily = ~$4,500)
-        st.metric("Daily CM After Tax", f"${cm_day_after_tax:,.2f}",
+        st.metric("Daily CM (before tax)", f"${cm_day_before_tax:,.2f}",
                    help=f"At λ_eff = {cd_lambda_eff:.2f} units/day")
 
     st.markdown("---")
