@@ -1879,31 +1879,30 @@ elif page == "🚀 14 Trial War Room":
             total_ad_spend += b14_ad_daily
         cumulative_cm.append(cum)
 
-    st.markdown("---")
-    summary_col1, summary_col2 = st.columns([2, 1])
-    with summary_col1:
-        fig_cum = go.Figure()
-        fig_cum.add_trace(go.Scatter(x=days, y=cumulative_cm, name="Cumulative Contribution",
-                                       line=dict(color="#2d6a2e", width=2.5),
-                                       fill="tozeroy", fillcolor="rgba(45,106,46,0.1)"))
-        fig_cum.add_hline(y=0, line_dash="dot", line_color="gray")
-        fig_cum.update_layout(height=300, xaxis_title="Day",
-                               yaxis_title="Cumulative Contribution ($)",
-                               yaxis_tickformat="$,.0f",
-                               title="4-Year Cumulative Contribution (net of advertising)",
-                               margin=dict(l=0, r=0, t=40, b=0))
-        st.plotly_chart(fig_cum, use_container_width=True)
+    # 4-year cumulative contribution chart (full width, directly under arrivals)
+    fig_cum = go.Figure()
+    fig_cum.add_trace(go.Scatter(x=days, y=cumulative_cm, name="Cumulative Contribution",
+                                   line=dict(color="#2d6a2e", width=2.5),
+                                   fill="tozeroy", fillcolor="rgba(45,106,46,0.1)"))
+    fig_cum.add_hline(y=0, line_dash="dot", line_color="gray")
+    fig_cum.update_layout(height=300, xaxis_title="Day",
+                           yaxis_title="Cumulative Contribution ($)",
+                           yaxis_tickformat="$,.0f",
+                           title="4-Year Cumulative Contribution (net of advertising)",
+                           margin=dict(l=0, r=0, t=40, b=0))
+    st.plotly_chart(fig_cum, use_container_width=True)
 
-    with summary_col2:
-        total_purchases = sum(purchases_list)
-        final_cum_cm = cumulative_cm[-1] if cumulative_cm else 0
-        st.metric("P(buy) at your price", f"{p_buy:.1%}")
-        st.metric("Total Purchases (4yr)", f"{total_purchases:,.0f} units")
-        st.metric("Market Served", f"{total_purchases/b14_M*100:.1f}% of {b14_M:,}")
-        st.metric("Total Ad Spend", f"${total_ad_spend:,}")
-        st.metric("Cumulative CM (net)", f"${final_cum_cm:,.0f}",
-                   delta=f"${final_cum_cm/1000:.0f}K")
-        st.metric("CM / unit sold", f"${cm_per_unit:.2f}")
+    # 6 metric boxes in horizontal alignment
+    total_purchases = sum(purchases_list)
+    final_cum_cm = cumulative_cm[-1] if cumulative_cm else 0
+    m1, m2, m3, m4, m5, m6 = st.columns(6)
+    m1.metric("P(buy)", f"{p_buy:.1%}")
+    m2.metric("Total Purchases", f"{total_purchases:,.0f} u")
+    m3.metric("Market Served", f"{total_purchases/b14_M*100:.1f}%")
+    m4.metric("Ad Spend", f"${total_ad_spend:,}")
+    m5.metric("Cumulative CM", f"${final_cum_cm:,.0f}",
+               delta=f"${final_cum_cm/1000:.0f}K")
+    m6.metric("CM / unit", f"${cm_per_unit:.2f}")
 
     # D3 Exercise verification
     with st.expander("**D3 Exercise Verification** (default params: MD Cancer Bladder/Kidney)", expanded=False):
