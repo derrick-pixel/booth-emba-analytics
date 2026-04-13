@@ -1688,7 +1688,8 @@ elif page == "🏭 13 Trial War Room":
 
     pg_col1, pg_col2, pg_col3, pg_col4, pg_col5 = st.columns(5)
     with pg_col1:
-        PG_STARTING_CASH = st.number_input("Starting Cash ($)", value=4000000, step=100000, key="pg_cash")
+        PG_STARTING_CASH = st.number_input("Initial Equity ($)", value=4000000, step=100000, key="pg_cash",
+                                             help="Engineer's $4M life savings contributed to firm. Actual starting cash when team takes over depends on Year 1 operations (factory/DC built, some sales). The $2M team paid goes to engineer, not firm.")
     with pg_col2:
         PG_SALES_COMMISSION = st.number_input("Sales Commission (%)", value=20.0, step=1.0, key="pg_comm")
     with pg_col3:
@@ -1716,7 +1717,7 @@ elif page == "🏭 13 Trial War Room":
     border-radius:12px;padding:1.2rem 1.5rem;margin-bottom:1rem;">
 <h4 style="color:#ffd700;margin:0 0 0.5rem 0;">4-Year Simulation | Bass Diffusion Model | 3 Production Technologies</h4>
 <div style="display:flex;gap:2rem;flex-wrap:wrap;">
-<div><span style="opacity:0.7;">Starting Cash</span><br><b style="font-size:1.3rem;">${PG_STARTING_CASH:,}</b></div>
+<div><span style="opacity:0.7;">Initial Equity</span><br><b style="font-size:1.3rem;">${PG_STARTING_CASH:,}</b><br><span style="font-size:0.75rem;opacity:0.6;">engineer's original contribution</span></div>
 <div><span style="opacity:0.7;">Sales Commission</span><br><b style="font-size:1.3rem;">{PG_SALES_COMMISSION:.0f}%</b><br><span style="font-size:0.75rem;opacity:0.6;">of retail price</span></div>
 <div><span style="opacity:0.7;">Handling Cost</span><br><b style="font-size:1.3rem;">${PG_HANDLING_COST}/unit</b></div>
 <div><span style="opacity:0.7;">Raw Materials Payable</span><br><b style="font-size:1.3rem;">30 days</b></div>
@@ -1745,47 +1746,65 @@ elif page == "🏭 13 Trial War Room":
         bass_q = st.number_input("Imitation Coefficient (q)", value=0.0035, step=0.0005,
                                   format="%.4f", key="bass_q",
                                   help="Typical: 0.0025-0.004. Higher = faster word-of-mouth.")
+        bass_p_inc = st.number_input("Adv. incremental p per $500/day", value=0.0002,
+                                      step=0.00005, format="%.5f", key="bass_p_inc",
+                                      help="Market-specific. From market research tables. Typically equals base p for medical/clinical markets.")
         bass_adv = st.number_input("Advertising $/day", value=0, step=100, key="bass_adv",
-                                    help="Adds incremental p = $adv/$500 × p")
+                                    help=f"Adds incremental_p = (adv/$500) × {bass_p_inc:.5f} to base p")
+        bass_price = st.number_input("Retail Price ($)", value=600, step=25, key="bass_price",
+                                      help="Actual selling price — affects P(buy) for arrivals")
+        bass_max_wtp = st.number_input("Max WTP ($)", value=965, step=50, key="bass_max_wtp",
+                                         help="Upper bound of WTP range. Used to calculate P(buy).")
         bass_days = st.number_input("Simulate Days", value=1460, step=30, key="bass_days",
                                      help="4 years = 1460 days")
 
-        # Peak sales calculation
+        # Peak sales calculation (theoretical, assuming 100% conversion)
         peak_time = (1 / (bass_p + bass_q)) * np.log(bass_q / bass_p) if bass_p > 0 and bass_q > bass_p else 0
         peak_sales = bass_M * ((bass_p + bass_q) ** 2) / (4 * bass_q) if bass_q > 0 else 0
 
         st.markdown("---")
-        st.metric("Time to Peak Sales", f"{peak_time:.0f} days ({peak_time/365:.1f} yrs)")
-        st.metric("Peak Daily Sales (theoretical)", f"{peak_sales:.1f} units/day")
+        st.metric("Time to Peak Arrivals", f"{peak_time:.0f} days ({peak_time/365:.1f} yrs)")
+        st.metric("Peak Daily Arrivals (theoretical)", f"{peak_sales:.1f} /day")
+
+        # P(buy) at given price
+        p_buy = max(0, min(1, (bass_max_wtp - bass_price) / bass_max_wtp)) if bass_max_wtp > 0 else 0
+        st.metric("P(buy) at this price", f"{p_buy:.1%}")
 
     with bass_col2:
-        # Simulate Bass model
-        adv_p_boost = (bass_adv / 500) * bass_p if bass_adv > 0 else 0
+        # Simulate Bass model with return-to-pool dynamics
+        adv_p_boost = (bass_adv / 500) * bass_p_inc if bass_adv > 0 else 0
         effective_p = bass_p + adv_p_boost
 
-        A = 0  # Cumulative sales
+        # Key insight: customers who don't buy RETURN to pool (per Case Brief).
+        # So only PURCHASES deplete the unserved pool M - A, not arrivals.
+        A = 0  # Cumulative purchases (not arrivals)
         days = np.arange(int(bass_days))
-        arrivals = []
-        cumulative = []
+        arrivals = []  # Daily arrivals (visits to DC)
+        purchases = []  # Daily actual sales
+        cumulative = []  # Cumulative purchases
         for t in days:
             if bass_M - A > 0:
-                q_t = (effective_p + bass_q * A / bass_M) * (bass_M - A)
+                q_t = (effective_p + bass_q * A / bass_M) * (bass_M - A)  # arrivals
             else:
                 q_t = 0
+            buys = q_t * p_buy  # Only those with positive surplus purchase
             arrivals.append(q_t)
-            A += q_t
+            purchases.append(buys)
+            A += buys  # Only purchases deplete pool (non-buyers return)
             cumulative.append(A)
 
         fig_bass = go.Figure()
-        fig_bass.add_trace(go.Scatter(x=days, y=arrivals, name="Daily Arrivals (Q_t)",
-                                       line=dict(color="#800000", width=2)))
-        fig_bass.add_trace(go.Scatter(x=days, y=cumulative, name="Cumulative (A)",
+        fig_bass.add_trace(go.Scatter(x=days, y=arrivals, name="Daily Arrivals",
+                                       line=dict(color="#b8860b", width=1.5, dash="dot")))
+        fig_bass.add_trace(go.Scatter(x=days, y=purchases, name=f"Daily Purchases (P(buy)={p_buy:.0%})",
+                                       line=dict(color="#800000", width=2.5)))
+        fig_bass.add_trace(go.Scatter(x=days, y=cumulative, name="Cumulative Purchases",
                                        line=dict(color="#1a3c5e", width=2, dash="dash"),
                                        yaxis="y2"))
         fig_bass.update_layout(
             height=400, xaxis_title="Days",
-            yaxis=dict(title="Daily Arrivals", tickfont=dict(color="#800000")),
-            yaxis2=dict(title="Cumulative Sales", overlaying="y", side="right",
+            yaxis=dict(title="Daily Count (arrivals/purchases)", tickfont=dict(color="#800000")),
+            yaxis2=dict(title="Cumulative Purchases", overlaying="y", side="right",
                         tickfont=dict(color="#1a3c5e")),
             margin=dict(l=0, r=0, t=30, b=0),
             legend=dict(orientation="h", yanchor="bottom", y=1.02),
@@ -1793,7 +1812,13 @@ elif page == "🏭 13 Trial War Room":
         st.plotly_chart(fig_bass, use_container_width=True)
 
         if bass_adv > 0:
-            st.info(f"Advertising boost: p = {bass_p:.5f} → {effective_p:.5f} (+{adv_p_boost/bass_p*100:.1f}%)")
+            st.info(f"Advertising boost: base p = {bass_p:.5f} → effective p = {effective_p:.5f} (+{adv_p_boost/bass_p*100:.1f}%)")
+
+        # Summary stats
+        total_purchases = int(sum(purchases))
+        total_arrivals = int(sum(arrivals))
+        st.caption(f"Over {int(bass_days)} days: {total_arrivals:,} arrivals → {total_purchases:,} purchases ({total_purchases/total_arrivals*100:.1f}% conversion). "
+                    f"Non-buyers return to pool per Case Brief — so only purchases deplete M−A.")
 
     st.markdown("---")
 
@@ -2250,49 +2275,82 @@ elif page == "🏭 13 Trial War Room":
             default_rev = 500
 
         npv_capex = st.number_input("Total Capital Investment ($)", value=default_capex, step=50000, key="npv_capex")
+        npv_land = st.number_input("Of which: Land (non-depreciating)", value=100000, step=10000, key="npv_land",
+                                    help="Land doesn't depreciate — only plant/equipment gets the tax shield")
         npv_build = st.number_input("Build Time (days)", value=default_build, step=5, key="npv_build")
         npv_daily_cost = st.number_input("Incremental Daily Cost ($)", value=default_daily, step=100, key="npv_daily")
         npv_daily_rev = st.number_input("Incremental Daily Revenue ($)", value=default_rev, step=500, key="npv_rev")
         npv_remaining_days = st.number_input("Game Days Remaining", value=1460, step=30, key="npv_days")
         npv_discount = st.number_input("Discount Rate (% APR)", value=15.0, step=0.5, key="npv_dr") / 100
+        npv_tax_rate = 0.35
+        npv_dep_years = PG_DEPRECIATION_YRS
 
     with npv_col2:
-        # Build period: capex + daily costs, no revenue
-        # Operating period: daily revenue - daily cost
+        # Depreciable capital (excludes land)
+        npv_depreciable = max(0, npv_capex - npv_land)
+        daily_depreciation = npv_depreciable / npv_dep_years / 364
+        daily_dep_tax_shield = daily_depreciation * npv_tax_rate
+
+        # Build period: capex + daily costs, no revenue. Depreciation starts upon operational.
         operating_days = max(0, npv_remaining_days - npv_build)
 
-        # Simple daily cash flow model
+        # Daily discount
         daily_discount = (1 + npv_discount) ** (1/365) - 1
-        npv = -npv_capex  # Initial outflow
+        npv = -npv_capex  # Initial outflow at day 0
 
+        total_dep_taken = 0
         for day in range(int(npv_remaining_days)):
             if day < npv_build:
+                # Build period: incremental daily cost, no revenue, no depreciation yet
                 cash_flow = -npv_daily_cost
             else:
-                cash_flow = (npv_daily_rev - npv_daily_cost) * (1 - 0.35)  # After tax
+                # Operating period: revenue - cost, plus depreciation tax shield
+                # Depreciation only for the days it applies within the game window
+                operating_profit = npv_daily_rev - npv_daily_cost
+                # Tax is on operating profit minus depreciation (reduces taxable income)
+                taxable = operating_profit - daily_depreciation
+                tax = max(0, taxable) * npv_tax_rate
+                cash_flow = operating_profit - tax  # = op_profit × (1-t) + dep × t
+                total_dep_taken += daily_depreciation
             npv += cash_flow / ((1 + daily_discount) ** day)
 
-        # Also compute payback period (undiscounted)
+        # Compute payback (undiscounted) with tax shield
         cumulative_cash = -npv_capex
         payback_day = None
         for day in range(int(npv_remaining_days)):
             if day < npv_build:
                 cumulative_cash -= npv_daily_cost
             else:
-                cumulative_cash += (npv_daily_rev - npv_daily_cost) * (1 - 0.35)
+                operating_profit = npv_daily_rev - npv_daily_cost
+                taxable = operating_profit - daily_depreciation
+                tax = max(0, taxable) * npv_tax_rate
+                cumulative_cash += operating_profit - tax
             if cumulative_cash > 0 and payback_day is None:
                 payback_day = day
                 break
 
+        # PV of depreciation tax shield (for display)
+        pv_tax_shield = 0
+        for day in range(int(npv_build), int(npv_remaining_days)):
+            pv_tax_shield += daily_dep_tax_shield / ((1 + daily_discount) ** day)
+
+        # Undiscounted annual operating profit for display
+        annual_op_profit_after_tax = (npv_daily_rev - npv_daily_cost - daily_depreciation) * 364 * (1 - npv_tax_rate) + daily_depreciation * 364
+
         npv_color = "#2d6a2e" if npv > 0 else "#b22222"
         st.markdown(f"""
 <div style="border:2px solid {npv_color};border-radius:10px;padding:1rem;">
-<h4 style="margin:0;color:{npv_color};">NPV Analysis</h4>
+<h4 style="margin:0;color:{npv_color};">NPV Analysis (with Depreciation Tax Shield)</h4>
 <table style="width:100%;margin-top:0.5rem;">
 <tr><td>Total Capital Investment</td><td style="text-align:right;">-${npv_capex:,}</td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;of which Land (no depreciation)</td><td style="text-align:right;">${npv_land:,}</td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;Depreciable Capital</td><td style="text-align:right;">${npv_depreciable:,}</td></tr>
+<tr><td>Daily Depreciation ({npv_dep_years}-yr SL)</td><td style="text-align:right;">${daily_depreciation:.2f}</td></tr>
+<tr><td>Daily Tax Shield (35% × dep.)</td><td style="text-align:right;">${daily_dep_tax_shield:.2f}</td></tr>
 <tr><td>Build Period</td><td style="text-align:right;">{npv_build} days</td></tr>
 <tr><td>Operating Period</td><td style="text-align:right;">{operating_days} days</td></tr>
-<tr><td>Annual Operating Profit (after tax)</td><td style="text-align:right;">${(npv_daily_rev - npv_daily_cost) * 365 * 0.65:,.0f}</td></tr>
+<tr><td>PV of Depreciation Tax Shield</td><td style="text-align:right;color:#2d6a2e;">+${pv_tax_shield:,.0f}</td></tr>
+<tr><td>Annual Operating Profit (after tax + shield)</td><td style="text-align:right;">${annual_op_profit_after_tax:,.0f}</td></tr>
 <tr><td><b>NPV (at {npv_discount*100:.1f}% APR)</b></td><td style="text-align:right;font-size:1.3rem;font-weight:700;color:{npv_color};">${npv:,.0f}</td></tr>
 <tr><td>Payback Period</td><td style="text-align:right;">{payback_day if payback_day else "Never"} days</td></tr>
 </table>
@@ -2300,7 +2358,7 @@ elif page == "🏭 13 Trial War Room":
 """, unsafe_allow_html=True)
 
         if npv > 0:
-            st.success(f"✓ Positive NPV — investment creates value of ${npv:,.0f}")
+            st.success(f"✓ Positive NPV — investment creates value of ${npv:,.0f} (includes ${pv_tax_shield:,.0f} from depreciation tax shield)")
         else:
             st.error(f"✗ Negative NPV — avoid this investment")
 
