@@ -1864,35 +1864,33 @@ elif page == "🚀 14 Trial War Room":
                 })
         st.dataframe(pd.DataFrame(check_data), use_container_width=True, hide_index=True)
 
-    # Cumulative contribution (4-year)
-    cum_cm = 0
-    var_cost = b14_materials + W14_SHIPPING + W14_HANDLING + b14_mfg_oh
-    cm_per_unit = b14_price * (1 - w14_comm_frac) - var_cost
-    daily_cm = [cm_per_unit * p for p in purchases_list]
-    cumulative_cm = []
-    cum = 0
-    total_ad_spend = 0
-    for t, d_cm in zip(days, daily_cm):
-        cum += d_cm
-        if t <= b14_ad_duration:
-            cum -= b14_ad_daily
-            total_ad_spend += b14_ad_daily
-        cumulative_cm.append(cum)
+        # Cumulative contribution (4-year) — inside right column, fills whitespace next to advertising inputs
+        var_cost = b14_materials + W14_SHIPPING + W14_HANDLING + b14_mfg_oh
+        cm_per_unit = b14_price * (1 - w14_comm_frac) - var_cost
+        daily_cm = [cm_per_unit * p for p in purchases_list]
+        cumulative_cm = []
+        cum = 0
+        total_ad_spend = 0
+        for t, d_cm in zip(days, daily_cm):
+            cum += d_cm
+            if t <= b14_ad_duration:
+                cum -= b14_ad_daily
+                total_ad_spend += b14_ad_daily
+            cumulative_cm.append(cum)
 
-    # 4-year cumulative contribution chart (full width, directly under arrivals)
-    fig_cum = go.Figure()
-    fig_cum.add_trace(go.Scatter(x=days, y=cumulative_cm, name="Cumulative Contribution",
-                                   line=dict(color="#2d6a2e", width=2.5),
-                                   fill="tozeroy", fillcolor="rgba(45,106,46,0.1)"))
-    fig_cum.add_hline(y=0, line_dash="dot", line_color="gray")
-    fig_cum.update_layout(height=300, xaxis_title="Day",
-                           yaxis_title="Cumulative Contribution ($)",
-                           yaxis_tickformat="$,.0f",
-                           title="4-Year Cumulative Contribution (net of advertising)",
-                           margin=dict(l=0, r=0, t=40, b=0))
-    st.plotly_chart(fig_cum, use_container_width=True)
+        fig_cum = go.Figure()
+        fig_cum.add_trace(go.Scatter(x=days, y=cumulative_cm, name="Cumulative Contribution",
+                                       line=dict(color="#2d6a2e", width=2.5),
+                                       fill="tozeroy", fillcolor="rgba(45,106,46,0.1)"))
+        fig_cum.add_hline(y=0, line_dash="dot", line_color="gray")
+        fig_cum.update_layout(height=300, xaxis_title="Day",
+                               yaxis_title="Cumulative Contribution ($)",
+                               yaxis_tickformat="$,.0f",
+                               title="4-Year Cumulative Contribution (net of advertising)",
+                               margin=dict(l=0, r=0, t=40, b=0))
+        st.plotly_chart(fig_cum, use_container_width=True)
 
-    # 6 metric boxes in horizontal alignment
+    # 6 metric boxes in horizontal alignment (full width)
     total_purchases = sum(purchases_list)
     final_cum_cm = cumulative_cm[-1] if cumulative_cm else 0
     m1, m2, m3, m4, m5, m6 = st.columns(6)
