@@ -1898,56 +1898,102 @@ elif page == "🏭 13 Trial War Room":
                                  "feature": "Heartbeat Temporal", "dealbreaker": "GPS significantly affects WTP"},
     }
 
-    mkt_col1, mkt_col2 = st.columns([1, 2])
-    with mkt_col1:
-        mkt_sel = st.selectbox("Target Market Segment", list(MARKETS.keys()), key="mkt_sel")
-        mkt = MARKETS[mkt_sel]
-        mkt_wtp_est = st.slider("WTP Estimate ($)",
-                                  int(mkt["wtp_low"]), int(mkt["wtp_high"]),
-                                  int((mkt["wtp_low"] + mkt["wtp_high"]) / 2), step=10, key="mkt_wtp")
-        mkt_size_est = st.slider("Market Size Estimate",
-                                  int(mkt["size_low"]), int(mkt["size_high"]),
-                                  int((mkt["size_low"] + mkt["size_high"]) / 2), step=1000, key="mkt_size")
-        mkt_mc_est = st.number_input("Your Marginal Cost ($/unit)", value=100, step=10, key="mkt_mc")
+    # Global settings row
+    mkt_config_col1, mkt_config_col2, mkt_config_col3 = st.columns([1, 1, 2])
+    with mkt_config_col1:
+        mkt_n = st.number_input("Markets to compare", min_value=2, max_value=4,
+                                 value=2, step=1, key="mkt_n")
+    with mkt_config_col2:
+        mkt_mc_est = st.number_input("Your Materials Cost ($/unit)",
+                                      value=100, step=10, key="mkt_mc",
+                                      help="Sum of materials costs from product design features")
+    with mkt_config_col3:
+        st.caption("Side-by-side comparison. Each column is an independent market selector "
+                   "with its own WTP and market size sliders.")
 
-        # Adjusted MC including handling and commission
-        effective_mc = mkt_mc_est + PG_HANDLING_COST
-        # Optimal price accounting for commission (20% of price)
-        # Profit = (P - P*comm/100 - effective_mc) * demand
-        # = P*(1-comm) - effective_mc
-        # So effective revenue per unit = P*(1-comm), and optimal P* = (WTP + effective_mc/(1-comm))/2
-        comm_frac = PG_SALES_COMMISSION / 100
-        effective_mc_commissioned = effective_mc / (1 - comm_frac)
-        optimal_mkt_price = (mkt_wtp_est + effective_mc_commissioned) / 2
+    comm_frac = PG_SALES_COMMISSION / 100
+    effective_mc = mkt_mc_est + PG_HANDLING_COST
+    effective_mc_commissioned = effective_mc / (1 - comm_frac)
 
-    with mkt_col2:
-        st.markdown(f"""
-**{mkt_sel}**
-- Core feature: **{mkt['feature']}**
-- WTP range: ${mkt['wtp_low']} - ${mkt['wtp_high']}
-- Market size: {mkt['size_low']:,} - {mkt['size_high']:,} per region
-- Bass p: {mkt['p']}, q: {mkt['q']}
-- DSO: {mkt['dso']} days
-- Deal breakers: _{mkt['dealbreaker']}_
-        """)
+    market_keys = list(MARKETS.keys())
+    # Default indices: first market and a different second market
+    default_indices = [0, 2, 5, 7]  # Clinical Fertility LH, Law Narcotic, MD Fertility, MD Heart Temporal
 
-        mk1, mk2, mk3, mk4 = st.columns(4)
-        mk1.metric("Your WTP Est.", f"${mkt_wtp_est}")
-        mk2.metric("Effective MC (w/ handling & commission)", f"${effective_mc_commissioned:.0f}")
-        mk3.metric("Optimal Price", f"${optimal_mkt_price:.0f}")
-        mk4.metric("Gross Margin %", f"{(optimal_mkt_price - effective_mc_commissioned)/optimal_mkt_price*100:.0f}%")
+    st.markdown("---")
+    mkt_cols = st.columns(int(mkt_n))
+    mkt_results = []  # collect for summary comparison
+    for i, col in enumerate(mkt_cols):
+        with col:
+            default_idx = default_indices[i] if i < len(default_indices) else i
+            mkt_sel = st.selectbox(f"Market {i+1}", market_keys, index=default_idx, key=f"mkt_sel_{i}")
+            mkt = MARKETS[mkt_sel]
 
-        # Unit economics breakdown
-        price_at_opt = optimal_mkt_price
-        commission_at_opt = price_at_opt * comm_frac
-        st.markdown(f"""
-**Unit Economics at ${price_at_opt:.0f}:**
-- Retail price: ${price_at_opt:.0f}
-- Sales commission ({PG_SALES_COMMISSION:.0f}%): -${commission_at_opt:.0f}
-- Handling cost: -${PG_HANDLING_COST}
-- Materials cost: -${mkt_mc_est}
-- **Gross profit/unit: ${price_at_opt - commission_at_opt - PG_HANDLING_COST - mkt_mc_est:.0f}**
-        """)
+            # Header card with discipline info
+            dealbreaker_color = "#b22222" if mkt['dealbreaker'] != "None" else "#2d6a2e"
+            st.markdown(f"""
+<div style="background:rgba(26,60,94,0.2);border-left:4px solid #1a3c5e;
+    border-radius:6px;padding:0.6rem 0.8rem;margin-bottom:0.5rem;font-size:0.85rem;">
+<b>{mkt_sel}</b><br>
+<span style="opacity:0.7;">Core feature:</span> {mkt['feature']}<br>
+<span style="opacity:0.7;">WTP range:</span> ${mkt['wtp_low']:,} – ${mkt['wtp_high']:,}<br>
+<span style="opacity:0.7;">Market size / region:</span> {mkt['size_low']:,} – {mkt['size_high']:,}<br>
+<span style="opacity:0.7;">Bass p:</span> {mkt['p']} &nbsp;|&nbsp; <span style="opacity:0.7;">q:</span> {mkt['q']}<br>
+<span style="opacity:0.7;">DSO:</span> <b>{mkt['dso']} days</b><br>
+<span style="opacity:0.7;">Deal breaker:</span> <b style="color:{dealbreaker_color};">{mkt['dealbreaker']}</b>
+</div>
+""", unsafe_allow_html=True)
+
+            mkt_wtp_est = st.slider("WTP Estimate ($)",
+                                      int(mkt["wtp_low"]), int(mkt["wtp_high"]),
+                                      int(mkt["wtp_high"]), step=10, key=f"mkt_wtp_{i}",
+                                      help="Default = upper bound (Max WTP) for optimal pricing")
+            mkt_size_est = st.slider("Market Size Estimate",
+                                      int(mkt["size_low"]), int(mkt["size_high"]),
+                                      int((mkt["size_low"] + mkt["size_high"]) / 2), step=1000,
+                                      key=f"mkt_size_{i}")
+
+            optimal_mkt_price = (mkt_wtp_est + effective_mc_commissioned) / 2
+            commission_at_opt = optimal_mkt_price * comm_frac
+            gross_profit_per_unit = optimal_mkt_price - commission_at_opt - PG_HANDLING_COST - mkt_mc_est
+            margin_pct = (gross_profit_per_unit / optimal_mkt_price * 100) if optimal_mkt_price > 0 else 0
+
+            # Peak sales calculation
+            peak_t = (1/(mkt["p"]+mkt["q"])) * np.log(mkt["q"]/mkt["p"]) if mkt["p"] > 0 and mkt["q"] > mkt["p"] else 0
+            peak_q = mkt_size_est * ((mkt["p"]+mkt["q"])**2) / (4*mkt["q"]) if mkt["q"] > 0 else 0
+
+            st.metric("Optimal Price", f"${optimal_mkt_price:,.0f}")
+            st.metric("Gross Profit / Unit", f"${gross_profit_per_unit:,.0f}")
+            st.metric("Gross Margin", f"{margin_pct:.0f}%")
+            st.metric("Bass Peak Sales", f"{peak_q:,.1f}/day")
+            st.metric("Time to Peak", f"{peak_t:.0f} days ({peak_t/365:.1f} yrs)")
+
+            # Unit economics detail
+            with st.expander("Unit economics", expanded=False):
+                st.markdown(f"""
+- Retail price: ${optimal_mkt_price:,.0f}
+- Commission ({PG_SALES_COMMISSION:.0f}%): -${commission_at_opt:,.0f}
+- Handling: -${PG_HANDLING_COST}
+- Materials: -${mkt_mc_est}
+- **Gross profit: ${gross_profit_per_unit:,.0f}**
+- DSO: {mkt['dso']} days → ${gross_profit_per_unit * mkt['dso']:,.0f} working capital tied up per unit
+""")
+
+            mkt_results.append({
+                "Market": mkt_sel,
+                "DSO (days)": mkt['dso'],
+                "WTP Max": f"${mkt['wtp_high']:,}",
+                "Opt. Price": f"${optimal_mkt_price:,.0f}",
+                "Profit/unit": f"${gross_profit_per_unit:,.0f}",
+                "Margin %": f"{margin_pct:.0f}%",
+                "Peak Sales/day": f"{peak_q:,.1f}",
+                "Time to Peak": f"{peak_t:.0f}d",
+                "Deal Breaker": mkt['dealbreaker'],
+            })
+
+    # Comparison summary table
+    st.markdown("---")
+    st.markdown("**Side-by-Side Summary**")
+    st.dataframe(pd.DataFrame(mkt_results), use_container_width=True, hide_index=True)
 
     st.markdown("---")
 
