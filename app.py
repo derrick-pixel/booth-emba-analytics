@@ -2428,16 +2428,46 @@ $$INV = \\lambda_{{eff}} \\times CT = {cd_lambda_eff:.2f} \\times {cd_CT:.3f} = 
 </div>
 """, unsafe_allow_html=True)
 
-            mkt_wtp_est = st.slider("WTP Estimate ($)",
-                                      int(mkt["wtp_low"]), int(mkt["wtp_high"]),
-                                      int(mkt["wtp_high"]), step=10, key=f"mkt_wtp_{i}",
-                                      help="Default = upper bound (Max WTP) for optimal pricing")
+            # ── Focus Group inputs: median AND max WTP ──────────────────────
+            st.caption("**From focus group ($20K/10 participants/7 days): enter median and max WTP**")
+            mkt_wtp_max = st.slider("Max WTP ($) — from focus group",
+                                      int(mkt["wtp_low"]), int(mkt["wtp_high"] * 1.5),
+                                      int(mkt["wtp_high"]), step=10, key=f"mkt_wtp_max_{i}",
+                                      help="100th percentile of WTP distribution across customers")
+            # Default median: geometric approach — 85% of max (typical pattern from focus group screenshots)
+            default_median = int(mkt_wtp_max * 0.85)
+            mkt_wtp_median = st.slider("Median WTP ($) — from focus group",
+                                        int(mkt_wtp_max * 0.3), int(mkt_wtp_max),
+                                        default_median, step=10, key=f"mkt_wtp_med_{i}",
+                                        help="50th percentile. If uniform distribution, median = (min + max) / 2, so min = 2×median − max.")
             mkt_size_est = st.slider("Market Size Estimate",
                                       int(mkt["size_low"]), int(mkt["size_high"]),
                                       int((mkt["size_low"] + mkt["size_high"]) / 2), step=1000,
                                       key=f"mkt_size_{i}")
 
-            optimal_mkt_price = (mkt_wtp_est + effective_mc_commissioned) / 2
+            # Implied min WTP under uniform [min, max] assumption
+            mkt_wtp_min = max(0, 2 * mkt_wtp_median - mkt_wtp_max)
+
+            # Optimal price calculation (uniform [min, max] + 20% commission)
+            # Interior: P* = max/2 + var_fixed / (2 * (1 - c))
+            # where var_fixed = materials + handling (shipping handled separately if relevant)
+            var_fixed = mkt_mc_est + PG_HANDLING_COST  # excludes shipping in this simplified view
+            interior_P = mkt_wtp_max / 2 + var_fixed / (2 * (1 - comm_frac))
+
+            if interior_P < mkt_wtp_min:
+                optimal_mkt_price = mkt_wtp_min
+                price_regime = f"Corner at min WTP (interior P*=${interior_P:,.0f} < min ${mkt_wtp_min:,.0f})"
+                p_buy_at_opt = 1.0
+            elif interior_P > mkt_wtp_max:
+                optimal_mkt_price = mkt_wtp_max
+                price_regime = f"At max WTP (demand → 0)"
+                p_buy_at_opt = 0
+            else:
+                optimal_mkt_price = interior_P
+                price_regime = "Interior optimum (between min and max)"
+                denom = mkt_wtp_max - mkt_wtp_min if mkt_wtp_max > mkt_wtp_min else 1
+                p_buy_at_opt = (mkt_wtp_max - interior_P) / denom
+
             commission_at_opt = optimal_mkt_price * comm_frac
             gross_profit_per_unit = optimal_mkt_price - commission_at_opt - PG_HANDLING_COST - mkt_mc_est
             margin_pct = (gross_profit_per_unit / optimal_mkt_price * 100) if optimal_mkt_price > 0 else 0
@@ -2446,32 +2476,51 @@ $$INV = \\lambda_{{eff}} \\times CT = {cd_lambda_eff:.2f} \\times {cd_CT:.3f} = 
             peak_t = (1/(mkt["p"]+mkt["q"])) * np.log(mkt["q"]/mkt["p"]) if mkt["p"] > 0 and mkt["q"] > mkt["p"] else 0
             peak_q = mkt_size_est * ((mkt["p"]+mkt["q"])**2) / (4*mkt["q"]) if mkt["q"] > 0 else 0
 
-            st.metric("Optimal Price", f"${optimal_mkt_price:,.0f}")
+            # Display implied min
+            st.caption(f"Implied min WTP: **${mkt_wtp_min:,.0f}** (= 2 × {mkt_wtp_median} − {mkt_wtp_max})")
+
+            st.metric("Optimal Price", f"${optimal_mkt_price:,.0f}",
+                       help=price_regime)
+            st.metric("P(buy) at optimal", f"{p_buy_at_opt:.0%}")
             st.metric("Gross Profit / Unit", f"${gross_profit_per_unit:,.0f}")
             st.metric("Gross Margin", f"{margin_pct:.0f}%")
             st.metric("Bass Peak Sales", f"{peak_q:,.1f}/day")
-            st.metric("Time to Peak", f"{peak_t:.0f} days ({peak_t/365:.1f} yrs)")
 
             # Unit economics detail
-            with st.expander("Unit economics", expanded=False):
+            with st.expander("Unit economics & pricing logic", expanded=False):
                 st.markdown(f"""
+**Inputs:**
+- Max WTP: ${mkt_wtp_max:,.0f} (100th pct from focus group)
+- Median WTP: ${mkt_wtp_median:,.0f} (50th pct from focus group)
+- Implied min WTP: ${mkt_wtp_min:,.0f} (uniform assumption)
+
+**Optimal price regime:** {price_regime}
+
+**Formula applied:**
+Interior P* = max/2 + var_fixed / (2 × (1 − commission))
+           = ${mkt_wtp_max:,.0f}/2 + ${var_fixed:,.0f} / 1.6
+           = ${mkt_wtp_max/2:,.0f} + ${var_fixed/1.6:,.0f}
+           = ${interior_P:,.0f}
+
+**Unit economics at optimal ${optimal_mkt_price:,.0f}:**
 - Retail price: ${optimal_mkt_price:,.0f}
 - Commission ({PG_SALES_COMMISSION:.0f}%): -${commission_at_opt:,.0f}
 - Handling: -${PG_HANDLING_COST}
 - Materials: -${mkt_mc_est}
 - **Gross profit: ${gross_profit_per_unit:,.0f}**
-- DSO: {mkt['dso']} days → ${gross_profit_per_unit * mkt['dso']:,.0f} working capital tied up per unit
+- DSO: {mkt['dso']} days → ${gross_profit_per_unit * mkt['dso']:,.0f} WC tied up per unit
 """)
 
             mkt_results.append({
                 "Market": mkt_sel,
-                "DSO (days)": mkt['dso'],
-                "WTP Max": f"${mkt['wtp_high']:,}",
+                "Median WTP": f"${mkt_wtp_median:,}",
+                "Max WTP": f"${mkt_wtp_max:,}",
+                "Min WTP (implied)": f"${mkt_wtp_min:,}",
                 "Opt. Price": f"${optimal_mkt_price:,.0f}",
+                "P(buy)": f"{p_buy_at_opt:.0%}",
                 "Profit/unit": f"${gross_profit_per_unit:,.0f}",
-                "Margin %": f"{margin_pct:.0f}%",
-                "Peak Sales/day": f"{peak_q:,.1f}",
-                "Time to Peak": f"{peak_t:.0f}d",
+                "Regime": price_regime.split(" ")[0] + " " + price_regime.split(" ")[1] if " " in price_regime else price_regime,
+                "DSO (d)": mkt['dso'],
                 "Deal Breaker": mkt['dealbreaker'],
             })
 
