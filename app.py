@@ -1676,9 +1676,23 @@ Dividends option available. Return calculation is more complex.
 
 elif page == "🏭 13 Trial War Room":
     st.markdown('<p class="big-header">13 Trial War Room</p>', unsafe_allow_html=True)
-    st.markdown('<p class="sub-header">Production Game (Gleacher Game) — April 13 | Bass diffusion, Cobb-Douglas production, 4-year simulation</p>',
+    st.markdown('<p class="sub-header">Production Game (Gleacher Game) — April 13 | Oligopoly with 8 teams, Bass diffusion, Cobb-Douglas, 4-year simulation</p>',
                 unsafe_allow_html=True)
     st.markdown("")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # CRITICAL WARNING BANNER (Class 2 updates)
+    # ══════════════════════════════════════════════════════════════════════════
+    st.error("""
+**⚠ CRITICAL: This is NOT a monopoly. Per Class 2 lecture:**
+- **DO NOT use monopoly pricing** `(WTP+MC)/2` — that was only for the Monopoly & Trading games
+- Daily production is **NOT 40/day** — calculate from Cobb-Douglas for your factory
+- Lead time is **NOT 3.5 days** — depends on throughput, batch size, and shipping mode
+- Production cost is **NOT $100** — you pay for materials + shipping + overhead + handling + commission
+- Starting cash is **$1,579,530** (not $4M) — firm has been operating at a loss for Year 1
+- Only **5 markets** exist: MD-Heart, MD-Breast, MD-Estrogen, Law-Narcotic, Clinic-Fertility
+- **No new factories until Tuesday** (per instructor)
+""")
 
     # ══════════════════════════════════════════════════════════════════════════
     # GAME CONSTANTS (from Gleacher Game Case Brief)
@@ -1688,8 +1702,8 @@ elif page == "🏭 13 Trial War Room":
 
     pg_col1, pg_col2, pg_col3, pg_col4, pg_col5 = st.columns(5)
     with pg_col1:
-        PG_STARTING_CASH = st.number_input("Initial Equity ($)", value=4000000, step=100000, key="pg_cash",
-                                             help="Engineer's $4M life savings contributed to firm. Actual starting cash when team takes over depends on Year 1 operations (factory/DC built, some sales). The $2M team paid goes to engineer, not firm.")
+        PG_STARTING_CASH = st.number_input("Starting Cash (Day 365) ($)", value=1579530, step=10000, key="pg_cash",
+                                             help="Actual cash at end of Q4. Firm's contributed capital is $5M but retained earnings are -$342K after Year 1 losses, factory ($193K net), DC ($2.33M net).")
     with pg_col2:
         PG_SALES_COMMISSION = st.number_input("Sales Commission (%)", value=20.0, step=1.0, key="pg_comm")
     with pg_col3:
@@ -1715,9 +1729,9 @@ elif page == "🏭 13 Trial War Room":
     st.markdown(f"""
 <div style="background:linear-gradient(135deg,#0e7c7b,#1a3c5e);color:white;
     border-radius:12px;padding:1.2rem 1.5rem;margin-bottom:1rem;">
-<h4 style="color:#ffd700;margin:0 0 0.5rem 0;">4-Year Simulation | Bass Diffusion Model | 3 Production Technologies</h4>
+<h4 style="color:#ffd700;margin:0 0 0.5rem 0;">Goal: Maximize Current Shareholder Value | 8-Team Oligopoly | Bass Diffusion | 4-year Horizon (day 365 → 1460)</h4>
 <div style="display:flex;gap:2rem;flex-wrap:wrap;">
-<div><span style="opacity:0.7;">Initial Equity</span><br><b style="font-size:1.3rem;">${PG_STARTING_CASH:,}</b><br><span style="font-size:0.75rem;opacity:0.6;">engineer's original contribution</span></div>
+<div><span style="opacity:0.7;">Starting Cash (Day 365)</span><br><b style="font-size:1.3rem;">${PG_STARTING_CASH:,}</b><br><span style="font-size:0.75rem;opacity:0.6;">actual after Y1 losses</span></div>
 <div><span style="opacity:0.7;">Sales Commission</span><br><b style="font-size:1.3rem;">{PG_SALES_COMMISSION:.0f}%</b><br><span style="font-size:0.75rem;opacity:0.6;">of retail price</span></div>
 <div><span style="opacity:0.7;">Handling Cost</span><br><b style="font-size:1.3rem;">${PG_HANDLING_COST}/unit</b></div>
 <div><span style="opacity:0.7;">Raw Materials Payable</span><br><b style="font-size:1.3rem;">30 days</b></div>
@@ -1729,6 +1743,83 @@ elif page == "🏭 13 Trial War Room":
 </div>
 """, unsafe_allow_html=True)
 
+    # Starting Financial Snapshot
+    with st.expander("**Starting Financial Snapshot (Day 364 — all 8 teams identical)**", expanded=False):
+        sp_col1, sp_col2, sp_col3 = st.columns(3)
+        with sp_col1:
+            st.markdown("**Income Statement Q4**")
+            st.markdown("""
+| Line | Amount |
+|---|---|
+| Sales revenue | $682,500 |
+| COGS | $(417,743) |
+| **Gross profit** | **$264,757** |
+| Selling expense (commission) | $(146,250) |
+| DC operating expense | $(182,000) |
+| DC depreciation | $(41,667) |
+| **Operating income** | **$(105,160)** |
+| Interest revenue | $11,913 |
+| Tax benefit | $32,636 |
+| **Net income** | **$(60,611)** |
+""")
+        with sp_col2:
+            st.markdown("**Balance Sheet**")
+            st.markdown("""
+| Line | Amount |
+|---|---|
+| Cash | $1,579,530 |
+| Accounts receivable | $240,100 |
+| WIP inventory | $33,157 |
+| Finished goods | $112,683 |
+| Tax benefit | $184,365 |
+| Land | $200,000 |
+| Net PP&E (factory) | $93,333 |
+| Net PP&E (DC) | $2,333,333 |
+| **Total assets** | **$4,776,502** |
+| Raw materials payable | $(20,000) |
+| Other payables | $(98,900) |
+| Contributed capital | $5,000,000 |
+| Retained earnings | $(342,398) |
+""")
+        with sp_col3:
+            st.markdown("**Key Metrics**")
+            st.markdown("""
+| Metric | Value |
+|---|---|
+| Current ratio | 18.08× |
+| Non-cash current ratio | 4.80× |
+| Quick ratio | 15.30× |
+| Working capital | $2,030,936 |
+| Non-cash WC | $451,406 |
+| Return to Investors | $1,579,530 |
+
+**Return to Investors Formula:**
+Cash Balance − Unsecured Debt + Paid Dividends + Subsequent Returns
+""")
+        st.info(
+            "**Starting position:** Q4 operating loss of $105K, Y1 retained earnings −$342K. "
+            "Total selling expense ($328K) exceeds gross profit contribution — this business is "
+            "losing money at current scale. Your job: turn it around over the next ~3 years."
+        )
+
+    # Game Timeline
+    with st.expander("**Game Timeline & Play Schedule**", expanded=False):
+        st.markdown("""
+| Day Range | Duration | What Happens |
+|---|---|---|
+| **Day 365 (Q4 end)** | Start | Team takes over from engineer |
+| **Day 365 → 546 (Q6 end)** | 1 hour in class | Initial moves |
+| **Day 546 → 910 (Q10 end)** | 2 hours tonight | Most strategy executed here |
+| **Day 910 → 1092** | Autonomous | Game continues without you — see what would happen |
+| **Speed** | 3 game days per minute | |
+
+**Teams (8):** B612, Dune, Globex, Gotham, **Panem (us)**, Vulcan, Westeros, Zion
+
+**Markets (only 5):** MD-Heart, MD-Breast, MD-Estrogen, Law-Narcotic, Clinic-Fertility
+
+**Restrictions:** No new factories until Tuesday. Catherine and Kathleen will not trade with us tonight.
+        """)
+
     st.markdown("---")
 
     # ══════════════════════════════════════════════════════════════════════════
@@ -1739,7 +1830,8 @@ elif page == "🏭 13 Trial War Room":
 
     bass_col1, bass_col2 = st.columns([1, 2])
     with bass_col1:
-        bass_M = st.number_input("Market Size (M)", value=30000, step=1000, key="bass_m")
+        bass_M = st.number_input("Market Size (M)", value=30000, step=1000, key="bass_m",
+                                   help="MD-Heart: 20K-40K per region (Heart View's market). Narcotic: 5K-15K. Fertility: 40K-60K. Breast/Estrogen: 10K-20K.")
         bass_p = st.number_input("Innovation Coefficient (p)", value=0.0002, step=0.00005,
                                   format="%.5f", key="bass_p",
                                   help="Typical: 0.0002-0.00025. Higher = faster early adoption.")
@@ -1755,8 +1847,8 @@ elif page == "🏭 13 Trial War Room":
                                       help="Actual selling price — affects P(buy) for arrivals")
         bass_max_wtp = st.number_input("Max WTP ($)", value=965, step=50, key="bass_max_wtp",
                                          help="Upper bound of WTP range. Used to calculate P(buy).")
-        bass_days = st.number_input("Simulate Days", value=1460, step=30, key="bass_days",
-                                     help="4 years = 1460 days")
+        bass_days = st.number_input("Simulate Days", value=1095, step=30, key="bass_days",
+                                     help="Day 365 start → day 1460 end = 1095 days remaining for us. (Full 4-year horizon = 1460 days).")
 
         # Peak sales calculation (theoretical, assuming 100% conversion)
         peak_time = (1 / (bass_p + bass_q)) * np.log(bass_q / bass_p) if bass_p > 0 and bass_q > bass_p else 0
@@ -1894,33 +1986,28 @@ elif page == "🏭 13 Trial War Room":
     # SECTION 3: MARKET SEGMENT SELECTOR (from D2 market research)
     # ══════════════════════════════════════════════════════════════════════════
     st.subheader("3. Market Segment Analyzer")
-    st.caption("Choose your target market — 5 segments from Production Game Market Research")
+    st.caption("⚠ Per Class 2: This is OLIGOPOLY pricing, not monopoly. Optimal price formula shown assumes you're alone — actual price depends on competitor moves. Use as starting reference only.")
 
+    # Only 5 markets exist in the Production Game per Class 2 slides
     MARKETS = {
-        "Clinical Fertility (LH)": {"wtp_low": 130, "wtp_high": 300, "size_low": 40000, "size_high": 60000,
-                                     "p": 0.00025, "q": 0.004, "dso": 10,
-                                     "feature": "Hormone LH", "dealbreaker": "Bulky battery packs"},
-        "Clinical Fertility (LH/FSH)": {"wtp_low": 230, "wtp_high": 400, "size_low": 40000, "size_high": 60000,
-                                         "p": 0.00025, "q": 0.004, "dso": 10,
-                                         "feature": "Hormone LH/FSH", "dealbreaker": "Bulky battery packs"},
-        "Law (Narcotic)": {"wtp_low": 1100, "wtp_high": 1600, "size_low": 5000, "size_high": 15000,
-                            "p": 0.00025, "q": 0.0025, "dso": 90,
-                            "feature": "Toxicology Narcotic", "dealbreaker": "No GPS or cellular"},
-        "MD Cancer Base": {"wtp_low": 0, "wtp_high": 900, "size_low": 10000, "size_high": 20000,
-                            "p": 0.0002, "q": 0.0035, "dso": 30,
-                            "feature": "Cancer Base Panel", "dealbreaker": "None"},
-        "MD Cancer Breast": {"wtp_low": 900, "wtp_high": 1600, "size_low": 10000, "size_high": 20000,
-                              "p": 0.0002, "q": 0.0035, "dso": 30,
-                              "feature": "Cancer Breast", "dealbreaker": "None"},
-        "MD Fertility (Estrogen)": {"wtp_low": 575, "wtp_high": 965, "size_low": 10000, "size_high": 20000,
-                                     "p": 0.0002, "q": 0.0035, "dso": 30,
-                                     "feature": "Hormone Estrogen", "dealbreaker": "None"},
-        "MD Heart (Pulse)": {"wtp_low": 0, "wtp_high": 115, "size_low": 20000, "size_high": 40000,
-                              "p": 0.0002, "q": 0.0035, "dso": 30,
-                              "feature": "Heartbeat Pulse", "dealbreaker": "None"},
-        "MD Heart (Temporal)": {"wtp_low": 600, "wtp_high": 865, "size_low": 20000, "size_high": 40000,
+        "MD-Heart (Temporal)": {"wtp_low": 600, "wtp_high": 865, "size_low": 20000, "size_high": 40000,
                                  "p": 0.0002, "q": 0.0035, "dso": 30,
-                                 "feature": "Heartbeat Temporal", "dealbreaker": "GPS significantly affects WTP"},
+                                 "feature": "Heartbeat Temporal (Heart View's base)",
+                                 "dealbreaker": "GPS significantly affects WTP"},
+        "MD-Breast (Cancer)": {"wtp_low": 900, "wtp_high": 1600, "size_low": 10000, "size_high": 20000,
+                                "p": 0.0002, "q": 0.0035, "dso": 30,
+                                "feature": "Cancer Breast panel", "dealbreaker": "None"},
+        "MD-Estrogen (Fertility)": {"wtp_low": 575, "wtp_high": 965, "size_low": 10000, "size_high": 20000,
+                                     "p": 0.0002, "q": 0.0035, "dso": 30,
+                                     "feature": "Hormone Estrogen", "dealbreaker": "None (slight wrist preference)"},
+        "Law-Narcotic": {"wtp_low": 1100, "wtp_high": 1600, "size_low": 5000, "size_high": 15000,
+                          "p": 0.00025, "q": 0.0025, "dso": 90,
+                          "feature": "Toxicology Narcotic",
+                          "dealbreaker": "MUST have GPS + cellular (deal breaker)"},
+        "Clinic-Fertility (LH/FSH)": {"wtp_low": 230, "wtp_high": 400, "size_low": 40000, "size_high": 60000,
+                                       "p": 0.00025, "q": 0.004, "dso": 10,
+                                       "feature": "Hormone LH/FSH",
+                                       "dealbreaker": "Bulky battery packs (deal breaker)"},
     }
 
     # Global settings row
@@ -1941,8 +2028,8 @@ elif page == "🏭 13 Trial War Room":
     effective_mc_commissioned = effective_mc / (1 - comm_frac)
 
     market_keys = list(MARKETS.keys())
-    # Default indices: first market and a different second market
-    default_indices = [0, 2, 5, 7]  # Clinical Fertility LH, Law Narcotic, MD Fertility, MD Heart Temporal
+    # Defaults: MD-Heart (our current), MD-Breast, Law-Narcotic, Clinic-Fertility
+    default_indices = [0, 1, 3, 4]
 
     st.markdown("---")
     mkt_cols = st.columns(int(mkt_n))
@@ -2280,7 +2367,8 @@ elif page == "🏭 13 Trial War Room":
         npv_build = st.number_input("Build Time (days)", value=default_build, step=5, key="npv_build")
         npv_daily_cost = st.number_input("Incremental Daily Cost ($)", value=default_daily, step=100, key="npv_daily")
         npv_daily_rev = st.number_input("Incremental Daily Revenue ($)", value=default_rev, step=500, key="npv_rev")
-        npv_remaining_days = st.number_input("Game Days Remaining", value=1460, step=30, key="npv_days")
+        npv_remaining_days = st.number_input("Game Days Remaining", value=1095, step=30, key="npv_days",
+                                               help="From day 365 to day 1460 = 1095 days. Game continues autonomously day 910 → 1092.")
         npv_discount = st.number_input("Discount Rate (% APR)", value=15.0, step=0.5, key="npv_dr") / 100
         npv_tax_rate = 0.35
         npv_dep_years = PG_DEPRECIATION_YRS
