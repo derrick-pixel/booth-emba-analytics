@@ -2419,6 +2419,24 @@ Given the D3 Exercise uses Normal, **we should assume Normal distribution** goin
 </div>
 """, unsafe_allow_html=True)
 
+    # Waterfall chart
+    fig_wf = go.Figure(go.Waterfall(
+        name="Per Unit",
+        orientation="v",
+        measure=["absolute", "relative", "relative", "relative", "relative", "relative", "total"],
+        x=["Revenue", "Mfg OH", "Materials", "Handling", "Commission", "Shipping", "CM"],
+        y=[w14_cm_price, -w14_mfg_oh, -w14_cm_materials, -w14_cm_handling,
+           -w14_cm_commission, -w14_cm_shipping, 0],
+        connector={"line": {"color": "rgb(63, 63, 63)"}},
+        increasing={"marker": {"color": "#2d6a2e"}},
+        decreasing={"marker": {"color": "#b22222"}},
+        totals={"marker": {"color": "#1a3c5e"}},
+    ))
+    fig_wf.update_layout(height=350, yaxis_title="$ per unit", yaxis_tickformat="$,.0f",
+                          title=f"Waterfall: ${w14_cm_price} price → ${w14_cm_before_tax:,.2f} CM before tax",
+                          margin=dict(l=0, r=0, t=40, b=0))
+    st.plotly_chart(fig_wf, use_container_width=True)
+
     st.markdown("---")
 
     # ══════════════════════════════════════════════════════════════════════════
@@ -2473,6 +2491,12 @@ DSO: <b>{m['dso']}d</b> | DB: <span style="color:{'#b22222' if m['dealbreaker'] 
                                             key=f"w14_m_mean_{i}")
             w14_std_in = st.number_input("Std Dev WTP", value=m["std"], step=5,
                                            key=f"w14_m_std_{i}")
+            # Market size now adjustable (slider range based on default × 0.5 to × 2)
+            w14_mkt_size_in = st.slider("Market Size",
+                                          int(m["size"] * 0.3), int(m["size"] * 2.5),
+                                          int(m["size"]), step=500,
+                                          key=f"w14_m_size_{i}",
+                                          help=f"Default from market research: {m['size']:,}. Actual in-game may differ.")
 
             # Theoretical optimum (Normal): complex, so use numerical search
             import math
@@ -2506,8 +2530,8 @@ DSO: <b>{m['dso']}d</b> | DB: <span style="color:{'#b22222' if m['dealbreaker'] 
             w14_m_cm = w14_m_price - w14_m_comm - W14_HANDLING - w14_m_materials - W14_SHIPPING
             w14_m_cm_per_arr = w14_m_cm * w14_p_buy
 
-            # Bass peak arrivals
-            peak_q_val = m["size"] * ((m["p"]+m["q"])**2) / (4*m["q"]) if m["q"] > 0 else 0
+            # Bass peak arrivals (uses adjustable market size)
+            peak_q_val = w14_mkt_size_in * ((m["p"]+m["q"])**2) / (4*m["q"]) if m["q"] > 0 else 0
 
             cm_c = "#2d6a2e" if w14_m_cm > 0 else "#b22222"
             st.markdown(f"""
@@ -2523,6 +2547,7 @@ Peak sales: {peak_q_val * w14_p_buy:,.1f}/day
 
             w14_mkt_summary.append({
                 "Market": w14_mkt_sel,
+                "Size": f"{w14_mkt_size_in:,}",
                 "Mean/Std WTP": f"${w14_mean_in:,}/${w14_std_in:,}",
                 "Price": f"${w14_m_price:,}",
                 "P(buy)": f"{w14_p_buy:.0%}",
@@ -2616,21 +2641,32 @@ Peak sales: {peak_q_val * w14_p_buy:,.1f}/day
                                    key=f"w14_pd_preset_{i}")
             preset = W14_PRESETS[p_sel]
 
-            st.markdown("**Base Features**")
+            st.markdown("**Base Features** (materials $/unit shown)")
             w14_sel_base = {}
             for attr, opts in W14_BASE_FEATURES.items():
                 default_feat = preset.get(attr, list(opts.keys())[0])
-                idx = list(opts.keys()).index(default_feat) if default_feat in opts else 0
-                w14_sel_base[attr] = st.selectbox(attr, list(opts.keys()), index=idx,
-                                                    key=f"w14_pd_base_{attr}_{i}")
+                # Create labeled options: "Feature name — $X/u materials"
+                labeled = {f"{feat} — ${mat}/u mat": feat for feat, mat in opts.items()}
+                labels = list(labeled.keys())
+                default_label = next((l for l, f in labeled.items() if f == default_feat), labels[0])
+                idx = labels.index(default_label)
+                chosen = st.selectbox(attr, labels, index=idx,
+                                        key=f"w14_pd_base_{attr}_{i}")
+                w14_sel_base[attr] = labeled[chosen]
 
-            st.markdown("**Detection Agenda**")
+            st.markdown("**Detection Agenda** (days / design $ / materials $/u shown)")
             w14_sel_det = {}
             for attr, opts in W14_DETECTION.items():
                 default_feat = preset[attr]
-                idx = list(opts.keys()).index(default_feat) if default_feat in opts else 0
-                w14_sel_det[attr] = st.selectbox(attr, list(opts.keys()), index=idx,
-                                                   key=f"w14_pd_det_{attr}_{i}")
+                # Create labeled options: "Feature — 60d, $75K, $60/u"
+                labeled = {f"{feat} — {d}d, ${c/1000:.0f}K, ${m}/u": feat
+                            for feat, (d, c, m) in opts.items()}
+                labels = list(labeled.keys())
+                default_label = next((l for l, f in labeled.items() if f == default_feat), labels[0])
+                idx = labels.index(default_label)
+                chosen = st.selectbox(attr, labels, index=idx,
+                                        key=f"w14_pd_det_{attr}_{i}")
+                w14_sel_det[attr] = labeled[chosen]
 
             # Totals
             base_mat = sum(W14_BASE_FEATURES[a][w14_sel_base[a]] for a in W14_BASE_FEATURES)
