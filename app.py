@@ -2264,6 +2264,404 @@ Given the D3 Exercise uses Normal, **we should assume Normal distribution** goin
 5. Customers attracted by advertising arrive **same day** — don't advertise without inventory
     """)
 
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 6: COBB-DOUGLAS + LITTLE'S LAW + CONTRIBUTION MARGIN TABLE
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("6. Cobb-Douglas + Little's Law + Contribution Margin")
+    st.caption("Custom α, β, K, L inputs → yearly & daily throughput → cycle time → inventory → CM")
+
+    W14_PROD_TECH = {
+        "Custom": {"A": 0.009, "alpha": 0.10, "beta": 0.85, "setup": 0.05, "min_K": 0},
+        "Benches": {"A": 0.009, "alpha": 0.10, "beta": 0.85, "setup": 0.05, "min_K": 0},
+        "Production Line": {"A": 0.010, "alpha": 0.30, "beta": 0.75, "setup": 0.50, "min_K": 500000},
+        "Automated Cell": {"A": 0.020, "alpha": 0.80, "beta": 0.30, "setup": 1.00, "min_K": 3000000},
+    }
+
+    w14_cd_preset = st.selectbox("Technology Preset", list(W14_PROD_TECH.keys()),
+                                   index=1, key="w14_cd_preset")
+    w14_preset = W14_PROD_TECH[w14_cd_preset]
+
+    w14_cd_p1, w14_cd_p2, w14_cd_p3, w14_cd_p4 = st.columns(4)
+    with w14_cd_p1:
+        w14_A = st.number_input("A", value=float(w14_preset["A"]), step=0.001,
+                                  format="%.4f", key="w14_A")
+    with w14_cd_p2:
+        w14_alpha = st.number_input("α (capital)", value=float(w14_preset["alpha"]),
+                                      step=0.05, format="%.2f", key="w14_alpha")
+    with w14_cd_p3:
+        w14_beta = st.number_input("β (labor)", value=float(w14_preset["beta"]),
+                                     step=0.05, format="%.2f", key="w14_beta")
+    with w14_cd_p4:
+        w14_setup = st.number_input("Setup (days)", value=float(w14_preset["setup"]),
+                                      step=0.05, format="%.2f", key="w14_setup")
+
+    w14_f1, w14_f2, w14_f3, w14_f4 = st.columns(4)
+    with w14_f1:
+        w14_K = st.number_input("Capital K ($)", value=100000, step=10000, key="w14_K")
+    with w14_f2:
+        w14_l = st.number_input("Daily Labor l ($/day)", value=2500, step=100, key="w14_l")
+    with w14_f3:
+        w14_batch = st.number_input("Batch Size", value=100, step=10, key="w14_batch")
+    with w14_f4:
+        w14_dpy = st.number_input("Days/year", value=364, step=1, key="w14_dpy")
+
+    # Cobb-Douglas calculations
+    w14_L_yearly = w14_l * w14_dpy
+    w14_Y = w14_A * (w14_K ** w14_alpha) * (w14_L_yearly ** w14_beta)
+    w14_lambda_raw = w14_Y / w14_dpy
+    w14_batch_time = w14_batch / w14_lambda_raw if w14_lambda_raw > 0 else float("inf")
+    w14_CT = w14_batch_time + w14_setup
+    w14_lambda_eff = w14_batch / w14_CT if w14_CT > 0 else 0
+    w14_WIP = w14_lambda_eff * w14_CT
+
+    # Mfg overhead (for CM)
+    W14_DEP_YRS = 15
+    w14_daily_dep = w14_K / W14_DEP_YRS / w14_dpy
+    w14_daily_factory_cost = w14_l + w14_daily_dep
+    w14_mfg_oh = w14_daily_factory_cost / w14_lambda_eff if w14_lambda_eff > 0 else 0
+
+    # Results panels
+    w14_r1, w14_r2, w14_r3 = st.columns(3)
+    with w14_r1:
+        st.markdown("**📐 Cobb-Douglas**")
+        st.metric("Yearly Production", f"{w14_Y:,.0f} units/yr")
+        st.metric("Daily λ (raw)", f"{w14_lambda_raw:.2f} units/day")
+        st.metric("Daily λ (effective)", f"{w14_lambda_eff:.2f} units/day")
+    with w14_r2:
+        st.markdown("**⏱️ Cycle Time**")
+        st.metric("Batch Time", f"{w14_batch_time:.3f} days")
+        st.metric("Setup", f"{w14_setup:.2f} days")
+        st.metric("Total CT", f"{w14_CT:.3f} days")
+    with w14_r3:
+        st.markdown("**📦 Little's Law**")
+        st.metric("WIP Inventory", f"{w14_WIP:.1f} units")
+        st.metric("Mfg OH/unit", f"${w14_mfg_oh:.2f}")
+        rts = w14_alpha + w14_beta
+        rts_label = "Increasing" if rts > 1.02 else ("Decreasing" if rts < 0.98 else "Constant")
+        st.metric("α+β", f"{rts:.2f}", delta=f"{rts_label} returns", delta_color="off")
+
+    # Contribution Margin Table
+    st.markdown("### 💰 Contribution Margin Table (Before Tax)")
+
+    w14_cm_c1, w14_cm_c2, w14_cm_c3, w14_cm_c4 = st.columns(4)
+    with w14_cm_c1:
+        w14_cm_price = st.number_input("Retail Price ($)", value=1200, step=25, key="w14_cm_price")
+    with w14_cm_c2:
+        w14_cm_materials = st.number_input("Materials ($/u)", value=100, step=10, key="w14_cm_mat")
+    with w14_cm_c3:
+        w14_cm_shipping = st.number_input("Shipping ($/u)", value=20, step=5, key="w14_cm_ship")
+    with w14_cm_c4:
+        w14_cm_handling = st.number_input("Handling ($/u)", value=10, step=1, key="w14_cm_hand")
+
+    w14_cm_commission = w14_cm_price * w14_comm_frac
+    w14_cm_total_cost = w14_mfg_oh + w14_cm_materials + w14_cm_shipping + w14_cm_handling + w14_cm_commission
+    w14_cm_before_tax = w14_cm_price - w14_cm_total_cost
+    w14_cm_day = w14_cm_before_tax * w14_lambda_eff
+
+    cm_color = "#2d6a2e" if w14_cm_before_tax > 0 else "#b22222"
+    pct_rev = lambda v: f"{v/w14_cm_price*100:.1f}%" if w14_cm_price > 0 else "—"
+
+    st.markdown(f"""
+<div style="border:1px solid rgba(128,128,128,0.3); border-radius:8px; padding:1rem;">
+<table style="width:100%; border-collapse:collapse;">
+<tr style="border-bottom:2px solid rgba(128,128,128,0.5);">
+<th style="text-align:left;">Line</th>
+<th style="text-align:right;">Per Unit</th>
+<th style="text-align:right;">Per Day (at λ_eff={w14_lambda_eff:.2f})</th>
+<th style="text-align:right;">% Rev</th>
+</tr>
+<tr><td>Revenue</td>
+<td style="text-align:right;"><b>${w14_cm_price:,.2f}</b></td>
+<td style="text-align:right;"><b>${w14_cm_price * w14_lambda_eff:,.2f}</b></td>
+<td style="text-align:right;">100.0%</td></tr>
+<tr><td>(−) Manufacturing Overhead</td>
+<td style="text-align:right;color:#b22222;">$({w14_mfg_oh:,.2f})</td>
+<td style="text-align:right;color:#b22222;">$({w14_daily_factory_cost:,.2f})</td>
+<td style="text-align:right;">{pct_rev(w14_mfg_oh)}</td></tr>
+<tr><td>(−) Materials</td>
+<td style="text-align:right;color:#b22222;">$({w14_cm_materials:,.2f})</td>
+<td style="text-align:right;color:#b22222;">$({w14_cm_materials * w14_lambda_eff:,.2f})</td>
+<td style="text-align:right;">{pct_rev(w14_cm_materials)}</td></tr>
+<tr><td>(−) Handling</td>
+<td style="text-align:right;color:#b22222;">$({w14_cm_handling:,.2f})</td>
+<td style="text-align:right;color:#b22222;">$({w14_cm_handling * w14_lambda_eff:,.2f})</td>
+<td style="text-align:right;">{pct_rev(w14_cm_handling)}</td></tr>
+<tr><td>(−) Commission ({W14_COMMISSION:.0f}%)</td>
+<td style="text-align:right;color:#b22222;">$({w14_cm_commission:,.2f})</td>
+<td style="text-align:right;color:#b22222;">$({w14_cm_commission * w14_lambda_eff:,.2f})</td>
+<td style="text-align:right;">{pct_rev(w14_cm_commission)}</td></tr>
+<tr style="border-bottom:2px solid rgba(128,128,128,0.5);">
+<td>(−) Shipping</td>
+<td style="text-align:right;color:#b22222;">$({w14_cm_shipping:,.2f})</td>
+<td style="text-align:right;color:#b22222;">$({w14_cm_shipping * w14_lambda_eff:,.2f})</td>
+<td style="text-align:right;">{pct_rev(w14_cm_shipping)}</td></tr>
+<tr style="background:rgba({'45,106,46' if w14_cm_before_tax > 0 else '178,34,34'},0.2);">
+<td><b>= Contribution Margin (before tax)</b></td>
+<td style="text-align:right;color:{cm_color};font-size:1.15em;"><b>${w14_cm_before_tax:,.2f}</b></td>
+<td style="text-align:right;color:{cm_color};font-size:1.15em;"><b>${w14_cm_day:,.2f}</b></td>
+<td style="text-align:right;color:{cm_color};"><b>{pct_rev(w14_cm_before_tax)}</b></td></tr>
+</table>
+</div>
+""", unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 7: MARKET SEGMENT ANALYZER (default 5)
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("7. Market Segment Analyzer (Side-by-Side, up to 5)")
+    st.caption("Normal WTP distribution (per D3 material). Price slider → P(buy) + CM live.")
+
+    W14_MARKETS = {
+        "MD-Heart (Temporal)": {"mean": 732, "std": 73, "size": 30000, "p": 0.0002, "q": 0.0035, "dso": 30,
+                                  "feature": "Heartbeat Temporal", "dealbreaker": "GPS affects WTP"},
+        "MD-Breast (Cancer)": {"mean": 1250, "std": 125, "size": 15000, "p": 0.0002, "q": 0.0035, "dso": 30,
+                                 "feature": "Cancer Breast", "dealbreaker": "None"},
+        "MD-Estrogen (Fertility)": {"mean": 770, "std": 77, "size": 15000, "p": 0.0002, "q": 0.0035, "dso": 30,
+                                      "feature": "Hormone Estrogen", "dealbreaker": "None"},
+        "Law-Narcotic": {"mean": 1350, "std": 135, "size": 10000, "p": 0.00025, "q": 0.0025, "dso": 90,
+                          "feature": "Toxicology Narcotic", "dealbreaker": "Needs GPS + cellular"},
+        "Clinic-Fertility (LH/FSH)": {"mean": 315, "std": 32, "size": 50000, "p": 0.00025, "q": 0.004, "dso": 10,
+                                        "feature": "Hormone LH/FSH", "dealbreaker": "Bulky battery packs"},
+    }
+
+    w14_m_top1, w14_m_top2 = st.columns([1, 3])
+    with w14_m_top1:
+        w14_n_markets = st.number_input("# Markets to compare", min_value=2, max_value=5,
+                                           value=5, step=1, key="w14_n_markets")
+    with w14_m_top2:
+        w14_m_materials = st.number_input("Your Materials Cost ($/unit)",
+                                             value=100, step=10, key="w14_m_materials")
+
+    market_keys = list(W14_MARKETS.keys())
+    w14_mkt_cols = st.columns(int(w14_n_markets))
+    w14_mkt_summary = []
+
+    for i, col in enumerate(w14_mkt_cols):
+        with col:
+            default_idx = i if i < len(market_keys) else 0
+            w14_mkt_sel = st.selectbox(f"Market {i+1}", market_keys, index=default_idx,
+                                         key=f"w14_mkt_sel_{i}")
+            m = W14_MARKETS[w14_mkt_sel]
+
+            st.markdown(f"""
+<div style="background:rgba(26,60,94,0.15);border-left:3px solid #1a3c5e;
+    border-radius:6px;padding:0.5rem 0.7rem;margin-bottom:0.3rem;font-size:0.75rem;">
+<b>{w14_mkt_sel}</b><br>
+Feature: {m['feature']}<br>
+Size: {m['size']:,} | Bass p: {m['p']} q: {m['q']}<br>
+DSO: <b>{m['dso']}d</b> | DB: <span style="color:{'#b22222' if m['dealbreaker'] != 'None' else '#2d6a2e'};">{m['dealbreaker']}</span>
+</div>
+""", unsafe_allow_html=True)
+
+            w14_mean_in = st.number_input("Mean WTP", value=m["mean"], step=25,
+                                            key=f"w14_m_mean_{i}")
+            w14_std_in = st.number_input("Std Dev WTP", value=m["std"], step=5,
+                                           key=f"w14_m_std_{i}")
+
+            # Theoretical optimum (Normal): complex, so use numerical search
+            import math
+            def _pbuy(P, mu, sigma):
+                if sigma <= 0:
+                    return 1.0 if P < mu else 0.0
+                z = (P - mu) / sigma
+                return 1 - 0.5 * (1 + math.erf(z / math.sqrt(2)))
+
+            # Price slider from cost to mean + 3σ
+            w14_p_min_slider = int(w14_m_materials + W14_HANDLING + W14_SHIPPING)
+            w14_p_max_slider = int(w14_mean_in + 3 * w14_std_in)
+
+            # Find numerical optimum for default
+            best_p, best_cm_per_arr = w14_p_min_slider, -1e9
+            for test_p in range(w14_p_min_slider, w14_p_max_slider + 1, 5):
+                pb = _pbuy(test_p, w14_mean_in, w14_std_in)
+                cm_u = test_p * (1 - w14_comm_frac) - w14_m_materials - W14_SHIPPING - W14_HANDLING
+                cm_per_arr = cm_u * pb
+                if cm_per_arr > best_cm_per_arr:
+                    best_cm_per_arr = cm_per_arr
+                    best_p = test_p
+
+            w14_m_price = st.slider("Your Price ($)",
+                                      w14_p_min_slider, w14_p_max_slider, best_p,
+                                      step=10, key=f"w14_m_price_{i}",
+                                      help=f"Default = optimum (${best_p})")
+
+            w14_p_buy = _pbuy(w14_m_price, w14_mean_in, w14_std_in)
+            w14_m_comm = w14_m_price * w14_comm_frac
+            w14_m_cm = w14_m_price - w14_m_comm - W14_HANDLING - w14_m_materials - W14_SHIPPING
+            w14_m_cm_per_arr = w14_m_cm * w14_p_buy
+
+            # Bass peak arrivals
+            peak_q_val = m["size"] * ((m["p"]+m["q"])**2) / (4*m["q"]) if m["q"] > 0 else 0
+
+            cm_c = "#2d6a2e" if w14_m_cm > 0 else "#b22222"
+            st.markdown(f"""
+<div style="background:rgba({'45,106,46' if w14_m_cm > 0 else '178,34,34'},0.12);
+    border-left:3px solid {cm_c};padding:0.5rem 0.7rem;border-radius:5px;margin-top:0.3rem;">
+<span style="opacity:0.7;font-size:0.7rem;">Price ${w14_m_price:,}</span><br>
+P(buy): <b>{w14_p_buy:.1%}</b><br>
+CM/u: <b style="color:{cm_c};">${w14_m_cm:,.0f}</b><br>
+CM/arrival: <b style="color:{cm_c};">${w14_m_cm_per_arr:,.0f}</b><br>
+Peak sales: {peak_q_val * w14_p_buy:,.1f}/day
+</div>
+""", unsafe_allow_html=True)
+
+            w14_mkt_summary.append({
+                "Market": w14_mkt_sel,
+                "Mean/Std WTP": f"${w14_mean_in:,}/${w14_std_in:,}",
+                "Price": f"${w14_m_price:,}",
+                "P(buy)": f"{w14_p_buy:.0%}",
+                "CM/u": f"${w14_m_cm:,.0f}",
+                "CM/arrival": f"${w14_m_cm_per_arr:,.0f}",
+                "Peak/day": f"{peak_q_val * w14_p_buy:,.1f}",
+                "DSO": f"{m['dso']}d",
+                "DB": m["dealbreaker"],
+            })
+
+    st.markdown("**Market Summary**")
+    st.dataframe(pd.DataFrame(w14_mkt_summary), use_container_width=True, hide_index=True)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 8: PRODUCT DESIGN ROI (default 5)
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("8. Product Design ROI Calculator (up to 5 products)")
+    st.caption("Base features + detection agenda. Compare design costs, break-even, and margins side-by-side.")
+
+    W14_BASE_FEATURES = {
+        "Platform": {"Wristband": 0, "Chest-worn": 0, "Ankle/leg": 0},
+        "GPS": {"No GPS": 0, "GPS enabled": 5},
+        "Network": {"Bluetooth": 0, "2.4 GHz cellular": 10, "5 GHz cellular": 15},
+        "Power": {"Ni-Cd": 0, "Polymer": 5, "Two-pack Ni-Cd": 10, "Two-pack polymer": 15},
+        "Finish": {"Original": 0, "Dyed": 2, "Painted": 3},
+    }
+
+    W14_DETECTION = {
+        "Heartbeat": {"None": (3, 1000, 0), "Pulse only": (15, 30000, 15), "Temporal": (90, 135000, 25)},
+        "Blood vessel": {"None": (3, 1000, 0), "Systolic only": (30, 75000, 10),
+                          "Systolic & diastolic": (90, 135000, 15), "Full profile": (120, 180000, 40)},
+        "Dissolved gasses": {"None": (3, 1000, 0), "O2 only": (30, 75000, 15),
+                              "O2, N2, CO2": (90, 135000, 20), "Full C,N,O": (90, 135000, 40)},
+        "Toxicology": {"None": (3, 1000, 0), "Ethanol": (30, 150000, 95),
+                        "Amphetamine": (90, 250000, 140), "THC": (90, 250000, 140),
+                        "Barbiturate": (90, 250000, 140), "Narcotic": (90, 250000, 140)},
+        "Hormone": {"None": (3, 1000, 0), "LH": (30, 45000, 20), "LH and FSH": (60, 75000, 50),
+                     "Estrogen": (60, 75000, 60), "Progesterone": (60, 75000, 60),
+                     "Testosterone": (60, 75000, 50)},
+        "Metabolic": {"None": (3, 1000, 0), "Thyroxine": (90, 90000, 155),
+                       "Bilirubin": (90, 90000, 150), "Proteins": (90, 90000, 170),
+                       "Uric acid": (90, 90000, 160)},
+    }
+
+    W14_PRESETS = {
+        "A — Heart View": {"Platform": "Chest-worn", "GPS": "GPS enabled", "Network": "2.4 GHz cellular",
+                            "Power": "Polymer", "Finish": "Original",
+                            "Heartbeat": "Temporal", "Blood vessel": "None",
+                            "Dissolved gasses": "None", "Toxicology": "None",
+                            "Hormone": "None", "Metabolic": "None", "price": 700},
+        "B — Estrogen (minimal)": {"Platform": "Wristband", "GPS": "No GPS", "Network": "Bluetooth",
+                                     "Power": "Polymer", "Finish": "Original",
+                                     "Heartbeat": "None", "Blood vessel": "None",
+                                     "Dissolved gasses": "None", "Toxicology": "None",
+                                     "Hormone": "Estrogen", "Metabolic": "None", "price": 712},
+        "C — Narcotic": {"Platform": "Ankle/leg", "GPS": "GPS enabled", "Network": "5 GHz cellular",
+                          "Power": "Two-pack polymer", "Finish": "Original",
+                          "Heartbeat": "None", "Blood vessel": "None",
+                          "Dissolved gasses": "None", "Toxicology": "Narcotic",
+                          "Hormone": "None", "Metabolic": "None", "price": 1200},
+        "D — Breast Cancer": {"Platform": "Chest-worn", "GPS": "GPS enabled", "Network": "2.4 GHz cellular",
+                                "Power": "Polymer", "Finish": "Dyed",
+                                "Heartbeat": "Pulse only", "Blood vessel": "Systolic only",
+                                "Dissolved gasses": "None", "Toxicology": "None",
+                                "Hormone": "None", "Metabolic": "None", "price": 1250},
+        "E — Clinic Fertility": {"Platform": "Wristband", "GPS": "No GPS", "Network": "Bluetooth",
+                                   "Power": "Polymer", "Finish": "Original",
+                                   "Heartbeat": "None", "Blood vessel": "None",
+                                   "Dissolved gasses": "None", "Toxicology": "None",
+                                   "Hormone": "LH and FSH", "Metabolic": "None", "price": 315},
+    }
+
+    w14_pd_t1, w14_pd_t2 = st.columns([1, 3])
+    with w14_pd_t1:
+        w14_n_products = st.number_input("# Products to design", min_value=1, max_value=5,
+                                            value=5, step=1, key="w14_n_products")
+    with w14_pd_t2:
+        st.caption("Base features: design cost $0/0 days (not published — override if confirmed in-game). "
+                   "Detection features: exact values from Design Guide.")
+
+    preset_keys = list(W14_PRESETS.keys())
+    w14_pd_cols = st.columns(int(w14_n_products))
+    w14_pd_summary = []
+
+    for i, col in enumerate(w14_pd_cols):
+        with col:
+            default_idx = i if i < len(preset_keys) else 0
+            p_sel = st.selectbox(f"Preset P{i+1}", preset_keys, index=default_idx,
+                                   key=f"w14_pd_preset_{i}")
+            preset = W14_PRESETS[p_sel]
+
+            st.markdown("**Base Features**")
+            w14_sel_base = {}
+            for attr, opts in W14_BASE_FEATURES.items():
+                default_feat = preset.get(attr, list(opts.keys())[0])
+                idx = list(opts.keys()).index(default_feat) if default_feat in opts else 0
+                w14_sel_base[attr] = st.selectbox(attr, list(opts.keys()), index=idx,
+                                                    key=f"w14_pd_base_{attr}_{i}")
+
+            st.markdown("**Detection Agenda**")
+            w14_sel_det = {}
+            for attr, opts in W14_DETECTION.items():
+                default_feat = preset[attr]
+                idx = list(opts.keys()).index(default_feat) if default_feat in opts else 0
+                w14_sel_det[attr] = st.selectbox(attr, list(opts.keys()), index=idx,
+                                                   key=f"w14_pd_det_{attr}_{i}")
+
+            # Totals
+            base_mat = sum(W14_BASE_FEATURES[a][w14_sel_base[a]] for a in W14_BASE_FEATURES)
+            det_days = max(W14_DETECTION[a][w14_sel_det[a]][0] for a in W14_DETECTION)
+            det_cost = sum(W14_DETECTION[a][w14_sel_det[a]][1] for a in W14_DETECTION)
+            det_mat = sum(W14_DETECTION[a][w14_sel_det[a]][2] for a in W14_DETECTION)
+
+            total_days = det_days
+            total_cost = det_cost
+            total_mat = base_mat + det_mat
+
+            w14_pd_price = st.number_input("Price ($)", value=preset["price"], step=25,
+                                             key=f"w14_pd_price_{i}")
+            w14_pd_sales = st.number_input("Est. Sales/day", value=5, step=1,
+                                             key=f"w14_pd_sales_{i}")
+
+            w14_pd_margin = (w14_pd_price * (1 - w14_comm_frac)
+                              - W14_HANDLING - total_mat - W14_SHIPPING)
+            w14_pd_be = (total_cost / (w14_pd_margin * w14_pd_sales)
+                           if w14_pd_margin > 0 and w14_pd_sales > 0 else float("inf"))
+
+            st.metric("Design Days", f"{total_days}")
+            st.metric("Design Cost", f"${total_cost:,}")
+            st.metric("Materials/u", f"${total_mat}")
+            st.metric("CM/u", f"${w14_pd_margin:,.0f}")
+            if w14_pd_be < float("inf"):
+                st.metric("Break-even", f"{w14_pd_be:.0f} days",
+                           delta=f"{w14_pd_be/30:.1f} months", delta_color="off")
+            else:
+                st.error("Negative margin")
+
+            w14_pd_summary.append({
+                "Product": f"P{i+1}: {p_sel}",
+                "Days": total_days,
+                "Design $": f"${total_cost:,}",
+                "Mat/u": f"${total_mat}",
+                "Price": f"${w14_pd_price}",
+                "CM/u": f"${w14_pd_margin:,.0f}",
+                "Break-even": f"{w14_pd_be:.0f}d" if w14_pd_be < float("inf") else "N/A",
+            })
+
+    st.markdown("**Product Comparison Summary**")
+    st.dataframe(pd.DataFrame(w14_pd_summary), use_container_width=True, hide_index=True)
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE 0.6: 13 TRIAL WAR ROOM (Production Game / Gleacher Game)
