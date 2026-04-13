@@ -2197,6 +2197,176 @@ $$INV = \\lambda_{{eff}} \\times CT = {cd_lambda_eff:.2f} \\times {cd_CT:.3f} = 
 - **WIP = {cd_WIP:.1f} units** — this is what you'll see as "Inventory in Process" in your HQ panel.
     """)
 
+    # ── Manufacturing Overhead per Unit (feeds into Contribution Margin) ─────
+    # Total daily factory cost = daily labor + daily depreciation
+    # Assumes 15-year SL depreciation, land not included in K (K is equipment only)
+    cd_daily_dep = cd_K / PG_DEPRECIATION_YRS / cd_days_per_year
+    cd_daily_factory_cost = cd_l + cd_daily_dep
+    cd_mfg_overhead_per_unit = cd_daily_factory_cost / cd_lambda_eff if cd_lambda_eff > 0 else 0
+
+    st.markdown("")
+    st.markdown("### 💰 Contribution Margin Table")
+    st.caption("Set a retail price → see contribution margin after all variable costs (uses the manufacturing overhead calculated above)")
+
+    # ── CM inputs ─────────────────────────────────────────────────────────────
+    cm_col1, cm_col2, cm_col3, cm_col4, cm_col5 = st.columns(5)
+    with cm_col1:
+        cm_price = st.number_input("Retail Price ($/unit)", value=700, step=25, key="cm_price")
+    with cm_col2:
+        cm_materials = st.number_input("Materials Cost ($/unit)", value=100, step=10, key="cm_materials",
+                                          help="Sum of materials costs from product features")
+    with cm_col3:
+        cm_shipping = st.number_input("Shipping Cost ($/unit)", value=50, step=5, key="cm_shipping",
+                                        help="Container in-region: $5K/1000 units=$5/u. Container between regions: $10K/1000=$10/u. At batch 100: $50/u (same region) or $100/u (different).")
+    with cm_col4:
+        cm_commission_pct = st.number_input("Commission (%)", value=PG_SALES_COMMISSION,
+                                              step=1.0, key="cm_comm",
+                                              help="Per Class 2: 20% of revenue")
+    with cm_col5:
+        cm_handling = st.number_input("Handling ($/unit)", value=PG_HANDLING_COST,
+                                         step=1, key="cm_handling")
+
+    # ── Calculations ──────────────────────────────────────────────────────────
+    cm_commission_per_unit = cm_price * (cm_commission_pct / 100)
+    cm_total_var_cost = (cd_mfg_overhead_per_unit + cm_materials + cm_shipping
+                          + cm_handling + cm_commission_per_unit)
+    cm_before_tax = cm_price - cm_total_var_cost
+    cm_tax = max(0, cm_before_tax) * 0.35
+    cm_after_tax = cm_before_tax - cm_tax
+
+    # Per-day aggregates (using effective throughput)
+    cm_day_revenue = cm_price * cd_lambda_eff
+    cm_day_mfg = cd_daily_factory_cost  # already a daily value
+    cm_day_materials = cm_materials * cd_lambda_eff
+    cm_day_shipping = cm_shipping * cd_lambda_eff
+    cm_day_handling = cm_handling * cd_lambda_eff
+    cm_day_commission = cm_commission_per_unit * cd_lambda_eff
+    cm_day_before_tax = cm_day_revenue - cm_day_mfg - cm_day_materials - cm_day_shipping - cm_day_handling - cm_day_commission
+    cm_day_tax = max(0, cm_day_before_tax) * 0.35
+    cm_day_after_tax = cm_day_before_tax - cm_day_tax
+
+    # ── Table display ────────────────────────────────────────────────────────
+    cm_table_col, cm_chart_col = st.columns([1, 1])
+
+    with cm_table_col:
+        cm_pct_of_rev = lambda v: f"{v/cm_price*100:.1f}%" if cm_price > 0 else "—"
+
+        color_pre = "#2d6a2e" if cm_before_tax > 0 else "#b22222"
+        color_post = "#2d6a2e" if cm_after_tax > 0 else "#b22222"
+
+        st.markdown(f"""
+<div style="border:1px solid rgba(128,128,128,0.3); border-radius:8px; padding:1rem;">
+<table style="width:100%; border-collapse:collapse;">
+<tr style="border-bottom:2px solid rgba(128,128,128,0.5);">
+<th style="text-align:left;">Line</th>
+<th style="text-align:right;">Per Unit</th>
+<th style="text-align:right;">Per Day</th>
+<th style="text-align:right;">% Rev</th>
+</tr>
+<tr>
+<td>Revenue</td>
+<td style="text-align:right;"><b>${cm_price:,.2f}</b></td>
+<td style="text-align:right;"><b>${cm_day_revenue:,.2f}</b></td>
+<td style="text-align:right;">100.0%</td>
+</tr>
+<tr>
+<td>(−) Manufacturing Overhead</td>
+<td style="text-align:right;color:#b22222;">$({cd_mfg_overhead_per_unit:,.2f})</td>
+<td style="text-align:right;color:#b22222;">$({cm_day_mfg:,.2f})</td>
+<td style="text-align:right;">{cm_pct_of_rev(cd_mfg_overhead_per_unit)}</td>
+</tr>
+<tr>
+<td>(−) Materials (Marginal Cost)</td>
+<td style="text-align:right;color:#b22222;">$({cm_materials:,.2f})</td>
+<td style="text-align:right;color:#b22222;">$({cm_day_materials:,.2f})</td>
+<td style="text-align:right;">{cm_pct_of_rev(cm_materials)}</td>
+</tr>
+<tr>
+<td>(−) Handling</td>
+<td style="text-align:right;color:#b22222;">$({cm_handling:,.2f})</td>
+<td style="text-align:right;color:#b22222;">$({cm_day_handling:,.2f})</td>
+<td style="text-align:right;">{cm_pct_of_rev(cm_handling)}</td>
+</tr>
+<tr>
+<td>(−) Commission ({cm_commission_pct:.0f}%)</td>
+<td style="text-align:right;color:#b22222;">$({cm_commission_per_unit:,.2f})</td>
+<td style="text-align:right;color:#b22222;">$({cm_day_commission:,.2f})</td>
+<td style="text-align:right;">{cm_pct_of_rev(cm_commission_per_unit)}</td>
+</tr>
+<tr style="border-bottom:1px solid rgba(128,128,128,0.3);">
+<td>(−) Shipping</td>
+<td style="text-align:right;color:#b22222;">$({cm_shipping:,.2f})</td>
+<td style="text-align:right;color:#b22222;">$({cm_day_shipping:,.2f})</td>
+<td style="text-align:right;">{cm_pct_of_rev(cm_shipping)}</td>
+</tr>
+<tr style="background:rgba(255,215,0,0.15);">
+<td><b>= Contribution Margin (before tax)</b></td>
+<td style="text-align:right;color:{color_pre};"><b>${cm_before_tax:,.2f}</b></td>
+<td style="text-align:right;color:{color_pre};"><b>${cm_day_before_tax:,.2f}</b></td>
+<td style="text-align:right;color:{color_pre};"><b>{cm_pct_of_rev(cm_before_tax)}</b></td>
+</tr>
+<tr>
+<td>(−) Tax (35%)</td>
+<td style="text-align:right;color:#b22222;">$({cm_tax:,.2f})</td>
+<td style="text-align:right;color:#b22222;">$({cm_day_tax:,.2f})</td>
+<td style="text-align:right;">{cm_pct_of_rev(cm_tax)}</td>
+</tr>
+<tr style="background:rgba({'45,106,46' if cm_after_tax > 0 else '178,34,34'},0.2);border-top:2px solid rgba(128,128,128,0.5);">
+<td><b>= Contribution Margin (after tax)</b></td>
+<td style="text-align:right;color:{color_post};font-size:1.1em;"><b>${cm_after_tax:,.2f}</b></td>
+<td style="text-align:right;color:{color_post};font-size:1.1em;"><b>${cm_day_after_tax:,.2f}</b></td>
+<td style="text-align:right;color:{color_post};"><b>{cm_pct_of_rev(cm_after_tax)}</b></td>
+</tr>
+</table>
+</div>
+""", unsafe_allow_html=True)
+
+    with cm_chart_col:
+        # Waterfall chart showing the margin decomposition
+        fig_cm = go.Figure(go.Waterfall(
+            name="Per Unit",
+            orientation="v",
+            measure=["absolute", "relative", "relative", "relative", "relative", "relative",
+                     "total", "relative", "total"],
+            x=["Revenue", "Mfg OH", "Materials", "Handling", "Commission", "Shipping",
+               "CM pre-tax", "Tax", "CM after tax"],
+            y=[cm_price, -cd_mfg_overhead_per_unit, -cm_materials, -cm_handling,
+               -cm_commission_per_unit, -cm_shipping, 0, -cm_tax, 0],
+            connector={"line": {"color": "rgb(63, 63, 63)"}},
+            increasing={"marker": {"color": "#2d6a2e"}},
+            decreasing={"marker": {"color": "#b22222"}},
+            totals={"marker": {"color": "#1a3c5e"}},
+        ))
+        fig_cm.update_layout(height=400, yaxis_title="$ per unit",
+                              yaxis_tickformat="$,.0f",
+                              margin=dict(l=0, r=0, t=30, b=0),
+                              title=f"Waterfall: ${cm_price} price → ${cm_after_tax:,.2f} CM after tax")
+        st.plotly_chart(fig_cm, use_container_width=True)
+
+    # Break-even analysis
+    st.markdown("---")
+    be_col1, be_col2, be_col3 = st.columns(3)
+    with be_col1:
+        # Break-even price given current costs
+        # 0 = P - OH - Mat - Ship - Hand - P*(comm%)
+        # P*(1-comm%) = OH + Mat + Ship + Hand
+        # P = (OH + Mat + Ship + Hand) / (1 - comm%)
+        be_fixed_per_unit = cd_mfg_overhead_per_unit + cm_materials + cm_shipping + cm_handling
+        be_price = be_fixed_per_unit / (1 - cm_commission_pct / 100) if cm_commission_pct < 100 else 0
+        st.metric("Break-even Price", f"${be_price:,.2f}",
+                   help="Minimum price for zero contribution margin")
+
+    with be_col2:
+        # Break-even volume given current price (covers DC opex of $2K/day from game)
+        st.metric("Unit CM After Tax", f"${cm_after_tax:,.2f}",
+                   delta=f"{cm_after_tax/cm_price*100:.1f}% of price" if cm_price > 0 else "—",
+                   delta_color="normal" if cm_after_tax > 0 else "inverse")
+
+    with be_col3:
+        # Daily CM contribution to fixed costs (DC daily + factory daily = ~$4,500)
+        st.metric("Daily CM After Tax", f"${cm_day_after_tax:,.2f}",
+                   help=f"At λ_eff = {cd_lambda_eff:.2f} units/day")
+
     st.markdown("---")
 
     # ══════════════════════════════════════════════════════════════════════════
