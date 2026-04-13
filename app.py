@@ -2476,52 +2476,102 @@ $$INV = \\lambda_{{eff}} \\times CT = {cd_lambda_eff:.2f} \\times {cd_CT:.3f} = 
             peak_t = (1/(mkt["p"]+mkt["q"])) * np.log(mkt["q"]/mkt["p"]) if mkt["p"] > 0 and mkt["q"] > mkt["p"] else 0
             peak_q = mkt_size_est * ((mkt["p"]+mkt["q"])**2) / (4*mkt["q"]) if mkt["q"] > 0 else 0
 
-            # Display implied min
-            st.caption(f"Implied min WTP: **${mkt_wtp_min:,.0f}** (= 2 × {mkt_wtp_median} − {mkt_wtp_max})")
+            # Display implied min + show theoretical optimal as reference
+            st.caption(f"Implied min WTP: **${mkt_wtp_min:,.0f}** (= 2 × {mkt_wtp_median} − {mkt_wtp_max}). "
+                        f"Theoretical optimal: **${optimal_mkt_price:,.0f}** — {price_regime}")
 
-            st.metric("Optimal Price", f"${optimal_mkt_price:,.0f}",
-                       help=price_regime)
-            st.metric("P(buy) at optimal", f"{p_buy_at_opt:.0%}")
-            st.metric("Gross Profit / Unit", f"${gross_profit_per_unit:,.0f}")
-            st.metric("Gross Margin", f"{margin_pct:.0f}%")
-            st.metric("Bass Peak Sales", f"{peak_q:,.1f}/day")
+            # ── Price slider: let user override the optimal ────────────────
+            mkt_price_slider_min = int(mkt_mc_est + PG_HANDLING_COST)  # floor = unit cost
+            mkt_price_slider_max = int(mkt_wtp_max * 1.2)
+            mkt_price = st.slider("Your Retail Price ($)",
+                                    mkt_price_slider_min, mkt_price_slider_max,
+                                    int(optimal_mkt_price), step=10,
+                                    key=f"mkt_price_{i}",
+                                    help=f"Defaults to theoretical optimal ${optimal_mkt_price:,.0f}. Drag to see P(buy) and CM at any price.")
+
+            # Compute P(buy) at slider price
+            if mkt_price <= mkt_wtp_min:
+                p_buy_at_price = 1.0
+            elif mkt_price >= mkt_wtp_max:
+                p_buy_at_price = 0.0
+            else:
+                p_buy_at_price = (mkt_wtp_max - mkt_price) / (mkt_wtp_max - mkt_wtp_min)
+
+            # CM calculation at slider price (no tax, shipping included)
+            cm_shipping_mkt = 20  # mail in-region default
+            commission_at_price = mkt_price * comm_frac
+            cm_per_unit = (mkt_price - commission_at_price - PG_HANDLING_COST
+                            - mkt_mc_est - cm_shipping_mkt)
+            cm_per_arrival = cm_per_unit * p_buy_at_price
+
+            cm_color = "#2d6a2e" if cm_per_unit > 0 else "#b22222"
+
+            st.markdown(f"""
+<div style="background:rgba({'45,106,46' if cm_per_unit > 0 else '178,34,34'},0.12);
+    border-left:4px solid {cm_color}; border-radius:6px; padding:0.6rem 0.8rem; margin:0.3rem 0;">
+<div style="font-size:0.8rem;opacity:0.7;">At price ${mkt_price:,}</div>
+<div style="display:flex;gap:1.2rem;flex-wrap:wrap;margin-top:0.3rem;">
+<div><span style="opacity:0.7;font-size:0.75rem;">P(buy)</span><br><b style="font-size:1.1rem;">{p_buy_at_price:.0%}</b></div>
+<div><span style="opacity:0.7;font-size:0.75rem;">CM / unit</span><br><b style="font-size:1.1rem;color:{cm_color};">${cm_per_unit:,.0f}</b></div>
+<div><span style="opacity:0.7;font-size:0.75rem;">CM / arrival</span><br><b style="font-size:1.1rem;color:{cm_color};">${cm_per_arrival:,.0f}</b></div>
+</div>
+</div>
+""", unsafe_allow_html=True)
+
+            st.metric("Bass Peak Sales (market, 100% buy)", f"{peak_q:,.1f}/day",
+                       help="Bass peak assuming 100% conversion. Adjust by current P(buy).")
 
             # Unit economics detail
             with st.expander("Unit economics & pricing logic", expanded=False):
                 st.markdown(f"""
-**Inputs:**
-- Max WTP: ${mkt_wtp_max:,.0f} (100th pct from focus group)
-- Median WTP: ${mkt_wtp_median:,.0f} (50th pct from focus group)
+**Focus group inputs:**
+- Max WTP: ${mkt_wtp_max:,.0f} (100th pct)
+- Median WTP: ${mkt_wtp_median:,.0f} (50th pct)
 - Implied min WTP: ${mkt_wtp_min:,.0f} (uniform assumption)
 
-**Optimal price regime:** {price_regime}
+**Theoretical optimal regime:** {price_regime}
 
-**Formula applied:**
+**Formula:**
 Interior P* = max/2 + var_fixed / (2 × (1 − commission))
            = ${mkt_wtp_max:,.0f}/2 + ${var_fixed:,.0f} / 1.6
-           = ${mkt_wtp_max/2:,.0f} + ${var_fixed/1.6:,.0f}
            = ${interior_P:,.0f}
 
-**Unit economics at optimal ${optimal_mkt_price:,.0f}:**
-- Retail price: ${optimal_mkt_price:,.0f}
-- Commission ({PG_SALES_COMMISSION:.0f}%): -${commission_at_opt:,.0f}
-- Handling: -${PG_HANDLING_COST}
-- Materials: -${mkt_mc_est}
-- **Gross profit: ${gross_profit_per_unit:,.0f}**
-- DSO: {mkt['dso']} days → ${gross_profit_per_unit * mkt['dso']:,.0f} WC tied up per unit
+**Your chosen price: ${mkt_price:,}**
+
+**Demand:**
+- P(buy) = (max − P) / (max − min) = ({mkt_wtp_max:,} − {mkt_price:,}) / ({mkt_wtp_max:,} − {mkt_wtp_min:,}) = **{p_buy_at_price:.1%}**
+
+**Contribution Margin per unit (before tax):**
+- Revenue: ${mkt_price:,}
+- (−) Commission ({PG_SALES_COMMISSION:.0f}%): -${commission_at_price:,.0f}
+- (−) Handling: -${PG_HANDLING_COST}
+- (−) Materials: -${mkt_mc_est}
+- (−) Shipping (mail in-region): -${cm_shipping_mkt}
+- **= CM per unit: ${cm_per_unit:,.0f}**
+
+**Expected value per arriving customer:**
+- CM × P(buy) = ${cm_per_unit:,.0f} × {p_buy_at_price:.0%} = **${cm_per_arrival:,.0f}**
+
+**Bass implications:**
+- Peak arrivals: {peak_q:,.1f}/day at market peak
+- Peak purchases at this price: {peak_q * p_buy_at_price:,.1f}/day
+- Daily CM at peak: ${peak_q * p_buy_at_price * cm_per_unit:,.0f}
+
+**Working capital:**
+- DSO: {mkt['dso']} days → ${cm_per_unit * mkt['dso']:,.0f} WC tied per unit sold
 """)
 
             mkt_results.append({
                 "Market": mkt_sel,
                 "Median WTP": f"${mkt_wtp_median:,}",
                 "Max WTP": f"${mkt_wtp_max:,}",
-                "Min WTP (implied)": f"${mkt_wtp_min:,}",
-                "Opt. Price": f"${optimal_mkt_price:,.0f}",
-                "P(buy)": f"{p_buy_at_opt:.0%}",
-                "Profit/unit": f"${gross_profit_per_unit:,.0f}",
-                "Regime": price_regime.split(" ")[0] + " " + price_regime.split(" ")[1] if " " in price_regime else price_regime,
+                "Your Price": f"${mkt_price:,}",
+                "P(buy)": f"{p_buy_at_price:.0%}",
+                "CM/unit": f"${cm_per_unit:,.0f}",
+                "CM/arrival": f"${cm_per_arrival:,.0f}",
+                "Peak Sales/day (at your price)": f"{peak_q * p_buy_at_price:,.1f}",
+                "Daily CM at peak": f"${peak_q * p_buy_at_price * cm_per_unit:,.0f}",
                 "DSO (d)": mkt['dso'],
-                "Deal Breaker": mkt['dealbreaker'],
             })
 
     # Comparison summary table
