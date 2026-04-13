@@ -1687,20 +1687,36 @@ elif page == "🚀 14 Trial War Room":
     st.markdown("")
 
     # ══════════════════════════════════════════════════════════════════════════
-    # WHAT'S NEW (vs 13 War Room)
+    # WHAT'S NEW + 8-SECTION SUMMARY
     # ══════════════════════════════════════════════════════════════════════════
-    st.info("""
-**What's new today (from D3 materials):**
+    w14_intro_col1, w14_intro_col2 = st.columns([1, 1])
 
-1. **WTP is NORMALLY distributed** — mean + std dev, not uniform [0, max]. Focus groups reveal mean/max.
-2. **Three arrival streams:** Innovators (decay over time) + Imitators (grow over time) + **Advertising-attracted** (same-day arrivals)
+    with w14_intro_col1:
+        st.info("""
+**🆕 What's new today (from D3 materials):**
+
+1. **WTP is NORMALLY distributed** — mean + std dev, not uniform. Focus groups reveal mean/max.
+2. **Three arrival streams:** Innovators (decay over time) + Imitators (grow over time) + **Advertising-attracted** (same-day)
 3. **Advertising decision framework** — when to advertise, when not to, strategic use
-4. **Debt issuance is tranche-based** — must exhaust Excellent before issuing Good, then Poor
-5. **Scenario comparison** — model 4-year cumulative contribution under price × advertising combinations
+4. **Debt issuance is tranche-based** — exhaust Excellent → Good → Poor sequentially
+5. **Scenario comparison** — 4-year cumulative contribution under price × advertising combinations
 
-**Today's game:** Practice Game 7-9pm. Plays forward, you execute strategy.
-**Tomorrow (Wed):** Competition begins. Today is your last practice.
-    """)
+**Today's game:** Practice Game 7-9pm. **Tomorrow (Wed):** Competition begins. Today is last practice.
+        """)
+
+    with w14_intro_col2:
+        st.success("""
+**📋 The 8 Components of this War Room:**
+
+1. **Advanced Bass Model** — Normal WTP, 3 arrival streams, daily simulation over 4 years
+2. **Scenario Comparison** — 4 price × ad scenarios side-by-side with trajectory plots
+3. **Advertising Decision Framework** — when/when-not checklist + ROI calculator
+4. **Debt Capacity & Bond Issuance** — tranche-based (Excellent → Good → Poor)
+5. **Normal vs Uniform WTP** — side-by-side comparison tool
+6. **Cobb-Douglas + Little's Law + CM Table** — throughput → cycle time → WIP → contribution margin
+7. **Market Segment Analyzer** (up to **5 markets**) — Normal WTP, price slider, live CM
+8. **Product Design ROI** (up to **5 products**) — base features + detection agenda, break-even
+        """)
 
     # ══════════════════════════════════════════════════════════════════════════
     # GAME PARAMETERS (shared with 13 War Room)
