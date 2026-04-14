@@ -2462,8 +2462,10 @@ Given the D3 Exercise uses Normal, **we should assume Normal distribution** goin
     w14_lambda_eff = picked_result["lambda_eff"]
     w14_daily_factory_cost = picked_result["daily_cost"]
 
-    # Contribution Margin Table
-    st.markdown("### 💰 Contribution Margin Table (Before Tax)")
+    # Contribution Margin Table — now with SELLER vs RETAILER cost allocation
+    st.markdown("### 💰 Contribution Margin — Cost Allocation")
+    st.caption("Per Gleacher Tips: **Retailer pays commission + handling. Wholesaler pays shipping + materials + mfg OH.** "
+               "Use this to model wholesale price negotiation below.")
 
     w14_cm_c1, w14_cm_c2, w14_cm_c3, w14_cm_c4 = st.columns(4)
     with w14_cm_c1:
@@ -2476,7 +2478,15 @@ Given the D3 Exercise uses Normal, **we should assume Normal distribution** goin
         w14_cm_handling = st.number_input("Handling ($/u)", value=10, step=1, key="w14_cm_hand")
 
     w14_cm_commission = w14_cm_price * w14_comm_frac
-    w14_cm_total_cost = w14_mfg_oh + w14_cm_materials + w14_cm_shipping + w14_cm_handling + w14_cm_commission
+
+    # Cost groupings by who bears them
+    SELLER = "#1a3c5e"   # blue for wholesaler/seller-borne
+    RETAILER = "#b8860b"  # gold for retailer-borne
+    seller_costs = w14_mfg_oh + w14_cm_materials + w14_cm_shipping
+    retailer_costs = w14_cm_handling + w14_cm_commission
+
+    # Integrated (own DC + own factory) CM: bear all costs
+    w14_cm_total_cost = seller_costs + retailer_costs
     w14_cm_before_tax = w14_cm_price - w14_cm_total_cost
     w14_cm_day = w14_cm_before_tax * w14_lambda_eff
 
@@ -2488,37 +2498,61 @@ Given the D3 Exercise uses Normal, **we should assume Normal distribution** goin
 <table style="width:100%; border-collapse:collapse;">
 <tr style="border-bottom:2px solid rgba(128,128,128,0.5);">
 <th style="text-align:left;">Line</th>
+<th style="text-align:center;">Borne by</th>
 <th style="text-align:right;">Per Unit</th>
 <th style="text-align:right;">Per Day (at λ_eff={w14_lambda_eff:.2f})</th>
 <th style="text-align:right;">% Rev</th>
 </tr>
 <tr><td>Revenue</td>
+<td style="text-align:center;"><b style="color:{RETAILER};">Retailer collects</b></td>
 <td style="text-align:right;"><b>${w14_cm_price:,.2f}</b></td>
 <td style="text-align:right;"><b>${w14_cm_price * w14_lambda_eff:,.2f}</b></td>
 <td style="text-align:right;">100.0%</td></tr>
-<tr><td>(−) Manufacturing Overhead</td>
+<tr style="background:rgba(26,60,94,0.08);">
+<td>(−) Manufacturing Overhead</td>
+<td style="text-align:center;"><b style="color:{SELLER};">Wholesaler (Seller)</b></td>
 <td style="text-align:right;color:#b22222;">$({w14_mfg_oh:,.2f})</td>
 <td style="text-align:right;color:#b22222;">$({w14_daily_factory_cost:,.2f})</td>
 <td style="text-align:right;">{pct_rev(w14_mfg_oh)}</td></tr>
-<tr><td>(−) Materials</td>
+<tr style="background:rgba(26,60,94,0.08);">
+<td>(−) Materials</td>
+<td style="text-align:center;"><b style="color:{SELLER};">Wholesaler (Seller)</b></td>
 <td style="text-align:right;color:#b22222;">$({w14_cm_materials:,.2f})</td>
 <td style="text-align:right;color:#b22222;">$({w14_cm_materials * w14_lambda_eff:,.2f})</td>
 <td style="text-align:right;">{pct_rev(w14_cm_materials)}</td></tr>
-<tr><td>(−) Handling</td>
-<td style="text-align:right;color:#b22222;">$({w14_cm_handling:,.2f})</td>
-<td style="text-align:right;color:#b22222;">$({w14_cm_handling * w14_lambda_eff:,.2f})</td>
-<td style="text-align:right;">{pct_rev(w14_cm_handling)}</td></tr>
-<tr><td>(−) Commission ({W14_COMMISSION:.0f}%)</td>
-<td style="text-align:right;color:#b22222;">$({w14_cm_commission:,.2f})</td>
-<td style="text-align:right;color:#b22222;">$({w14_cm_commission * w14_lambda_eff:,.2f})</td>
-<td style="text-align:right;">{pct_rev(w14_cm_commission)}</td></tr>
-<tr style="border-bottom:2px solid rgba(128,128,128,0.5);">
+<tr style="background:rgba(26,60,94,0.08);">
 <td>(−) Shipping</td>
+<td style="text-align:center;"><b style="color:{SELLER};">Wholesaler (Seller)</b></td>
 <td style="text-align:right;color:#b22222;">$({w14_cm_shipping:,.2f})</td>
 <td style="text-align:right;color:#b22222;">$({w14_cm_shipping * w14_lambda_eff:,.2f})</td>
 <td style="text-align:right;">{pct_rev(w14_cm_shipping)}</td></tr>
+<tr style="border-top:1px solid rgba(26,60,94,0.5);background:rgba(26,60,94,0.12);">
+<td><b>Subtotal: Wholesaler's COGS</b></td>
+<td style="text-align:center;"><b style="color:{SELLER};">Seller bears</b></td>
+<td style="text-align:right;color:{SELLER};"><b>$({seller_costs:,.2f})</b></td>
+<td style="text-align:right;color:{SELLER};"><b>$({seller_costs * w14_lambda_eff:,.2f})</b></td>
+<td style="text-align:right;">{pct_rev(seller_costs)}</td></tr>
+<tr style="background:rgba(184,134,11,0.08);">
+<td>(−) Handling</td>
+<td style="text-align:center;"><b style="color:{RETAILER};">Retailer</b></td>
+<td style="text-align:right;color:#b22222;">$({w14_cm_handling:,.2f})</td>
+<td style="text-align:right;color:#b22222;">$({w14_cm_handling * w14_lambda_eff:,.2f})</td>
+<td style="text-align:right;">{pct_rev(w14_cm_handling)}</td></tr>
+<tr style="background:rgba(184,134,11,0.08);">
+<td>(−) Commission ({W14_COMMISSION:.0f}%)</td>
+<td style="text-align:center;"><b style="color:{RETAILER};">Retailer</b></td>
+<td style="text-align:right;color:#b22222;">$({w14_cm_commission:,.2f})</td>
+<td style="text-align:right;color:#b22222;">$({w14_cm_commission * w14_lambda_eff:,.2f})</td>
+<td style="text-align:right;">{pct_rev(w14_cm_commission)}</td></tr>
+<tr style="border-top:1px solid rgba(184,134,11,0.5);background:rgba(184,134,11,0.15);border-bottom:2px solid rgba(128,128,128,0.5);">
+<td><b>Subtotal: Retailer's cost of sale</b></td>
+<td style="text-align:center;"><b style="color:{RETAILER};">Retailer bears</b></td>
+<td style="text-align:right;color:{RETAILER};"><b>$({retailer_costs:,.2f})</b></td>
+<td style="text-align:right;color:{RETAILER};"><b>$({retailer_costs * w14_lambda_eff:,.2f})</b></td>
+<td style="text-align:right;">{pct_rev(retailer_costs)}</td></tr>
 <tr style="background:rgba({'45,106,46' if w14_cm_before_tax > 0 else '178,34,34'},0.2);">
-<td><b>= Contribution Margin (before tax)</b></td>
+<td><b>= Integrated CM (same party owns DC + factory)</b></td>
+<td></td>
 <td style="text-align:right;color:{cm_color};font-size:1.15em;"><b>${w14_cm_before_tax:,.2f}</b></td>
 <td style="text-align:right;color:{cm_color};font-size:1.15em;"><b>${w14_cm_day:,.2f}</b></td>
 <td style="text-align:right;color:{cm_color};"><b>{pct_rev(w14_cm_before_tax)}</b></td></tr>
@@ -2526,23 +2560,133 @@ Given the D3 Exercise uses Normal, **we should assume Normal distribution** goin
 </div>
 """, unsafe_allow_html=True)
 
-    # Waterfall chart
+    # Waterfall chart with seller/retailer color grouping
     fig_wf = go.Figure(go.Waterfall(
         name="Per Unit",
         orientation="v",
         measure=["absolute", "relative", "relative", "relative", "relative", "relative", "total"],
-        x=["Revenue", "Mfg OH", "Materials", "Handling", "Commission", "Shipping", "CM"],
-        y=[w14_cm_price, -w14_mfg_oh, -w14_cm_materials, -w14_cm_handling,
-           -w14_cm_commission, -w14_cm_shipping, 0],
+        x=["Revenue", "Mfg OH<br>(seller)", "Materials<br>(seller)", "Shipping<br>(seller)",
+           "Handling<br>(retailer)", "Commission<br>(retailer)", "CM"],
+        y=[w14_cm_price, -w14_mfg_oh, -w14_cm_materials, -w14_cm_shipping,
+           -w14_cm_handling, -w14_cm_commission, 0],
         connector={"line": {"color": "rgb(63, 63, 63)"}},
         increasing={"marker": {"color": "#2d6a2e"}},
         decreasing={"marker": {"color": "#b22222"}},
         totals={"marker": {"color": "#1a3c5e"}},
     ))
     fig_wf.update_layout(height=350, yaxis_title="$ per unit", yaxis_tickformat="$,.0f",
-                          title=f"Waterfall: ${w14_cm_price} price → ${w14_cm_before_tax:,.2f} CM before tax",
+                          title=f"Waterfall: ${w14_cm_price} price → ${w14_cm_before_tax:,.2f} CM (integrated)",
                           margin=dict(l=0, r=0, t=40, b=0))
     st.plotly_chart(fig_wf, use_container_width=True)
+
+    # ── Wholesale Price Negotiation Tool ─────────────────────────────────────
+    st.markdown("### 🤝 Wholesale Price Negotiation Tool")
+    st.caption("If you sell to another team (wholesale), split the CM between Seller (you) and Retailer (partner). "
+               "Use the slider to find a win-win wholesale price.")
+
+    wpn_col1, wpn_col2 = st.columns([1, 2])
+    with wpn_col1:
+        # Wholesale price must be:
+        # - >= seller's cost (materials + mfg OH + shipping) for seller to want the deal
+        # - <= retail - retailer's cost (commission + handling) for retailer to make any margin
+        seller_min_ws = seller_costs  # wholesale price = seller_costs → seller makes $0
+        retailer_max_ws = w14_cm_price - retailer_costs  # retailer CM = 0 at this wholesale price
+
+        if retailer_max_ws > seller_min_ws:
+            default_ws = (seller_min_ws + retailer_max_ws) / 2  # ZOPA midpoint
+            ws_slider = st.slider(
+                "Wholesale Price ($)",
+                int(seller_min_ws), int(retailer_max_ws),
+                int(default_ws), step=10, key="w14_ws_slider",
+                help=f"ZOPA: ${seller_min_ws:,.0f} (seller breakeven) to ${retailer_max_ws:,.0f} (retailer breakeven)",
+            )
+            has_zopa = True
+        else:
+            ws_slider = int(seller_min_ws)
+            has_zopa = False
+
+        st.markdown(f"""
+**ZOPA Range (Zone of Possible Agreement):**
+- Seller min (breakeven): **${seller_min_ws:,.2f}**
+- Retailer max (breakeven): **${retailer_max_ws:,.2f}**
+- Width: **${retailer_max_ws - seller_min_ws:,.2f}**
+        """)
+        if not has_zopa:
+            st.error("🔴 **NO ZOPA** — seller's cost > retailer's revenue after commission/handling. Deal impossible at this retail price.")
+
+    with wpn_col2:
+        seller_cm = ws_slider - seller_costs
+        retailer_cm = w14_cm_price - ws_slider - retailer_costs
+        total_cm = seller_cm + retailer_cm
+        seller_share = seller_cm / total_cm * 100 if total_cm > 0 else 0
+        retailer_share = retailer_cm / total_cm * 100 if total_cm > 0 else 0
+
+        # Side-by-side metrics
+        sc_a, sc_b, sc_c = st.columns(3)
+        with sc_a:
+            st.markdown(f"""
+<div style="background:{SELLER};color:white;border-radius:8px;padding:0.8rem;text-align:center;">
+<b>Seller (Wholesaler)</b><br>
+<span style="font-size:0.8em;opacity:0.8;">Receives ${ws_slider:,.0f} wholesale</span><br>
+<b style="font-size:1.5em;">${seller_cm:,.0f}</b><br>
+<span style="font-size:0.8em;">CM/unit ({seller_share:.0f}% of total)</span>
+</div>
+""", unsafe_allow_html=True)
+        with sc_b:
+            st.markdown(f"""
+<div style="background:{RETAILER};color:white;border-radius:8px;padding:0.8rem;text-align:center;">
+<b>Retailer</b><br>
+<span style="font-size:0.8em;opacity:0.8;">Pays ${ws_slider:,.0f}, sells at ${w14_cm_price:,.0f}</span><br>
+<b style="font-size:1.5em;">${retailer_cm:,.0f}</b><br>
+<span style="font-size:0.8em;">CM/unit ({retailer_share:.0f}% of total)</span>
+</div>
+""", unsafe_allow_html=True)
+        with sc_c:
+            status_color = "#2d6a2e" if seller_cm > 0 and retailer_cm > 0 else "#b22222"
+            status_text = "✅ Win-win" if seller_cm > 0 and retailer_cm > 0 else "⚠️ One side loses"
+            st.markdown(f"""
+<div style="background:{status_color};color:white;border-radius:8px;padding:0.8rem;text-align:center;">
+<b>Combined</b><br>
+<span style="font-size:0.8em;opacity:0.8;">Total CM split</span><br>
+<b style="font-size:1.5em;">${total_cm:,.0f}</b><br>
+<span style="font-size:0.8em;">{status_text}</span>
+</div>
+""", unsafe_allow_html=True)
+
+        # Sweep chart: seller CM vs retailer CM across wholesale prices
+        ws_range = list(range(int(seller_min_ws), int(retailer_max_ws) + 1, 10)) if retailer_max_ws > seller_min_ws else [int(seller_min_ws)]
+        seller_cms = [ws - seller_costs for ws in ws_range]
+        retailer_cms = [w14_cm_price - ws - retailer_costs for ws in ws_range]
+
+        fig_ws = go.Figure()
+        fig_ws.add_trace(go.Scatter(x=ws_range, y=seller_cms, name="Seller CM",
+                                      line=dict(color=SELLER, width=2.5),
+                                      fill="tozeroy", fillcolor=f"rgba(26,60,94,0.1)"))
+        fig_ws.add_trace(go.Scatter(x=ws_range, y=retailer_cms, name="Retailer CM",
+                                      line=dict(color=RETAILER, width=2.5),
+                                      fill="tozeroy", fillcolor="rgba(184,134,11,0.1)"))
+        fig_ws.add_vline(x=ws_slider, line_dash="dash", line_color="green",
+                          annotation_text=f"Your WS: ${ws_slider}")
+        fig_ws.add_hline(y=0, line_dash="dot", line_color="gray")
+        fig_ws.update_layout(
+            height=300, xaxis_title="Wholesale Price ($)",
+            yaxis_title="CM per unit ($)", yaxis_tickformat="$,.0f",
+            title=dict(text="CM Split Across Wholesale Prices",
+                         x=0.5, xanchor="center", y=0.97, yanchor="top"),
+            margin=dict(l=0, r=0, t=60, b=0),
+            legend=dict(orientation="h", yanchor="top", y=1.07, xanchor="center", x=0.5),
+        )
+        st.plotly_chart(fig_ws, use_container_width=True)
+
+    st.info(f"""
+**Negotiation Strategy:**
+- **If you are the seller**, push for wholesale price ABOVE midpoint (${(seller_min_ws + retailer_max_ws)/2:,.0f})
+- **If you are the retailer**, push BELOW midpoint
+- **Fair split**: wholesale = midpoint → 50/50 CM split
+- Include WTP info in your shipping agreement comments (per Gleacher Tips) to accelerate negotiation
+- Remember: total CM is FIXED at ${retailer_max_ws - seller_min_ws:,.0f} regardless of wholesale price —
+  the split determines who takes how much
+    """)
 
     st.markdown("---")
 
