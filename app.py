@@ -1840,11 +1840,13 @@ elif page == "🚀 14 Trial War Room":
         fig_arrivals.add_trace(go.Scatter(x=days, y=total_arrivals, name="Total arrivals",
                                             line=dict(color="#2d6a2e", width=2.5, dash="dash")))
         fig_arrivals.update_layout(
-            height=350, xaxis_title="Day",
+            height=400, xaxis_title="Day",
             yaxis_title="Daily Arrivals",
-            title=f"Daily Customer Arrivals (P(buy at ${b14_price}) = {p_buy:.1%})",
-            margin=dict(l=0, r=0, t=40, b=0),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02),
+            title=dict(text=f"Daily Customer Arrivals (P(buy at ${b14_price}) = {p_buy:.1%})",
+                         x=0.5, xanchor="center", y=0.97, yanchor="top"),
+            margin=dict(l=0, r=0, t=90, b=0),
+            legend=dict(orientation="h", yanchor="top", y=1.07,
+                         xanchor="center", x=0.5),
         )
         st.plotly_chart(fig_arrivals, use_container_width=True)
 
