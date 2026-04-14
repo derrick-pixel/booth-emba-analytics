@@ -3414,6 +3414,16 @@ Given the D3 Exercise uses Normal, **we should assume Normal distribution** goin
         else:
             st.caption("🌍 **Standard Region** — medium market sizes, no military.")
 
+    # ── COST PARAMETERS (global for page) ────────────────────────────────────
+    cost_col1, cost_col2, cost_col3 = st.columns(3)
+    with cost_col1:
+        W14B_COMMISSION = st.number_input("Sales Commission (%)", value=20.0, step=1.0, key="w14b_comm")
+    with cost_col2:
+        W14B_HANDLING = st.number_input("Handling ($/unit)", value=10, step=1, key="w14b_handling")
+    with cost_col3:
+        W14B_SHIPPING = st.number_input("Shipping mail in-region ($/u)", value=20, step=5, key="w14b_ship")
+    w14b_comm_frac = W14B_COMMISSION / 100
+
     st.markdown("---")
 
     # ══════════════════════════════════════════════════════════════════════════
