@@ -4640,6 +4640,346 @@ Your firm's terminal value (post-day 1460) should be included in valuation. Use 
 5. Expand: new products, DC in second region, second Line factory.
         """)
 
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 14: COMPETITIVE INNOVATOR SPLIT SIMULATOR
+    # Class 3 slide 50 — innovators price-shop the REGION, buy max(WTP − Price)
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("14. Competitive Innovator Split — 'Who wins the region's price shoppers?'")
+    st.caption("Class 3 slide 50: innovators compare (WTP − Price) across all teams in a region and buy the best. "
+                "If WTP < Price, no buy. Simulates daily innovator allocation across you vs up to 3 competitors.")
+
+    ci_col1, ci_col2 = st.columns([1, 2])
+    with ci_col1:
+        st.markdown("**Market**")
+        ci_market_size = st.number_input("Initial market size (remaining)", value=34_500, step=1_000, key="w14b_ci_M")
+        ci_mean_wtp = st.number_input("Mean WTP ($)", value=723, step=10, key="w14b_ci_mean")
+        ci_std_wtp = st.number_input("Std dev WTP ($)", value=30, step=5, key="w14b_ci_std",
+                                        help="Slide 53 Practice Game Heart: $30. Tight distribution = fierce price war.")
+        ci_p = st.number_input("Innovator rate p", value=0.0002, step=0.00005, format="%.5f", key="w14b_ci_p")
+        ci_n_teams = st.radio("How many teams (incl. you)?", [2, 3, 4], index=1, horizontal=True, key="w14b_ci_n")
+
+        st.markdown("**Your price & competitors**")
+        ci_your_price = st.number_input("YOUR price ($)", value=700, step=10, key="w14b_ci_you")
+        ci_competitors = []
+        for i in range(ci_n_teams - 1):
+            ci_competitors.append(
+                st.number_input(f"Competitor {i+1} price ($)",
+                                    value=700 - (i+1)*25, step=10, key=f"w14b_ci_c{i}")
+            )
+
+    with ci_col2:
+        st.markdown("**Daily innovator allocation**")
+
+        # Monte-Carlo: sample N innovators, each has a WTP drawn from Normal(mean, std).
+        # Each buys the best (WTP - Price) positive option, ties broken randomly.
+        import random
+        random.seed(42)
+        N_SAMPLES = 5000
+        all_prices = [ci_your_price] + ci_competitors
+        labels = ["You"] + [f"Comp{i+1}" for i in range(len(ci_competitors))]
+        wins = [0] * len(all_prices)
+        no_buys = 0
+
+        # Use erf-based inverse-CDF sampling via Box-Muller (stdlib only)
+        for _ in range(N_SAMPLES):
+            # Box-Muller
+            u1, u2 = random.random(), random.random()
+            z = _math.sqrt(-2 * _math.log(max(1e-12, u1))) * _math.cos(2 * _math.pi * u2)
+            wtp = ci_mean_wtp + ci_std_wtp * z
+            surpluses = [(wtp - p) for p in all_prices]
+            max_surplus = max(surpluses)
+            if max_surplus <= 0:
+                no_buys += 1
+                continue
+            # ties
+            winners = [i for i, s in enumerate(surpluses) if s == max_surplus]
+            w = random.choice(winners)
+            wins[w] += 1
+
+        # Daily innovators arriving at the REGION (from Class 3: p × remaining)
+        daily_innovators = ci_p * ci_market_size
+
+        rows = []
+        for i, lbl in enumerate(labels):
+            share = wins[i] / N_SAMPLES
+            daily_buyers = daily_innovators * share
+            daily_rev = daily_buyers * all_prices[i]
+            rows.append({
+                "Team": lbl,
+                "Price": f"${all_prices[i]}",
+                "Innovator share": f"{share*100:.1f}%",
+                "Daily buyers": f"{daily_buyers:.2f}",
+                "Daily revenue": f"${daily_rev:,.0f}",
+            })
+        nobuy_share = no_buys / N_SAMPLES
+        rows.append({
+            "Team": "(no buy — WTP < all prices)",
+            "Price": "—",
+            "Innovator share": f"{nobuy_share*100:.1f}%",
+            "Daily buyers": "—",
+            "Daily revenue": "—",
+        })
+
+        import pandas as pd
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+        # Price sensitivity: sweep YOUR price ±$100, hold competitors fixed
+        sweep_prices = list(range(max(100, ci_your_price - 100), ci_your_price + 101, 10))
+        sweep_shares = []
+        for sp in sweep_prices:
+            all_p = [sp] + ci_competitors
+            w = 0
+            random.seed(7)
+            for _ in range(2000):
+                u1, u2 = random.random(), random.random()
+                z = _math.sqrt(-2 * _math.log(max(1e-12, u1))) * _math.cos(2 * _math.pi * u2)
+                wtp = ci_mean_wtp + ci_std_wtp * z
+                surp = [(wtp - pp) for pp in all_p]
+                mx = max(surp)
+                if mx <= 0:
+                    continue
+                winners = [i for i, s in enumerate(surp) if s == mx]
+                if random.choice(winners) == 0:
+                    w += 1
+            sweep_shares.append(w / 2000 * 100)
+
+        fig_ci = go.Figure()
+        fig_ci.add_trace(go.Scatter(x=sweep_prices, y=sweep_shares,
+                                       mode='lines+markers', name='Your innovator share',
+                                       line=dict(color='#1a3c5e', width=3)))
+        fig_ci.add_vline(x=ci_your_price, line_dash="dash", line_color="red",
+                           annotation_text=f"Your current: ${ci_your_price}", annotation_position="top")
+        for i, cp in enumerate(ci_competitors):
+            fig_ci.add_vline(x=cp, line_dash="dot", line_color="gray",
+                               annotation_text=f"Comp{i+1}: ${cp}", annotation_position="bottom")
+        fig_ci.update_layout(height=320, xaxis_title="Your Price ($)", yaxis_title="Innovator share (%)",
+                                title=dict(text="Your share vs price (competitors fixed)",
+                                             x=0.5, xanchor="center"),
+                                margin=dict(l=0, r=0, t=50, b=0))
+        st.plotly_chart(fig_ci, use_container_width=True)
+
+        st.info("💡 **Reading the curve**: the cliff tells you the price ceiling. "
+                 "Above it, innovators all flip to a competitor. Below it, you're leaving margin on the table. "
+                 "Sweet spot is just below the cliff — but check the imitator economics (§15) before committing.")
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 15: AD ROI + CAPACITY GATE
+    # Class 3 slide 50 — "$500/day = +1 p" BUT don't advertise without capacity
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("15. Advertising ROI + Capacity Gate")
+    st.caption("Class 3 slide 50: $500/day in advertising adds arrivals = p × remaining × (spend / $500). "
+                "But Kathleen's warning: *'don't advertise if you can't fulfill'* — stockouts kill the imitator flywheel.")
+
+    ad_col1, ad_col2 = st.columns([1, 2])
+    with ad_col1:
+        st.markdown("**Market & unit economics**")
+        ad_M = st.number_input("Market size", value=34_500, step=1_000, key="w14b_ad_M")
+        ad_served = st.number_input("Already served (cumulative)", value=2_837, step=100, key="w14b_ad_served",
+                                        help="From HQ or Bass spreadsheet — units already sold to this market.")
+        ad_p = st.number_input("p (innovator)", value=0.0002, step=0.00005, format="%.5f", key="w14b_ad_p")
+        ad_q = st.number_input("q (imitator)", value=0.0035, step=0.0005, format="%.4f", key="w14b_ad_q")
+        ad_price = st.number_input("Your price ($)", value=700, step=10, key="w14b_ad_price")
+        ad_mean = st.number_input("Mean WTP", value=723, step=10, key="w14b_ad_mean")
+        ad_std = st.number_input("Std WTP", value=30, step=5, key="w14b_ad_std")
+        ad_throughput = st.number_input("Your daily throughput (u/day)", value=9, step=1, key="w14b_ad_cap",
+                                              help="Pilot bench = 9 u/day. Line factory at full capacity can do 30-80+.")
+
+    with ad_col2:
+        st.markdown("**Ad spend scenarios — marginal arrivals, capacity check, ROI**")
+
+        remaining = max(0, ad_M - ad_served)
+        pct_served = min(1.0, ad_served / ad_M) if ad_M > 0 else 0
+        p_buy = 1 - _normal_cdf(float(ad_price), float(ad_mean), float(max(1, ad_std)))
+
+        # Base (no ads) daily arrivals
+        base_innov = ad_p * remaining
+        base_imit = ad_q * remaining * pct_served
+        base_arrivals = base_innov + base_imit
+        base_buys = base_arrivals * p_buy
+
+        ad_scenarios = [0, 500, 1000, 2500, 5000, 10000]
+        rows = []
+        for spend in ad_scenarios:
+            ad_arrivals = (spend / 500) * ad_p * remaining
+            total_arrivals = base_arrivals + ad_arrivals
+            total_buys = total_arrivals * p_buy
+
+            # Capacity check: can you fulfill the DEMAND (buys)?
+            fulfilled = min(total_buys, ad_throughput)
+            stocked_out = max(0, total_buys - ad_throughput)
+            daily_revenue = fulfilled * ad_price
+            marginal_rev_vs_base = (fulfilled - base_buys * (ad_throughput >= base_buys)) * ad_price - spend
+            # Simpler: net revenue = fulfilled × price − ad_spend
+            net_cash = daily_revenue - spend
+            roi_pct = ((daily_revenue - spend) / spend * 100) if spend > 0 else None
+
+            status = "✅ OK" if stocked_out < 0.5 else f"🔴 STOCKOUT ({stocked_out:.1f}u/day lost)"
+
+            rows.append({
+                "Ad $/day": f"${spend}",
+                "Extra arrivals": f"{ad_arrivals:.2f}",
+                "Total demand (u/day)": f"{total_buys:.2f}",
+                "Capacity (u/day)": f"{ad_throughput}",
+                "Fulfilled": f"{fulfilled:.2f}",
+                "Lost to stockout": f"{stocked_out:.2f}",
+                "Daily revenue": f"${daily_revenue:,.0f}",
+                "Net (rev − ad)": f"${net_cash:,.0f}",
+                "ROI on ads": f"{roi_pct:.0f}%" if roi_pct is not None else "—",
+                "Status": status,
+            })
+
+        import pandas as pd
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+        # Capacity line
+        break_spend = None
+        for spend in ad_scenarios:
+            ad_arrivals = (spend / 500) * ad_p * remaining
+            total_buys = (base_arrivals + ad_arrivals) * p_buy
+            if total_buys > ad_throughput:
+                break_spend = spend
+                break
+
+        if break_spend is None:
+            st.success(f"✅ You can advertise up to ${ad_scenarios[-1]}/day without stocking out at {ad_throughput} u/day capacity.")
+        elif break_spend == 0:
+            st.error(f"🔴 You're already at/over capacity with ZERO ads. Current demand ({base_buys:.1f} u/day) > capacity ({ad_throughput} u/day). "
+                       "Fix throughput first — ads will only worsen the stockout.")
+        else:
+            st.warning(f"⚠️ **Ad ceiling ≈ ${break_spend}/day** at {ad_throughput} u/day capacity. "
+                          f"Every dollar above that creates stockouts, which kill the imitator flywheel (compounds for years). "
+                          f"Get the Line factory online before advertising heavier.")
+
+        st.info("""
+**The golden rule (Class 3 slide 50)**: *"We recommend you do not advertise today as you don't really have
+the capacity to keep up with it. Wait until next week when you have a faster factory."*
+
+The damage from advertising without capacity is not just the wasted ad dollars — it's the **lost imitator
+arrivals for the rest of the game**, because imitators only scale with cumulative sales. Stockouts break the
+flywheel permanently.
+        """)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 16: MARKET SHARE FLYWHEEL VISUALIZER
+    # Imitator arrivals scale with cumulative sales — first-mover compounds
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("16. Market Share Flywheel — Early vs Late Entry")
+    st.caption("Imitator arrivals = q × remaining × (your_cumulative / initial_market). "
+                "Entering earlier captures the compounding share. Simulates YOU at two entry timings, same capacity/price.")
+
+    fw_col1, fw_col2 = st.columns([1, 2])
+    with fw_col1:
+        st.markdown("**Market**")
+        fw_M = st.number_input("Initial market size", value=34_500, step=1_000, key="w14b_fw_M")
+        fw_p = st.number_input("p (innovator)", value=0.0002, step=0.00005, format="%.5f", key="w14b_fw_p")
+        fw_q = st.number_input("q (imitator)", value=0.0035, step=0.0005, format="%.4f", key="w14b_fw_q")
+        fw_price = st.number_input("Price ($)", value=700, step=10, key="w14b_fw_price")
+        fw_mean = st.number_input("Mean WTP", value=723, step=10, key="w14b_fw_mean")
+        fw_std = st.number_input("Std WTP", value=30, step=5, key="w14b_fw_std")
+        fw_cap = st.number_input("Capacity (u/day)", value=30, step=5, key="w14b_fw_cap",
+                                       help="Assume both scenarios have the same capacity. What differs is entry timing.")
+        fw_days = st.number_input("Simulation days", value=1092, step=30, key="w14b_fw_days",
+                                        help="Default = Practice Game horizon (day 1092 = Q12).")
+        fw_early = st.number_input("Early entry day", value=1, step=10, key="w14b_fw_e1")
+        fw_late = st.number_input("Late entry day", value=180, step=30, key="w14b_fw_e2",
+                                       help="Days after the early entrant started. 180 = ~6 months late.")
+        fw_competitor_share = st.slider("Market already taken by competitor at LATE entry (%)", 0, 50, 15, key="w14b_fw_comp",
+                                              help="Late entrant finds some market already captured by the early player.")
+
+    with fw_col2:
+        st.markdown("**Cumulative sales trajectory**")
+
+        def sim_entry(entry_day: int, initial_competitor_share: float = 0.0):
+            """Simulate your cumulative sales with a given entry day."""
+            p_buy = 1 - _normal_cdf(float(fw_price), float(fw_mean), float(max(1, fw_std)))
+            your_cum = 0.0
+            competitor_cum = initial_competitor_share * fw_M
+            trajectory = []
+            for t in range(1, int(fw_days) + 1):
+                total_taken = your_cum + competitor_cum
+                remaining = max(0, fw_M - total_taken)
+                if t < entry_day:
+                    trajectory.append(0)
+                    # Competitor still growing at the same mechanics vs empty market
+                    comp_innov = fw_p * remaining
+                    comp_imit = fw_q * (competitor_cum / fw_M) * remaining if fw_M > 0 else 0
+                    comp_buys = (comp_innov + comp_imit) * p_buy
+                    competitor_cum += min(comp_buys, fw_cap)
+                    continue
+                # You've entered. Both players compete; split innovators 50/50 (same price).
+                innovators = fw_p * remaining
+                your_imit = fw_q * (your_cum / fw_M) * remaining if fw_M > 0 else 0
+                comp_imit = fw_q * (competitor_cum / fw_M) * remaining if fw_M > 0 else 0
+                your_arrivals = innovators * 0.5 + your_imit
+                comp_arrivals = innovators * 0.5 + comp_imit
+                your_buys = min(fw_cap, your_arrivals * p_buy)
+                comp_buys = min(fw_cap, comp_arrivals * p_buy)
+                your_cum += your_buys
+                competitor_cum += comp_buys
+                trajectory.append(your_cum)
+            return trajectory
+
+        early_traj = sim_entry(int(fw_early), initial_competitor_share=0)
+        late_traj = sim_entry(int(fw_late), initial_competitor_share=fw_competitor_share / 100.0)
+
+        fig_fw = go.Figure()
+        fig_fw.add_trace(go.Scatter(x=list(range(1, int(fw_days)+1)), y=early_traj,
+                                       mode='lines', name=f'Early entry (day {int(fw_early)})',
+                                       line=dict(color='#2d6a2e', width=3)))
+        fig_fw.add_trace(go.Scatter(x=list(range(1, int(fw_days)+1)), y=late_traj,
+                                       mode='lines', name=f'Late entry (day {int(fw_late)})',
+                                       line=dict(color='#b22222', width=3)))
+        # Quarter markers
+        for q in [364, 728, 1092, 1456]:
+            if q <= fw_days:
+                fig_fw.add_vline(x=q, line_dash="dot", line_color="gray", opacity=0.3,
+                                   annotation_text=f"Q{q//91 + (1 if q%91 else 0)}",
+                                   annotation_position="top")
+        fig_fw.update_layout(height=400, xaxis_title="Day", yaxis_title="Cumulative units sold (you)",
+                                title=dict(text="Entry timing → flywheel divergence", x=0.5, xanchor="center"),
+                                margin=dict(l=0, r=0, t=50, b=0),
+                                legend=dict(x=0.01, y=0.98))
+        st.plotly_chart(fig_fw, use_container_width=True)
+
+        # Summary metrics
+        final_early = early_traj[-1] if early_traj else 0
+        final_late = late_traj[-1] if late_traj else 0
+        gap_units = final_early - final_late
+        gap_pct = (gap_units / final_late * 100) if final_late > 0 else 0
+        gap_revenue = gap_units * fw_price
+        # Approximate CM: apply commission only, ignore other costs for clarity
+        gap_cm_estimate = gap_units * fw_price * (1 - w14b_comm_frac)
+
+        sum_a, sum_b, sum_c = st.columns(3)
+        with sum_a:
+            st.metric("Early-entry final cum units", f"{final_early:,.0f}")
+        with sum_b:
+            st.metric("Late-entry final cum units", f"{final_late:,.0f}",
+                        delta=f"−{gap_units:,.0f} units ({-gap_pct:.0f}%)",
+                        delta_color="inverse")
+        with sum_c:
+            st.metric("Revenue gap (price × units)", f"${gap_revenue:,.0f}",
+                        delta=f"~${gap_cm_estimate:,.0f} in CM (est.)")
+
+        st.info(f"""
+**The flywheel math**: entering {int(fw_late) - int(fw_early)} days later costs you **{gap_units:,.0f} units**
+over the simulation (≈ **${gap_revenue:,.0f} revenue**, ≈ **${gap_cm_estimate:,.0f} contribution margin**).
+
+Why? Imitators compound on your share-of-served-market. Every day the competitor sells first, their
+imitator multiplier grows while yours stays zero. By the time you enter, the market doesn't just have
+**fewer remaining customers** — it also has **fewer imitators arriving at YOUR store**, because imitators
+scale with YOUR cumulative share, which is still tiny.
+
+This is why the $600K scramble matters. The Line factory doesn't just produce more per day — it gets
+you to scale fast enough that the imitator flywheel starts spinning for YOU before a competitor locks it in.
+        """)
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE 0.6: 13 TRIAL WAR ROOM (Production Game / Gleacher Game)
