@@ -1804,7 +1804,7 @@ elif page == "✨ 14 New War Room":
     st.error("""
 **⚠ THIS DOCUMENT SUPERSEDES D2**. Key differences:
 
-1. **3-tier regional market sizes** — Serenity (small / military HUGE) | Metropolis (2-3× others) | Other Regions
+1. **3-tier regional market sizes** — Serenity (small / military HUGE) | Metropolis (up to 2× others) | Other Regions
 2. **Military is SERENITY-only** (not Metropolis as previously assumed) — Botulinum 100-140K, Anatoxin-a 50-70K, zero elsewhere
 3. **6 NEW markets**: Clinical Cardiovascular, MD Dissolved Gasses, MD Metabolic (Bilirubin), MD Cancer Bladder & Kidney, Military×2, Athlete (General + Fad)
 4. **Athlete uses ADDITIVE WTP** — summed across features (unique mechanic)
@@ -3404,25 +3404,60 @@ Given the D3 Exercise uses Normal, **we should assume Normal distribution** goin
         W14B_REGION = st.selectbox("Region",
                                     ["Metropolis", "Other Region", "Serenity"],
                                     index=1, key="w14b_region",
-                                    help="Metropolis: 2-3× market sizes. Serenity: very small EXCEPT military (huge). Other: standard.")
+                                    help="Metropolis: up to 2× market sizes (per Class 3 slide 47). Serenity: very small EXCEPT military (huge). Other: standard.")
     with reg_col2:
         if W14B_REGION == "Serenity":
             st.warning("🏜️ **Serenity mode** — All medical/law/athlete markets very small (250-5000). "
                        "BUT military markets are HUGE (Botulinum 100-140K, Anatoxin-a 50-70K) — only region where military exists.")
         elif W14B_REGION == "Metropolis":
-            st.info("🏙️ **Metropolis mode** — All non-military markets 2-3× larger than other regions. No military.")
+            st.info("🏙️ **Metropolis mode** — Non-military markets **up to 2×** larger than other regions (per Class 3). No military.")
         else:
             st.caption("🌍 **Standard Region** — medium market sizes, no military.")
 
     # ── COST PARAMETERS (global for page) ────────────────────────────────────
-    cost_col1, cost_col2, cost_col3 = st.columns(3)
+    # Commission fixed at 20% per Class 3 lecture (slide 53 spreadsheet / Practice Game default)
+    # Shipping: mail is per-unit; container is fixed per-container (capacity-dependent)
+    st.markdown("**Cost Parameters** (global — per Class 3 Practice Game)")
+    cost_col1, cost_col2, cost_col3, cost_col4 = st.columns(4)
     with cost_col1:
-        W14B_COMMISSION = st.number_input("Sales Commission (%)", value=20.0, step=1.0, key="w14b_comm")
+        W14B_COMMISSION = st.number_input("Sales Commission (%)", value=20.0, step=1.0, key="w14b_comm",
+                                            help="20% flat per Class 3 (paid by retailer). Rarely changes.")
     with cost_col2:
-        W14B_HANDLING = st.number_input("Handling ($/unit)", value=10, step=1, key="w14b_handling")
+        W14B_HANDLING = st.number_input("Handling ($/unit)", value=10, step=1, key="w14b_handling",
+                                           help="Flat $10/u in-region per Practice Game spreadsheet.")
     with cost_col3:
-        W14B_SHIPPING = st.number_input("Shipping mail in-region ($/u)", value=20, step=5, key="w14b_ship")
+        W14B_SHIP_MODE = st.radio("Shipping mode",
+                                     ["Mail (per-unit)", "Container (bulk)"],
+                                     index=0, key="w14b_ship_mode",
+                                     help="Mail = pay $/unit. Container = flat cost per container; economic only above breakeven volume.")
+    with cost_col4:
+        if W14B_SHIP_MODE == "Mail (per-unit)":
+            W14B_MAIL_PER_U = st.number_input("Mail cost ($/u, in-region)", value=50, step=5, key="w14b_mail",
+                                                  help="Class 3 slide 53 shows $50/u for Practice Game in-region mail.")
+            W14B_CONT_COST = 0
+            W14B_CONT_CAP = 1
+            W14B_SHIPPING = W14B_MAIL_PER_U
+        else:
+            W14B_CONT_COST = st.number_input("Container cost ($)", value=1000, step=100, key="w14b_cont_cost",
+                                                 help="Flat cost per container. Check Quick Ref for exact Practice Game value.")
+            W14B_CONT_CAP = st.number_input("Units per container", value=50, step=10, key="w14b_cont_cap",
+                                                help="How many units fit. Breakeven vs mail drives the decision.")
+            W14B_MAIL_PER_U = 50
+            W14B_SHIPPING = W14B_CONT_COST / max(1, W14B_CONT_CAP)
     w14b_comm_frac = W14B_COMMISSION / 100
+
+    # Mail vs container breakeven hint
+    if W14B_SHIP_MODE == "Container (bulk)":
+        breakeven_units = W14B_CONT_COST / max(1, W14B_MAIL_PER_U)
+        if W14B_CONT_CAP >= breakeven_units:
+            st.success(f"📦 Container beats mail at **{breakeven_units:.0f}+ units/container**. "
+                        f"You've got {W14B_CONT_CAP}u → effective **${W14B_SHIPPING:.2f}/u** vs ${W14B_MAIL_PER_U}/u mail. "
+                        f"**Savings: ${W14B_MAIL_PER_U - W14B_SHIPPING:.2f}/u**.")
+        else:
+            st.warning(f"📮 Container **loses** at {W14B_CONT_CAP}u → ${W14B_SHIPPING:.2f}/u vs ${W14B_MAIL_PER_U}/u mail. "
+                        f"Breakeven is {breakeven_units:.0f}u/container. Ship by mail until volumes justify containers.")
+    else:
+        st.caption(f"📮 Mail mode: **${W14B_SHIPPING}/u** in-region. Switch to container once batch volumes clear breakeven.")
 
     st.markdown("---")
 
@@ -4343,6 +4378,267 @@ Per Gleacher Tips: *"The business remains a going concern after the period of ac
 Your firm's terminal value (post-day 1460) should be included in valuation. Use a **terminal value**
 = next-year cash flow / (discount rate − growth rate) or a 4-year DCF + terminal multiple.
     """)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 11: PRODUCTION TECHNOLOGY PICKER (Bench / Line / Cell)
+    # Class 3 slides 34-38 — Cobb-Douglas λ = A·K^α·L^β (per day, inc. setup time)
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("11. Production Technology Picker — Bench vs Line vs Cell")
+    st.caption("Class 3 slides 34-38. Daily throughput λ = A·K^α·L^β. Picks cheapest tech per unit at your K/L point.")
+
+    W14B_TECH = {
+        "Bench":    {"A": 0.009, "alpha": 0.10, "beta": 0.85, "setup": 0.05, "K_min": 1,        "desc": "Skilled worker per bench, full-product build, lowest fixed cost"},
+        "Line":     {"A": 0.010, "alpha": 0.30, "beta": 0.75, "setup": 0.50, "K_min": 500_000,   "desc": "Specialized stations, unskilled labor, volume workhorse"},
+        "Cell":     {"A": 0.020, "alpha": 0.80, "beta": 0.30, "setup": 1.00,  "K_min": 3_000_000, "desc": "Robot-fed automation, tiny labor, huge capital"},
+    }
+
+    pt_col1, pt_col2 = st.columns([1, 2])
+    with pt_col1:
+        st.markdown("**Inputs**")
+        w14b_K = st.number_input("Capital K ($)", value=1_000_000, step=100_000, key="w14b_pt_K",
+                                   help="Cumulative CapEx invested in the factory.")
+        w14b_L_daily = st.number_input("Labor L ($/day)", value=3_000, step=500, key="w14b_pt_L",
+                                          help="Daily labor expenditure. NEVER $1 — ruins factory (Class 3 slide 35).")
+        w14b_batch = st.number_input("Batch size (units)", value=100, step=50, key="w14b_pt_batch",
+                                        help="Setup penalty applies once per batch.")
+        w14b_materials_cost = st.number_input("Materials ($/u)", value=100, step=10, key="w14b_pt_mat")
+
+    with pt_col2:
+        st.markdown("**Throughput & unit cost comparison**")
+
+        tech_rows = []
+        for tech_name, t in W14B_TECH.items():
+            if w14b_K < t["K_min"]:
+                tech_rows.append({
+                    "Technology": tech_name, "Daily λ (u)": "—", "Overhead/u": "—",
+                    "Materials/u": f"${w14b_materials_cost}", "Total cost/u": "—",
+                    "Status": f"❌ Need K ≥ ${t['K_min']:,}",
+                })
+                continue
+            # Cobb-Douglas daily throughput (yearly → daily, labor is daily so scale to annual basis)
+            yearly_L = w14b_L_daily * 364
+            yearly_lambda = t["A"] * (w14b_K ** t["alpha"]) * (yearly_L ** t["beta"])
+            daily_lambda_raw = yearly_lambda / 364
+            # Apply setup penalty: fraction of day lost per batch
+            batches_per_day = daily_lambda_raw / max(1, w14b_batch)
+            setup_time_per_day = batches_per_day * t["setup"]
+            effective_fraction = max(0.1, 1.0 - min(0.9, setup_time_per_day))
+            daily_lambda = daily_lambda_raw * effective_fraction
+
+            # Overhead per unit = (daily K amortized @ 15% APR + daily labor) / daily units
+            daily_K_amort = w14b_K * 0.15 / 364
+            overhead_per_u = (daily_K_amort + w14b_L_daily) / max(1, daily_lambda)
+            total_per_u = overhead_per_u + w14b_materials_cost
+
+            tech_rows.append({
+                "Technology": tech_name,
+                "Daily λ (u)": f"{daily_lambda:,.0f}",
+                "Overhead/u": f"${overhead_per_u:,.2f}",
+                "Materials/u": f"${w14b_materials_cost}",
+                "Total cost/u": f"${total_per_u:,.2f}",
+                "Status": "✅ OK",
+            })
+
+        import pandas as pd
+        df_tech = pd.DataFrame(tech_rows)
+        st.dataframe(df_tech, use_container_width=True, hide_index=True)
+
+        # Recommend cheapest valid tech
+        valid_techs = [r for r in tech_rows if r["Status"] == "✅ OK"]
+        if valid_techs:
+            best = min(valid_techs, key=lambda r: float(r["Total cost/u"].replace("$", "").replace(",", "")))
+            st.success(f"🏆 **Cheapest tech at K=${w14b_K:,}, L=${w14b_L_daily}/d, batch={w14b_batch}u**: "
+                        f"**{best['Technology']}** @ {best['Total cost/u']}/u ({best['Daily λ (u)']} u/day)")
+
+        st.caption("⚠️ Setup time: Bench 0.05d · Line 0.50d · Cell 1.0d per batch. Small batches + Cell = death. "
+                    "Min capital: Bench $1 · Line $500K · Line + land $600K total · Cell $3M. "
+                    "**NEVER set labor to $1 — ruins factory.**")
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 12: DEBT ISSUANCE CALCULATOR (Bonds — Class 3 slides 59-65)
+    # 5-year zero-coupon bonds, daily compounding over 364 days/year
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("12. Debt Issuance Calculator — Excellent / Good / Poor")
+    st.caption("Class 3 slides 59-65. 5-year zero-coupon bonds, **daily compounding over 364 days/year**. "
+                "Need a full quarter of positive EBIT to borrow.")
+
+    db_col1, db_col2 = st.columns([1, 2])
+    with db_col1:
+        st.markdown("**Inputs**")
+        db_ebit = st.number_input("Last full quarter EBIT ($)", value=25_000, step=1_000, key="w14b_db_ebit",
+                                     help="Class 3 example uses $25K. Annualized = 4× this for coverage ratio.")
+        db_cur_int = st.number_input("Current quarterly interest expense ($)", value=0, step=500, key="w14b_db_cur_int",
+                                        help="From outstanding bonds already on the books.")
+        db_par = st.number_input("Par per bond ($)", value=1000, step=100, key="w14b_db_par")
+        db_years = st.number_input("Maturity (years)", value=5, step=1, key="w14b_db_years",
+                                       help="Game default is 5-year zero coupons.")
+
+    with db_col2:
+        st.markdown("**Debt capacity by credit tier**")
+
+        annualized_ebit = 4 * db_ebit
+        tiers = [
+            {"name": "Excellent", "apr": 0.10, "coverage": 20, "color": "#2d6a2e"},
+            {"name": "Good",       "apr": 0.15, "coverage": 7,  "color": "#c38a2e"},
+            {"name": "Poor",       "apr": 0.25, "coverage": 2,  "color": "#b22222"},
+        ]
+
+        cumulative_int = db_cur_int * 4  # annualize
+        debt_rows = []
+        total_pv = 0
+        total_fv = 0
+        total_bonds = 0
+        for t in tiers:
+            # Max total annualized interest expense allowed at this tier = EBIT_annual / coverage
+            max_int_at_tier = annualized_ebit / t["coverage"]
+            # Incremental interest available here = this tier's cap minus cumulative allocation so far
+            incr_int = max(0, max_int_at_tier - cumulative_int)
+            # Daily compounding: EAR = (1 + APR/364)^364 - 1
+            ear = (1 + t["apr"] / 364) ** 364 - 1
+            # PV of debt that would generate incr_int of annualized interest
+            pv_debt = incr_int / ear if ear > 0 else 0
+            # FV = PV × (1 + EAR)^n
+            fv_debt = pv_debt * ((1 + ear) ** db_years)
+            # Number of bonds = FV / par
+            n_bonds = int(fv_debt / db_par) if db_par > 0 else 0
+            # Recompute with integer bonds
+            fv_exact = n_bonds * db_par
+            pv_exact = fv_exact / ((1 + ear) ** db_years) if ear > 0 else 0
+            pv_per_bond = db_par / ((1 + ear) ** db_years) if ear > 0 else 0
+
+            debt_rows.append({
+                "Tier": t["name"],
+                "APR": f"{t['apr']*100:.0f}%",
+                "EAR": f"{ear*100:.3f}%",
+                "Coverage ≥": f"{t['coverage']}×",
+                "Max int/yr": f"${max_int_at_tier:,.0f}",
+                "Incr int/yr": f"${incr_int:,.0f}",
+                "# Bonds": f"{n_bonds:,}",
+                "Face (FV)": f"${fv_exact:,.0f}",
+                "Cash (PV)": f"${pv_exact:,.0f}",
+                "PV/bond": f"${pv_per_bond:,.2f}",
+            })
+            total_pv += pv_exact
+            total_fv += fv_exact
+            total_bonds += n_bonds
+            cumulative_int += incr_int  # next tier is net of what we already used
+
+        import pandas as pd
+        df_debt = pd.DataFrame(debt_rows)
+        st.dataframe(df_debt, use_container_width=True, hide_index=True)
+
+        tot_a, tot_b, tot_c = st.columns(3)
+        with tot_a:
+            st.metric("Total bonds issuable", f"{total_bonds:,}")
+        with tot_b:
+            st.metric("Total face value", f"${total_fv:,.0f}")
+        with tot_c:
+            st.metric("Total cash raised (PV)", f"${total_pv:,.0f}")
+
+        if annualized_ebit <= 0:
+            st.error("❌ EBIT ≤ 0 → cannot borrow. Need a full quarter of positive operating income first (Class 3 slide 60).")
+        else:
+            st.caption(f"✅ At EBIT = ${db_ebit:,}/Q (${annualized_ebit:,}/yr), you can raise **${total_pv:,.0f} cash** "
+                        f"by issuing {total_bonds:,} bonds. Lowest-cost capital is the **Excellent** tranche (10% APR). "
+                        f"Poor tranche (25%) is still cheaper than the 40% emergency loan.")
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 13: GET-TO-$600K PLANNER (Assignment 4 — Real Game Wed)
+    # Class 3 slide 85: start cash $549K, need $600K for Line factory
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("13. Get-to-$600K Planner — Real Game Wednesday (Assignment 4)")
+    st.caption("Class 3 slide 85. Real game starts with **only $549K** cash (not $1.58M). "
+                "Line factory = $100K land + $500K capex = **$600K** minimum. "
+                "No focus groups, no new products, until line is under construction.")
+
+    st.error("⚠️ **Starting state**: $549K cash, 1 Bench pilot factory (Heart View, $700 price, 9 u/day), "
+              "negative EBIT (−$105K last Q). You cannot borrow. You must earn your way to $600K.")
+
+    p_col1, p_col2 = st.columns([1, 2])
+    with p_col1:
+        st.markdown("**Starting state**")
+        p_start_cash = st.number_input("Starting cash ($)", value=549_000, step=1_000, key="w14b_p_cash")
+        p_needed = st.number_input("Target cash ($)", value=600_000, step=10_000, key="w14b_p_target",
+                                       help="$100K land + $500K Line capex = $600K min.")
+        gap = p_needed - p_start_cash
+        st.metric("Cash gap", f"${gap:,}", delta=f"{gap/p_start_cash*100:.1f}% of start", delta_color="off")
+
+        st.markdown("**Heart View unit economics**")
+        p_price = st.number_input("Heart View retail price ($)", value=700, step=10, key="w14b_p_price")
+        p_materials = st.number_input("Materials ($/u)", value=100, step=10, key="w14b_p_mat")
+        p_overhead = st.number_input("Mfg overhead ($/u)", value=278, step=10, key="w14b_p_ovh",
+                                         help="Class 3 slide 53 shows $278.45/u for the pilot bench at baseline K/L.")
+        # Unit contribution
+        p_ship_per_u = W14B_SHIPPING
+        p_handle = W14B_HANDLING
+        p_comm = p_price * w14b_comm_frac
+        p_cm_u = p_price - p_comm - p_handle - p_ship_per_u - p_materials - p_overhead
+
+        st.metric("Commission (20%)", f"${p_comm:,.0f}/u")
+        st.metric("CM per unit", f"${p_cm_u:,.2f}",
+                    delta="positive ✅" if p_cm_u > 0 else "NEGATIVE ❌ — rethink",
+                    delta_color="normal" if p_cm_u > 0 else "inverse")
+
+    with p_col2:
+        st.markdown("**Path to $600K — daily rate scenarios**")
+        p_daily_opex = st.number_input("Daily fixed opex ($)", value=2_500, step=100, key="w14b_p_opex",
+                                            help="Pilot factory daily expenditure. Heart View pilot = $2.5K/day.")
+        p_daily_units = st.number_input("Daily units sold (projection)", value=9, step=1, key="w14b_p_units",
+                                            help="Pilot = 9 u/day throughput. Scale with demand.")
+
+        daily_revenue = p_daily_units * p_price
+        daily_cm = p_daily_units * p_cm_u
+        daily_net = daily_cm - p_daily_opex + p_daily_units * p_overhead  # Add overhead back since we subtracted in CM but it's already in daily opex via factory daily exp
+        # Actually the factory daily $2,500 IS the labor/overhead — so net cash flow = revenue − commission − handling − shipping − materials − daily_opex
+        daily_cash_cm = p_daily_units * (p_price - p_comm - p_handle - p_ship_per_u - p_materials) - p_daily_opex
+
+        if daily_cash_cm > 0:
+            days_to_target = gap / daily_cash_cm
+            months_to_target = days_to_target / 30
+            st.success(f"✅ At **{p_daily_units} u/day** you generate **${daily_cash_cm:,.0f}/day** cash flow. "
+                        f"Reach $600K in **{days_to_target:.0f} days** ({months_to_target:.1f} months).")
+        else:
+            st.error(f"❌ Daily cash flow is **${daily_cash_cm:,.0f}** — burning cash. Raise price, cut daily opex, "
+                       f"or boost throughput. Cannot reach $600K on current plan.")
+
+        # Scenario table
+        st.markdown("**Break-even days under 3 scenarios**")
+        scenarios = [
+            {"name": "Current pace", "units": p_daily_units, "price": p_price},
+            {"name": "+25% units",    "units": int(p_daily_units * 1.25), "price": p_price},
+            {"name": "+25% price + current units", "units": p_daily_units, "price": int(p_price * 1.25)},
+        ]
+        scen_rows = []
+        for s in scenarios:
+            cm_s = s["price"] - (s["price"] * w14b_comm_frac) - p_handle - p_ship_per_u - p_materials
+            net_s = s["units"] * cm_s - p_daily_opex
+            days_s = gap / net_s if net_s > 0 else None
+            scen_rows.append({
+                "Scenario": s["name"],
+                "Units/day": s["units"],
+                "Price": f"${s['price']}",
+                "CM/u": f"${cm_s:,.2f}",
+                "Net cash/day": f"${net_s:,.0f}",
+                "Days to $600K": f"{days_s:.0f}" if days_s else "❌ never",
+            })
+        import pandas as pd
+        df_scen = pd.DataFrame(scen_rows)
+        st.dataframe(df_scen, use_container_width=True, hide_index=True)
+
+        st.info("""
+**Playbook (Class 3 slide 77 — Suggested Steps):**
+1. Run pilot factory hard. Don't touch focus groups or new products yet.
+2. Once cash ≥ $600K, **build new Line factory** (name it!), schedule Bench to close after Line opens.
+3. **Clone shipping agreements** to the new Line factory.
+4. Once Line online and profitable for 1 full quarter → issue bonds (Excellent 10% APR).
+5. Expand: new products, DC in second region, second Line factory.
+        """)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
