@@ -2079,127 +2079,141 @@ elif page == "✨ 14 New War Room":
         n14_mkt_materials = st.number_input("Your Materials Cost ($/u)",
                                                value=100, step=10, key="n14_mkt_mat")
 
-    # Filter markets available in this region (exclude zero-size)
-    available_markets = {k: v for k, v in N14_MARKETS.items()
-                          if v["sizes"].get(N14_REGION, 0) > 0}
+    # ALL markets always visible — per-column region override
+    st.caption(f"💡 Global region above = default for new columns. Each column has its OWN region selector so you can compare multi-region strategy (e.g. Military in Serenity + MD Heart in Metropolis).")
 
-    if len(available_markets) < 2:
-        st.error(f"Only {len(available_markets)} markets available in {N14_REGION}. Change region.")
-    else:
-        mkt_keys = list(available_markets.keys())
-        max_cols = min(int(n14_n_mkts), len(mkt_keys))
-        n14_mkt_cols = st.columns(max_cols)
-        n14_mkt_summary = []
+    mkt_keys = list(N14_MARKETS.keys())  # show all 16 markets including military
+    max_cols = min(int(n14_n_mkts), len(mkt_keys))
+    n14_mkt_cols = st.columns(max_cols)
+    n14_mkt_summary = []
 
-        # default selection - pick first 5 different markets
-        for i, col in enumerate(n14_mkt_cols):
-            with col:
-                default_idx = i if i < len(mkt_keys) else 0
-                n14_sel_mkt = st.selectbox(f"Market {i+1}", mkt_keys, index=default_idx,
-                                             key=f"n14_ms_sel_{i}")
-                m = available_markets[n14_sel_mkt]
-                m_size = m["sizes"][N14_REGION]
+    REGION_OPTIONS = ["Metropolis", "Other Region", "Serenity"]
 
-                # Info card
-                db_color = "#b22222" if m["dealbreaker"] != "None" else "#2d6a2e"
-                st.markdown(f"""
+    for i, col in enumerate(n14_mkt_cols):
+        with col:
+            default_idx = i if i < len(mkt_keys) else 0
+            n14_sel_mkt = st.selectbox(f"Market {i+1}", mkt_keys, index=default_idx,
+                                         key=f"n14_ms_sel_{i}")
+            m = N14_MARKETS[n14_sel_mkt]
+
+            # Per-column region override
+            # If this is a military market, force Serenity
+            is_military = "Military" in n14_sel_mkt
+            if is_military:
+                st.markdown("**Region: Serenity** 🏜️ (military only exists here)")
+                col_region = "Serenity"
+            else:
+                default_region_idx = REGION_OPTIONS.index(N14_REGION) if N14_REGION in REGION_OPTIONS else 1
+                col_region = st.selectbox("Region",
+                                             REGION_OPTIONS,
+                                             index=default_region_idx,
+                                             key=f"n14_ms_region_{i}")
+
+            m_size = m["sizes"].get(col_region, 0)
+            if m_size == 0:
+                st.error(f"{n14_sel_mkt} not available in {col_region}. Pick different market or region.")
+                continue
+
+            # Info card
+            db_color = "#b22222" if m["dealbreaker"] != "None" else "#2d6a2e"
+            st.markdown(f"""
 <div style="background:rgba(26,60,94,0.15);border-left:3px solid #1a3c5e;
     border-radius:6px;padding:0.5rem 0.7rem;font-size:0.72rem;margin-bottom:0.3rem;">
-<b>{n14_sel_mkt}</b><br>
+<b>{n14_sel_mkt}</b> <span style="opacity:0.7;">in {col_region}</span><br>
 Feature: {m['core_feature']}<br>
-Size @ {N14_REGION}: {m_size:,}<br>
+Size @ {col_region}: {m_size:,}<br>
 Bass p: {m['p']} q: {m['q']} | DSO: {m['dso']}d<br>
 DB: <span style="color:{db_color};">{m['dealbreaker']}</span>
 </div>
 """, unsafe_allow_html=True)
 
-                # Market size slider (adjustable around default)
-                mkt_size_in = st.slider("Market Size",
-                                          int(m_size * 0.3), int(m_size * 2.5),
-                                          int(m_size), step=max(100, m_size // 50),
-                                          key=f"n14_ms_size_{i}")
+            # Market size slider (adjustable around default)
+            mkt_size_in = st.slider("Market Size",
+                                      int(m_size * 0.3), int(m_size * 2.5),
+                                      int(m_size), step=max(100, m_size // 50),
+                                      key=f"n14_ms_size_{i}")
 
-                # Handle Athlete markets with additive WTP
-                if m.get("type") == "athlete" or m.get("type") == "athlete_fad":
-                    st.markdown("**Athlete Features (additive WTP)**")
-                    a_heart = st.selectbox("Heartbeat", list(N14_ATHLETE_WTP["Heartbeat"].keys()),
-                                              index=1, key=f"n14_ath_hb_{i}")
-                    a_bv = st.selectbox("Blood Vessel", list(N14_ATHLETE_WTP["Blood vessel"].keys()),
-                                          index=0, key=f"n14_ath_bv_{i}")
-                    a_dg = st.selectbox("Dissolved Gasses", list(N14_ATHLETE_WTP["Dissolved gasses"].keys()),
-                                          index=0, key=f"n14_ath_dg_{i}")
-                    a_mo = st.selectbox("Motion", list(N14_ATHLETE_WTP["Motion"].keys()),
-                                          index=1, key=f"n14_ath_mo_{i}")
-                    a_pl = st.selectbox("Platform", list(N14_ATHLETE_WTP["Platform"].keys()),
-                                          index=3, key=f"n14_ath_pl_{i}")
-                    additive_wtp = (N14_ATHLETE_WTP["Heartbeat"][a_heart] +
-                                     N14_ATHLETE_WTP["Blood vessel"][a_bv] +
-                                     N14_ATHLETE_WTP["Dissolved gasses"][a_dg] +
-                                     N14_ATHLETE_WTP["Motion"][a_mo] +
-                                     N14_ATHLETE_WTP["Platform"][a_pl])
-                    st.metric("Summed Max WTP", f"${additive_wtp}")
-                    wtp_max_use = additive_wtp
-                    wtp_mean_use = additive_wtp * 0.85
-                    wtp_std_use = additive_wtp * 0.1
-                elif "wtp_tiers" in m:
-                    # Tiered WTP: user picks which feature tier applies to their product
-                    st.markdown("**Feature tier (determines WTP range)**")
-                    tier_labels = [f"{t[0]} (${t[1]}-${t[2]})" for t in m["wtp_tiers"]]
-                    tier_idx = st.selectbox("Your product tier", range(len(tier_labels)),
-                                              format_func=lambda x: tier_labels[x],
-                                              index=len(m["wtp_tiers"]) - 1,  # default to highest
-                                              key=f"n14_ms_tier_{i}")
-                    tier = m["wtp_tiers"][tier_idx]
-                    wtp_low_d, wtp_high_d = tier[1], tier[2]
-                    wtp_max_use = st.slider("Max WTP ($)",
-                                               int(wtp_low_d), int(wtp_high_d * 1.2),
-                                               int(wtp_high_d), step=10, key=f"n14_ms_wtp_{i}")
-                    wtp_mean_use = (wtp_low_d + wtp_max_use) / 2
-                    wtp_std_use = max(1, (wtp_max_use - wtp_low_d) / 3.464)
-                else:
-                    # Normal WTP: mid-range from Practice Game doc; treat uniform [wtp_low, wtp_high]
-                    wtp_low_d = m["wtp_low"]
-                    wtp_high_d = m["wtp_high"]
-                    st.caption(f"WTP range: ${wtp_low_d} - ${wtp_high_d} (uniform assumption)")
-                    wtp_max_use = st.slider("Max WTP ($)",
-                                               int(max(wtp_low_d + 1, 1)), int(max(wtp_high_d * 1.2, wtp_low_d + 10)),
-                                               int(max(wtp_high_d, wtp_low_d + 1)), step=10, key=f"n14_ms_wtp_{i}")
-                    wtp_mean_use = (wtp_low_d + wtp_max_use) / 2
-                    wtp_std_use = max(1, (wtp_max_use - wtp_low_d) / 3.464)  # uniform → std
+            # Handle Athlete markets with additive WTP
+            if m.get("type") == "athlete" or m.get("type") == "athlete_fad":
+                st.markdown("**Athlete Features (additive WTP)**")
+                a_heart = st.selectbox("Heartbeat", list(N14_ATHLETE_WTP["Heartbeat"].keys()),
+                                          index=1, key=f"n14_ath_hb_{i}")
+                a_bv = st.selectbox("Blood Vessel", list(N14_ATHLETE_WTP["Blood vessel"].keys()),
+                                      index=0, key=f"n14_ath_bv_{i}")
+                a_dg = st.selectbox("Dissolved Gasses", list(N14_ATHLETE_WTP["Dissolved gasses"].keys()),
+                                      index=0, key=f"n14_ath_dg_{i}")
+                a_mo = st.selectbox("Motion", list(N14_ATHLETE_WTP["Motion"].keys()),
+                                      index=1, key=f"n14_ath_mo_{i}")
+                a_pl = st.selectbox("Platform", list(N14_ATHLETE_WTP["Platform"].keys()),
+                                      index=3, key=f"n14_ath_pl_{i}")
+                additive_wtp = (N14_ATHLETE_WTP["Heartbeat"][a_heart] +
+                                 N14_ATHLETE_WTP["Blood vessel"][a_bv] +
+                                 N14_ATHLETE_WTP["Dissolved gasses"][a_dg] +
+                                 N14_ATHLETE_WTP["Motion"][a_mo] +
+                                 N14_ATHLETE_WTP["Platform"][a_pl])
+                st.metric("Summed Max WTP", f"${additive_wtp}")
+                wtp_max_use = additive_wtp
+                wtp_mean_use = additive_wtp * 0.85
+                wtp_std_use = max(1, additive_wtp * 0.1)
+            elif "wtp_tiers" in m:
+                # Tiered WTP: user picks which feature tier applies to their product
+                st.markdown("**Feature tier (determines WTP range)**")
+                tier_labels = [f"{t[0]} (${t[1]}-${t[2]})" for t in m["wtp_tiers"]]
+                tier_idx = st.selectbox("Your product tier", range(len(tier_labels)),
+                                          format_func=lambda x: tier_labels[x],
+                                          index=len(m["wtp_tiers"]) - 1,
+                                          key=f"n14_ms_tier_{i}")
+                tier = m["wtp_tiers"][tier_idx]
+                wtp_low_d, wtp_high_d = tier[1], tier[2]
+                wtp_max_use = st.slider("Max WTP ($)",
+                                           int(wtp_low_d), int(wtp_high_d * 1.2),
+                                           int(wtp_high_d), step=10, key=f"n14_ms_wtp_{i}")
+                wtp_mean_use = (wtp_low_d + wtp_max_use) / 2
+                wtp_std_use = max(1, (wtp_max_use - wtp_low_d) / 3.464)
+            else:
+                # Normal WTP: mid-range from Practice Game doc; treat uniform [wtp_low, wtp_high]
+                wtp_low_d = m["wtp_low"]
+                wtp_high_d = m["wtp_high"]
+                st.caption(f"WTP range: ${wtp_low_d} - ${wtp_high_d} (uniform assumption)")
+                wtp_max_use = st.slider("Max WTP ($)",
+                                           int(max(wtp_low_d + 1, 1)), int(max(wtp_high_d * 1.2, wtp_low_d + 10)),
+                                           int(max(wtp_high_d, wtp_low_d + 1)), step=10, key=f"n14_ms_wtp_{i}")
+                wtp_mean_use = (wtp_low_d + wtp_max_use) / 2
+                wtp_std_use = max(1, (wtp_max_use - wtp_low_d) / 3.464)
 
-                # Price slider
-                ms_p_min = int(n14_mkt_materials + N14_HANDLING + N14_SHIPPING)
-                ms_p_max = int(wtp_max_use * 1.1) if wtp_max_use > 0 else 1000
+            # Price slider
+            ms_p_min = int(n14_mkt_materials + N14_HANDLING + N14_SHIPPING)
+            ms_p_max = int(wtp_max_use * 1.1) if wtp_max_use > 0 else 1000
 
-                # Find optimum via cached function
-                opt_p = find_optimal_price_normal(
-                    price_min=ms_p_min, price_max=ms_p_max,
-                    mean_wtp=float(wtp_mean_use), std_wtp=float(max(1, wtp_std_use)),
-                    materials=float(n14_mkt_materials), shipping=float(N14_SHIPPING),
-                    handling=float(N14_HANDLING), commission_frac=float(n14_comm_frac),
-                    step=5,
-                )
+            # Find optimum via cached function
+            opt_p = find_optimal_price_normal(
+                price_min=ms_p_min, price_max=ms_p_max,
+                mean_wtp=float(wtp_mean_use), std_wtp=float(max(1, wtp_std_use)),
+                materials=float(n14_mkt_materials), shipping=float(N14_SHIPPING),
+                handling=float(N14_HANDLING), commission_frac=float(n14_comm_frac),
+                step=5,
+            )
 
-                n14_ms_price = st.slider("Your Price ($)",
-                                           ms_p_min, ms_p_max, opt_p,
-                                           step=10, key=f"n14_ms_price_{i}",
-                                           help=f"Default = optimum (${opt_p})")
+            n14_ms_price = st.slider("Your Price ($)",
+                                       ms_p_min, ms_p_max, opt_p,
+                                       step=10, key=f"n14_ms_price_{i}",
+                                       help=f"Default = optimum (${opt_p})")
 
-                # P(buy) via Normal assumption
-                p_buy_ms = 1 - _normal_cdf(float(n14_ms_price),
-                                              float(wtp_mean_use),
-                                              float(max(1, wtp_std_use)))
+            # P(buy) via Normal assumption
+            p_buy_ms = 1 - _normal_cdf(float(n14_ms_price),
+                                          float(wtp_mean_use),
+                                          float(max(1, wtp_std_use)))
 
-                # CM
-                ms_comm = n14_ms_price * n14_comm_frac
-                ms_cm_u = n14_ms_price - ms_comm - N14_HANDLING - n14_mkt_materials - N14_SHIPPING
-                ms_cm_arr = ms_cm_u * p_buy_ms
+            # CM
+            ms_comm = n14_ms_price * n14_comm_frac
+            ms_cm_u = n14_ms_price - ms_comm - N14_HANDLING - n14_mkt_materials - N14_SHIPPING
+            ms_cm_arr = ms_cm_u * p_buy_ms
 
-                # Bass peak
-                peak_q = mkt_size_in * ((m["p"]+m["q"])**2) / (4*m["q"]) if m["q"] > 0 else 0
+            # Bass peak
+            peak_q = mkt_size_in * ((m["p"]+m["q"])**2) / (4*m["q"]) if m["q"] > 0 else 0
 
-                cm_c = "#2d6a2e" if ms_cm_u > 0 else "#b22222"
-                st.markdown(f"""
+            cm_c = "#2d6a2e" if ms_cm_u > 0 else "#b22222"
+            st.markdown(f"""
 <div style="background:rgba({'45,106,46' if ms_cm_u > 0 else '178,34,34'},0.12);
     border-left:3px solid {cm_c};padding:0.4rem 0.6rem;border-radius:5px;">
 <span style="font-size:0.65rem;opacity:0.7;">At ${n14_ms_price}</span><br>
@@ -2208,21 +2222,21 @@ CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_m
 </div>
 """, unsafe_allow_html=True)
 
-                n14_mkt_summary.append({
-                    "Market": n14_sel_mkt,
-                    "Region": N14_REGION,
-                    "Size": f"{mkt_size_in:,}",
-                    "WTP max": f"${wtp_max_use:,.0f}",
-                    "Price": f"${n14_ms_price}",
-                    "P(buy)": f"{p_buy_ms:.0%}",
-                    "CM/u": f"${ms_cm_u:,.0f}",
-                    "CM/arr": f"${ms_cm_arr:,.0f}",
-                    "Peak/d": f"{peak_q * p_buy_ms:,.1f}",
-                    "DSO": f"{m['dso']}d",
-                })
+            n14_mkt_summary.append({
+                "Market": n14_sel_mkt,
+                "Region": col_region,
+                "Size": f"{mkt_size_in:,}",
+                "WTP max": f"${wtp_max_use:,.0f}",
+                "Price": f"${n14_ms_price}",
+                "P(buy)": f"{p_buy_ms:.0%}",
+                "CM/u": f"${ms_cm_u:,.0f}",
+                "CM/arr": f"${ms_cm_arr:,.0f}",
+                "Peak/d": f"{peak_q * p_buy_ms:,.1f}",
+                "DSO": f"{m['dso']}d",
+            })
 
-        st.markdown("**Market Summary**")
-        st.dataframe(pd.DataFrame(n14_mkt_summary), use_container_width=True, hide_index=True)
+    st.markdown("**Market Summary**")
+    st.dataframe(pd.DataFrame(n14_mkt_summary), use_container_width=True, hide_index=True)
 
     st.markdown("---")
 
