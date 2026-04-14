@@ -3398,358 +3398,613 @@ Given the D3 Exercise uses Normal, **we should assume Normal distribution** goin
 
     st.markdown("---")
 
-    # ══════════════════════════════════════════════════════════════════════════
-    # SECTION 7: MARKET SEGMENT ANALYZER (default 5)
-    # ══════════════════════════════════════════════════════════════════════════
-    st.subheader("7. Market Segment Analyzer (Side-by-Side, up to 5)")
-    st.caption("Normal WTP distribution (per D3 material). Price slider → P(buy) + CM live.")
-
-    W14_STANDARD_MARKETS = {
-        "MD-Heart (Temporal)": {"mean": 732, "std": 73, "size": 30000, "p": 0.0002, "q": 0.0035, "dso": 30,
-                                  "feature": "Heartbeat Temporal", "dealbreaker": "GPS affects WTP",
-                                  "premium_feature": "Heartbeat=Temporal"},
-        "MD-Breast (Cancer)": {"mean": 1250, "std": 125, "size": 15000, "p": 0.0002, "q": 0.0035, "dso": 30,
-                                 "feature": "Cancer Breast", "dealbreaker": "None",
-                                 "premium_feature": "Blood vessel + Cancer"},
-        "MD-Estrogen (Fertility)": {"mean": 770, "std": 77, "size": 15000, "p": 0.0002, "q": 0.0035, "dso": 30,
-                                      "feature": "Hormone Estrogen", "dealbreaker": "None",
-                                      "premium_feature": "Hormone=Estrogen"},
-        "Law-Narcotic": {"mean": 1350, "std": 135, "size": 10000, "p": 0.00025, "q": 0.0025, "dso": 90,
-                          "feature": "Toxicology Narcotic", "dealbreaker": "Needs GPS + cellular",
-                          "premium_feature": "Toxicology=Narcotic"},
-        "Clinic-Fertility (LH/FSH)": {"mean": 315, "std": 32, "size": 50000, "p": 0.00025, "q": 0.004, "dso": 10,
-                                        "feature": "Hormone LH/FSH", "dealbreaker": "Bulky battery packs",
-                                        "premium_feature": "Hormone=LH/FSH"},
-    }
-
-    # Military markets — Metropolis-only, from D2 Case Brief ("4 military segments")
-    # Placeholders based on case brief (high WTP, moderate size, dark color preference)
-    W14_MILITARY_MARKETS = {
-        "Mil-Botulinum (Metropolis only)": {"mean": 1200, "std": 120, "size": 8000, "p": 0.00025, "q": 0.003, "dso": 60,
-                                              "feature": "Toxicology Botulinum", "dealbreaker": "Needs GPS + cellular + dark finish",
-                                              "premium_feature": "Toxicology=Botulinum"},
-        "Mil-Sarin (Metropolis only)": {"mean": 1250, "std": 125, "size": 8000, "p": 0.00025, "q": 0.003, "dso": 60,
-                                          "feature": "Toxicology Sarin", "dealbreaker": "Needs GPS + cellular + dark finish",
-                                          "premium_feature": "Toxicology=Sarin"},
-        "Mil-Cyclosarin (Metropolis only)": {"mean": 1250, "std": 125, "size": 8000, "p": 0.00025, "q": 0.003, "dso": 60,
-                                               "feature": "Toxicology Cyclosarin", "dealbreaker": "Needs GPS + cellular + dark finish",
-                                               "premium_feature": "Toxicology=Cyclosarin"},
-        "Mil-Anatoxin-A (Metropolis only)": {"mean": 1200, "std": 120, "size": 8000, "p": 0.00025, "q": 0.003, "dso": 60,
-                                               "feature": "Toxicology Anatoxin-A", "dealbreaker": "Needs GPS + cellular + dark finish",
-                                               "premium_feature": "Toxicology=Anatoxin-A"},
-    }
-
-    # Region toggle
-    w14_region_col1, w14_region_col2 = st.columns([1, 2])
-    with w14_region_col1:
-        w14_is_metropolis = st.checkbox("Analyzing Metropolis region",
-                                           value=False, key="w14_metropolis_toggle",
-                                           help="Metropolis has larger non-military markets AND 4 military markets unavailable elsewhere")
-    with w14_region_col2:
-        if w14_is_metropolis:
-            st.info("🏛️ **Metropolis mode:** non-military market sizes boosted ×1.5. 4 military markets unlocked (Metropolis-only). Deal breaker: all military needs GPS + cellular + dark finish.")
+    # ── REGION SELECTOR (global for page) ────────────────────────────────────
+    reg_col1, reg_col2 = st.columns([1, 3])
+    with reg_col1:
+        W14B_REGION = st.selectbox("Region",
+                                    ["Metropolis", "Other Region", "Serenity"],
+                                    index=1, key="w14b_region",
+                                    help="Metropolis: 2-3× market sizes. Serenity: very small EXCEPT military (huge). Other: standard.")
+    with reg_col2:
+        if W14B_REGION == "Serenity":
+            st.warning("🏜️ **Serenity mode** — All medical/law/athlete markets very small (250-5000). "
+                       "BUT military markets are HUGE (Botulinum 100-140K, Anatoxin-a 50-70K) — only region where military exists.")
+        elif W14B_REGION == "Metropolis":
+            st.info("🏙️ **Metropolis mode** — All non-military markets 2-3× larger than other regions. No military.")
         else:
-            st.caption("Standard region mode. Military markets hidden (only available in Metropolis per Case Brief).")
-
-    # Build market list based on region
-    W14_MARKETS = {}
-    for k, v in W14_STANDARD_MARKETS.items():
-        v_copy = dict(v)
-        if w14_is_metropolis:
-            # Non-military markets are LARGER in Metropolis
-            v_copy["size"] = int(v_copy["size"] * 1.5)
-        W14_MARKETS[k] = v_copy
-    if w14_is_metropolis:
-        W14_MARKETS.update(W14_MILITARY_MARKETS)
-
-    w14_m_top1, w14_m_top2 = st.columns([1, 3])
-    with w14_m_top1:
-        max_markets = min(5, len(W14_MARKETS))
-        w14_n_markets = st.number_input("# Markets to compare", min_value=2, max_value=max_markets,
-                                           value=max_markets, step=1, key="w14_n_markets")
-    with w14_m_top2:
-        w14_m_materials = st.number_input("Your Materials Cost ($/unit)",
-                                             value=100, step=10, key="w14_m_materials")
-
-    market_keys = list(W14_MARKETS.keys())
-    w14_mkt_cols = st.columns(int(w14_n_markets))
-    w14_mkt_summary = []
-
-    for i, col in enumerate(w14_mkt_cols):
-        with col:
-            default_idx = i if i < len(market_keys) else 0
-            w14_mkt_sel = st.selectbox(f"Market {i+1}", market_keys, index=default_idx,
-                                         key=f"w14_mkt_sel_{i}")
-            m = W14_MARKETS[w14_mkt_sel]
-
-            st.markdown(f"""
-<div style="background:rgba(26,60,94,0.15);border-left:3px solid #1a3c5e;
-    border-radius:6px;padding:0.5rem 0.7rem;margin-bottom:0.3rem;font-size:0.75rem;">
-<b>{w14_mkt_sel}</b><br>
-Feature: {m['feature']}<br>
-Size: {m['size']:,} | Bass p: {m['p']} q: {m['q']}<br>
-DSO: <b>{m['dso']}d</b> | DB: <span style="color:{'#b22222' if m['dealbreaker'] != 'None' else '#2d6a2e'};">{m['dealbreaker']}</span>
-</div>
-""", unsafe_allow_html=True)
-
-            w14_mean_in = st.number_input("Mean WTP", value=m["mean"], step=25,
-                                            key=f"w14_m_mean_{i}")
-            w14_std_in = st.number_input("Std Dev WTP", value=m["std"], step=5,
-                                           key=f"w14_m_std_{i}")
-            # Market size now adjustable (slider range based on default × 0.5 to × 2)
-            w14_mkt_size_in = st.slider("Market Size",
-                                          int(m["size"] * 0.3), int(m["size"] * 2.5),
-                                          int(m["size"]), step=500,
-                                          key=f"w14_m_size_{i}",
-                                          help=f"Default from market research: {m['size']:,}. Actual in-game may differ.")
-
-            # P(buy) helper — uses cached _normal_cdf
-            def _pbuy(P, mu, sigma):
-                return 1 - _normal_cdf(float(P), float(mu), float(sigma))
-
-            # Price slider from cost to mean + 3σ
-            w14_p_min_slider = int(w14_m_materials + W14_HANDLING + W14_SHIPPING)
-            w14_p_max_slider = int(w14_mean_in + 3 * w14_std_in)
-
-            # Find numerical optimum (CACHED — runs once per unique input set)
-            best_p = find_optimal_price_normal(
-                price_min=int(w14_p_min_slider), price_max=int(w14_p_max_slider),
-                mean_wtp=float(w14_mean_in), std_wtp=float(w14_std_in),
-                materials=float(w14_m_materials), shipping=float(W14_SHIPPING),
-                handling=float(W14_HANDLING), commission_frac=float(w14_comm_frac),
-                step=5,
-            )
-
-            w14_m_price = st.slider("Your Price ($)",
-                                      w14_p_min_slider, w14_p_max_slider, best_p,
-                                      step=10, key=f"w14_m_price_{i}",
-                                      help=f"Default = optimum (${best_p})")
-
-            w14_p_buy = _pbuy(w14_m_price, w14_mean_in, w14_std_in)
-            w14_m_comm = w14_m_price * w14_comm_frac
-            w14_m_cm = w14_m_price - w14_m_comm - W14_HANDLING - w14_m_materials - W14_SHIPPING
-            w14_m_cm_per_arr = w14_m_cm * w14_p_buy
-
-            # Bass peak arrivals (uses adjustable market size)
-            peak_q_val = w14_mkt_size_in * ((m["p"]+m["q"])**2) / (4*m["q"]) if m["q"] > 0 else 0
-
-            cm_c = "#2d6a2e" if w14_m_cm > 0 else "#b22222"
-            st.markdown(f"""
-<div style="background:rgba({'45,106,46' if w14_m_cm > 0 else '178,34,34'},0.12);
-    border-left:3px solid {cm_c};padding:0.5rem 0.7rem;border-radius:5px;margin-top:0.3rem;">
-<span style="opacity:0.7;font-size:0.7rem;">Price ${w14_m_price:,}</span><br>
-P(buy): <b>{w14_p_buy:.1%}</b><br>
-CM/u: <b style="color:{cm_c};">${w14_m_cm:,.0f}</b><br>
-CM/arrival: <b style="color:{cm_c};">${w14_m_cm_per_arr:,.0f}</b><br>
-Peak sales: {peak_q_val * w14_p_buy:,.1f}/day
-</div>
-""", unsafe_allow_html=True)
-
-            w14_mkt_summary.append({
-                "Market": w14_mkt_sel,
-                "Size": f"{w14_mkt_size_in:,}",
-                "Mean/Std WTP": f"${w14_mean_in:,}/${w14_std_in:,}",
-                "Price": f"${w14_m_price:,}",
-                "P(buy)": f"{w14_p_buy:.0%}",
-                "CM/u": f"${w14_m_cm:,.0f}",
-                "CM/arrival": f"${w14_m_cm_per_arr:,.0f}",
-                "Peak/day": f"{peak_q_val * w14_p_buy:,.1f}",
-                "DSO": f"{m['dso']}d",
-                "DB": m["dealbreaker"],
-            })
-
-    st.markdown("**Market Summary**")
-    st.dataframe(pd.DataFrame(w14_mkt_summary), use_container_width=True, hide_index=True)
+            st.caption("🌍 **Standard Region** — medium market sizes, no military.")
 
     st.markdown("---")
 
     # ══════════════════════════════════════════════════════════════════════════
-    # SECTION 8: PRODUCT DESIGN ROI (default 5)
+    # MASTER DATABASES
     # ══════════════════════════════════════════════════════════════════════════
-    st.subheader("8. Product Design ROI Calculator (up to 5 products)")
-    st.caption("Base features + detection agenda. Compare design costs, break-even, and margins side-by-side.")
-
-    W14_BASE_FEATURES = {
-        "Platform": {"Wristband": 0, "Chest-worn": 0, "Ankle/leg": 0},
-        "GPS": {"No GPS": 0, "GPS enabled": 5},
-        "Network": {"Bluetooth": 0, "2.4 GHz cellular": 10, "5 GHz cellular": 15},
-        "Power": {"Ni-Cd": 0, "Polymer": 5, "Two-pack Ni-Cd": 10, "Two-pack polymer": 15},
-        "Finish": {"Original": 0, "Dyed": 2, "Painted": 3},
+    # Markets: 3-tier region sizes (mid-range values for defaults)
+    W14B_MARKETS = {
+        "Clinical Cardiovascular": {
+            "sizes": {"Serenity": 2000, "Metropolis": 40000, "Other Region": 20000},
+            "wtp_tiers": [
+                ("Systolic + O2 + GPS", 40, 290),
+                ("Sys & Dia + O2/N2/CO2 + GPS", 85, 380),
+                ("Full BP + Full DG + GPS", 350, 600),
+            ],
+            "core_feature": "Blood pressure + Dissolved gasses + GPS",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "Lack of GPS (significant)",
+            "type": "normal",
+        },
+        "Clinical Fertility (LH)": {
+            "sizes": {"Serenity": 2500, "Metropolis": 100000, "Other Region": 50000},
+            "wtp_low": 130, "wtp_high": 300,
+            "core_feature": "Hormone LH",
+            "p": 0.00025, "p_adv": 0.00025, "q": 0.004,
+            "dso": 10, "dealbreaker": "Bulky battery packs",
+            "type": "normal",
+        },
+        "Clinical Fertility (LH/FSH)": {
+            "sizes": {"Serenity": 2500, "Metropolis": 100000, "Other Region": 50000},
+            "wtp_low": 230, "wtp_high": 400,
+            "core_feature": "Hormone LH/FSH",
+            "p": 0.00025, "p_adv": 0.00025, "q": 0.004,
+            "dso": 10, "dealbreaker": "Bulky battery packs",
+            "type": "normal",
+        },
+        "Law (Narcotic)": {
+            "sizes": {"Serenity": 500, "Metropolis": 20000, "Other Region": 10000},
+            "wtp_low": 1100, "wtp_high": 1600,
+            "core_feature": "Toxicology Narcotic",
+            "p": 0.00025, "p_adv": 0.00025, "q": 0.0025,
+            "dso": 90, "dealbreaker": "Lack of GPS / cellular",
+            "type": "normal",
+        },
+        "MD Cancer (Base Panel)": {
+            "sizes": {"Serenity": 750, "Metropolis": 30000, "Other Region": 15000},
+            "wtp_low": 0, "wtp_high": 900,
+            "core_feature": "Cancer Base",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "None",
+            "type": "normal",
+        },
+        "MD Cancer (Breast)": {
+            "sizes": {"Serenity": 750, "Metropolis": 30000, "Other Region": 15000},
+            "wtp_low": 900, "wtp_high": 1600,
+            "core_feature": "Cancer Breast",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "None",
+            "type": "normal",
+        },
+        "MD Cancer (Bladder & Kidney)": {
+            "sizes": {"Serenity": 750, "Metropolis": 30000, "Other Region": 15000},
+            "wtp_low": 900, "wtp_high": 1700,
+            "core_feature": "Cancer Bladder & Kidney",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "None",
+            "type": "normal",
+        },
+        "MD Dissolved Gasses": {
+            "sizes": {"Serenity": 750, "Metropolis": 30000, "Other Region": 15000},
+            "wtp_low": 350, "wtp_high": 550,
+            "core_feature": "Full C, N, O",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "None",
+            "type": "normal",
+        },
+        "MD Fertility (Estrogen)": {
+            "sizes": {"Serenity": 750, "Metropolis": 30000, "Other Region": 15000},
+            "wtp_low": 575, "wtp_high": 965,
+            "core_feature": "Hormone Estrogen",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "None",
+            "type": "normal",
+        },
+        "MD Heart (Pulse only)": {
+            "sizes": {"Serenity": 2500, "Metropolis": 60000, "Other Region": 30000},
+            "wtp_low": 0, "wtp_high": 115,
+            "core_feature": "Heartbeat Pulse",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "Lack of GPS (safety)",
+            "type": "normal",
+        },
+        "MD Heart (Temporal)": {
+            "sizes": {"Serenity": 2500, "Metropolis": 60000, "Other Region": 30000},
+            "wtp_low": 600, "wtp_high": 865,
+            "core_feature": "Heartbeat Temporal",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "Lack of GPS (safety)",
+            "type": "normal",
+        },
+        "MD Metabolic (Bilirubin)": {
+            "sizes": {"Serenity": 750, "Metropolis": 30000, "Other Region": 15000},
+            "wtp_low": 750, "wtp_high": 1300,
+            "core_feature": "Metabolic Bilirubin",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "None",
+            "type": "normal",
+        },
+        "Military Botulinum (Serenity-only)": {
+            "sizes": {"Serenity": 120000, "Metropolis": 0, "Other Region": 0},
+            "wtp_low": 800, "wtp_high": 1300,
+            "core_feature": "Neurotoxin Botulinum",
+            "p": 0.0003, "p_adv": 0.0003, "q": 0.0045,
+            "dso": 60, "dealbreaker": "Lack of GPS OR polymer battery pack",
+            "type": "normal",
+        },
+        "Military Anatoxin-a (Serenity-only)": {
+            "sizes": {"Serenity": 60000, "Metropolis": 0, "Other Region": 0},
+            "wtp_low": 800, "wtp_high": 1300,
+            "core_feature": "Neurotoxin Anatoxin-a",
+            "p": 0.0003, "p_adv": 0.0003, "q": 0.0045,
+            "dso": 60, "dealbreaker": "Lack of GPS OR polymer battery pack",
+            "type": "normal",
+        },
+        "Athlete (General)": {
+            "sizes": {"Serenity": 10000, "Metropolis": 220000, "Other Region": 115000},
+            "wtp_low": 0, "wtp_high": 500,   # placeholder; actual is additive per-feature
+            "core_feature": "Motion / Pulse / BP / Dissolved Gas",
+            "p": 0.0003, "p_adv": 0.0003, "q": 0.003,
+            "dso": 5, "dealbreaker": "Bulky battery packs",
+            "type": "athlete",
+        },
+        "Athlete (Fad)": {
+            "sizes": {"Serenity": 10000, "Metropolis": 220000, "Other Region": 115000},
+            "wtp_low": 0, "wtp_high": 500,
+            "core_feature": "Motion + preferred finish/platform",
+            "p": 0.0009, "p_adv": 0.0009, "q": 0.009,
+            "dso": 5, "dealbreaker": "Wrong finish or platform (fad customers)",
+            "type": "athlete_fad",
+        },
     }
 
-    W14_DETECTION = {
-        "Heartbeat": {"None": (3, 1000, 0), "Pulse only": (15, 30000, 15), "Temporal": (90, 135000, 25)},
-        "Blood vessel": {"None": (3, 1000, 0), "Systolic only": (30, 75000, 10),
-                          "Systolic & diastolic": (90, 135000, 15), "Full profile": (120, 180000, 40)},
-        "Dissolved gasses": {"None": (3, 1000, 0), "O2 only": (30, 75000, 15),
-                              "O2, N2, CO2": (90, 135000, 20), "Full C,N,O": (90, 135000, 40)},
-        "Toxicology": {"None": (3, 1000, 0), "Ethanol": (30, 150000, 95),
-                        "Amphetamine": (90, 250000, 140), "THC": (90, 250000, 140),
-                        "Barbiturate": (90, 250000, 140), "Narcotic": (90, 250000, 140)},
-        "Hormone": {"None": (3, 1000, 0), "LH": (30, 45000, 20), "LH and FSH": (60, 75000, 50),
-                     "Estrogen": (60, 75000, 60), "Progesterone": (60, 75000, 60),
-                     "Testosterone": (60, 75000, 50)},
-        "Metabolic": {"None": (3, 1000, 0), "Thyroxine": (90, 90000, 155),
-                       "Bilirubin": (90, 90000, 150), "Proteins": (90, 90000, 170),
-                       "Uric acid": (90, 90000, 160)},
+    # Athlete WTP is additive by feature (from Practice Game Market Research p.22)
+    W14B_ATHLETE_WTP = {
+        "Heartbeat": {"None": 0, "Pulse only": 150, "Pulse + temporal": 150},
+        "Blood vessel": {"None": 0, "Systolic only": 27, "Systolic & diastolic": 35, "Full profile": 35},
+        "Dissolved gasses": {"None": 0, "O2 only": 22, "O2, N2, CO2": 27, "Full C,N,O": 27},
+        "Motion": {"None": 0, "Steps": 20, "Steps + balance": 37, "Steps + balance + gait": 57},
+        "Platform": {"Chest": 5, "Stockings": 20, "Sleeves": 30, "Wrists": 37},
     }
 
-    W14_PRESETS = {
-        "A — Heart View": {"Platform": "Chest-worn", "GPS": "GPS enabled", "Network": "2.4 GHz cellular",
-                            "Power": "Polymer", "Finish": "Original",
-                            "Heartbeat": "Temporal", "Blood vessel": "None",
-                            "Dissolved gasses": "None", "Toxicology": "None",
-                            "Hormone": "None", "Metabolic": "None", "price": 700},
-        "B — Estrogen (minimal)": {"Platform": "Wristband", "GPS": "No GPS", "Network": "Bluetooth",
-                                     "Power": "Polymer", "Finish": "Original",
-                                     "Heartbeat": "None", "Blood vessel": "None",
-                                     "Dissolved gasses": "None", "Toxicology": "None",
-                                     "Hormone": "Estrogen", "Metabolic": "None", "price": 712},
-        "C — Narcotic": {"Platform": "Ankle/leg", "GPS": "GPS enabled", "Network": "5 GHz cellular",
-                          "Power": "Two-pack polymer", "Finish": "Original",
-                          "Heartbeat": "None", "Blood vessel": "None",
-                          "Dissolved gasses": "None", "Toxicology": "Narcotic",
-                          "Hormone": "None", "Metabolic": "None", "price": 1200},
-        "D — Breast Cancer": {"Platform": "Chest-worn", "GPS": "GPS enabled", "Network": "2.4 GHz cellular",
-                                "Power": "Polymer", "Finish": "Dyed",
-                                "Heartbeat": "Pulse only", "Blood vessel": "Systolic only",
-                                "Dissolved gasses": "None", "Toxicology": "None",
-                                "Hormone": "None", "Metabolic": "None", "price": 1250},
-        "E — Clinic Fertility": {"Platform": "Wristband", "GPS": "No GPS", "Network": "Bluetooth",
-                                   "Power": "Polymer", "Finish": "Original",
-                                   "Heartbeat": "None", "Blood vessel": "None",
-                                   "Dissolved gasses": "None", "Toxicology": "None",
-                                   "Hormone": "LH and FSH", "Metabolic": "None", "price": 315},
+    # Product design attributes — FULL from page 23-24 of new research doc
+    W14B_DETECTION = {
+        "Heartbeat": {
+            "None": (3, 1000, 0), "Pulse only": (15, 30000, 15), "Temporal": (90, 135000, 25),
+        },
+        "Blood vessel": {
+            "None": (3, 1000, 0), "Systolic only": (30, 75000, 10),
+            "Systolic & diastolic": (90, 135000, 15), "Full profile": (120, 180000, 40),
+        },
+        "Dissolved gasses": {
+            "None": (3, 1000, 0), "O2 only": (30, 75000, 15),
+            "O2, N2, CO2": (90, 135000, 20), "Full C,N,O": (90, 135000, 40),
+        },
+        "Toxicology": {
+            "None": (3, 1000, 0), "Ethanol": (30, 150000, 95),
+            "Amphetamine": (90, 250000, 140), "THC": (90, 250000, 140),
+            "Barbiturate": (90, 250000, 140), "Narcotic": (90, 250000, 140),
+        },
+        "Hormone": {
+            "None": (3, 1000, 0), "LH": (30, 45000, 20),
+            "LH and FSH": (60, 75000, 50), "Estrogen": (60, 75000, 60),
+            "Progesterone": (60, 75000, 60), "Testosterone": (60, 75000, 50),
+        },
+        "Metabolic": {
+            "None": (3, 1000, 0), "Thyroxine": (90, 90000, 155),
+            "Bilirubin": (90, 90000, 150), "Proteins": (90, 90000, 170),
+            "Uric acid": (90, 90000, 160),
+        },
+        "Cancer": {
+            "None": (3, 1000, 0), "Base": (60, 200000, 100),
+            "Prostate": (90, 300000, 210), "Breast": (90, 300000, 200),
+            "Bladder & Kidney": (90, 300000, 300), "Lymphoma": (90, 300000, 250),
+            "Blood & Bone": (90, 300000, 310),
+        },
+        "Neurotoxins": {
+            "None": (3, 1000, 0), "Botulinum": (90, 135000, 190),
+            "Anatoxin-a": (90, 135000, 210), "Sarin & Cyclosarin": (90, 135000, 220),
+            "Soman": (90, 135000, 280),
+        },
+        "Motion": {
+            "None": (3, 1000, 0), "Steps": (15, 30000, 15),
+            "Steps + balance": (30, 45000, 30), "Steps + balance + gait": (45, 60000, 45),
+        },
     }
 
-    w14_pd_t1, w14_pd_t2 = st.columns([1, 3])
-    with w14_pd_t1:
-        w14_n_products = st.number_input("# Products to design", min_value=1, max_value=5,
-                                            value=5, step=1, key="w14_n_products")
-    with w14_pd_t2:
-        st.caption("Base features: design cost $0/0 days (not published — override if confirmed in-game). "
-                   "Detection features: exact values from Design Guide.")
+    # Base features now with REAL costs from Product Design Guide (page 24)
+    W14B_BASE = {
+        "Platform": {
+            "Wrists": (90, 135000, 20), "Chest": (15, 3000, 10),
+            "Sleeves": (30, 30000, 15), "Stockings": (30, 30000, 15),
+        },
+        "GPS": {
+            "No GPS": (3, 1000, 0), "GPS": (30, 45000, 50),
+        },
+        "Network": {
+            "Bluetooth": (15, 1000, 5), "2.4 GHz": (30, 30000, 10),
+            "5 GHz": (45, 36000, 20),
+        },
+        "Power": {
+            "Ni-Cd": (5, 1500, 5), "Ni-Cd pack": (10, 15000, 20),
+            "Polymer": (5, 1500, 35), "Polymer pack": (10, 15000, 140),
+        },
+        "Finish": {
+            "Original": (3, 2400, 0), "Blue": (5, 3000, 3), "Red": (5, 3000, 3),
+            "Green": (5, 3000, 3), "Black": (5, 3000, 3), "White": (5, 3000, 3),
+            "Metallic": (90, 27000, 6), "Geometric": (90, 27000, 6),
+            "Camouflage": (20, 27000, 6),
+        },
+    }
 
-    preset_keys = list(W14_PRESETS.keys())
-    w14_pd_cols = st.columns(int(w14_n_products))
-    w14_pd_summary = []
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 7: MARKET SEGMENT ANALYZER (Region-aware, all 16 markets)
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("7. Market Segment Analyzer (Region-Aware, up to 5 markets)")
+    st.caption(f"Region: **{W14B_REGION}**. Market sizes auto-scaled. Athlete markets use additive WTP.")
 
-    for i, col in enumerate(w14_pd_cols):
+    ms_top1, ms_top2 = st.columns([1, 3])
+    with ms_top1:
+        w14b_n_mkts = st.number_input("# Markets", min_value=2, max_value=5,
+                                        value=5, step=1, key="w14b_n_mkts")
+    with ms_top2:
+        w14b_mkt_materials = st.number_input("Your Materials Cost ($/u)",
+                                               value=100, step=10, key="w14b_mkt_mat")
+
+    # ALL markets always visible — per-column region override
+    st.caption(f"💡 Global region above = default for new columns. Each column has its OWN region selector so you can compare multi-region strategy (e.g. Military in Serenity + MD Heart in Metropolis).")
+
+    mkt_keys = list(W14B_MARKETS.keys())  # show all 16 markets including military
+    max_cols = min(int(w14b_n_mkts), len(mkt_keys))
+    w14b_mkt_cols = st.columns(max_cols)
+    w14b_mkt_summary = []
+
+    REGION_OPTIONS = ["Metropolis", "Other Region", "Serenity"]
+
+    for i, col in enumerate(w14b_mkt_cols):
+        with col:
+            default_idx = i if i < len(mkt_keys) else 0
+            w14b_sel_mkt = st.selectbox(f"Market {i+1}", mkt_keys, index=default_idx,
+                                         key=f"w14b_ms_sel_{i}")
+            m = W14B_MARKETS[w14b_sel_mkt]
+
+            # Per-column region override
+            # If this is a military market, force Serenity
+            is_military = "Military" in w14b_sel_mkt
+            if is_military:
+                st.markdown("**Region: Serenity** 🏜️ (military only exists here)")
+                col_region = "Serenity"
+            else:
+                default_region_idx = REGION_OPTIONS.index(W14B_REGION) if W14B_REGION in REGION_OPTIONS else 1
+                col_region = st.selectbox("Region",
+                                             REGION_OPTIONS,
+                                             index=default_region_idx,
+                                             key=f"w14b_ms_region_{i}")
+
+            m_size = m["sizes"].get(col_region, 0)
+            if m_size == 0:
+                st.error(f"{w14b_sel_mkt} not available in {col_region}. Pick different market or region.")
+                continue
+
+            # Info card
+            db_color = "#b22222" if m["dealbreaker"] != "None" else "#2d6a2e"
+            st.markdown(f"""
+<div style="background:rgba(26,60,94,0.15);border-left:3px solid #1a3c5e;
+    border-radius:6px;padding:0.5rem 0.7rem;font-size:0.72rem;margin-bottom:0.3rem;">
+<b>{w14b_sel_mkt}</b> <span style="opacity:0.7;">in {col_region}</span><br>
+Feature: {m['core_feature']}<br>
+Size @ {col_region}: {m_size:,}<br>
+Bass p: {m['p']} q: {m['q']} | DSO: {m['dso']}d<br>
+DB: <span style="color:{db_color};">{m['dealbreaker']}</span>
+</div>
+""", unsafe_allow_html=True)
+
+            # Market size slider (adjustable around default)
+            mkt_size_in = st.slider("Market Size",
+                                      int(m_size * 0.3), int(m_size * 2.5),
+                                      int(m_size), step=max(100, m_size // 50),
+                                      key=f"w14b_ms_size_{i}")
+
+            # Handle Athlete markets with additive WTP
+            if m.get("type") == "athlete" or m.get("type") == "athlete_fad":
+                st.markdown("**Athlete Features (additive WTP)**")
+                a_heart = st.selectbox("Heartbeat", list(W14B_ATHLETE_WTP["Heartbeat"].keys()),
+                                          index=1, key=f"w14b_ath_hb_{i}")
+                a_bv = st.selectbox("Blood Vessel", list(W14B_ATHLETE_WTP["Blood vessel"].keys()),
+                                      index=0, key=f"w14b_ath_bv_{i}")
+                a_dg = st.selectbox("Dissolved Gasses", list(W14B_ATHLETE_WTP["Dissolved gasses"].keys()),
+                                      index=0, key=f"w14b_ath_dg_{i}")
+                a_mo = st.selectbox("Motion", list(W14B_ATHLETE_WTP["Motion"].keys()),
+                                      index=1, key=f"w14b_ath_mo_{i}")
+                a_pl = st.selectbox("Platform", list(W14B_ATHLETE_WTP["Platform"].keys()),
+                                      index=3, key=f"w14b_ath_pl_{i}")
+                additive_wtp = (W14B_ATHLETE_WTP["Heartbeat"][a_heart] +
+                                 W14B_ATHLETE_WTP["Blood vessel"][a_bv] +
+                                 W14B_ATHLETE_WTP["Dissolved gasses"][a_dg] +
+                                 W14B_ATHLETE_WTP["Motion"][a_mo] +
+                                 W14B_ATHLETE_WTP["Platform"][a_pl])
+                st.metric("Summed Max WTP", f"${additive_wtp}")
+                wtp_max_use = additive_wtp
+                wtp_mean_use = additive_wtp * 0.85
+                wtp_std_use = max(1, additive_wtp * 0.1)
+            elif "wtp_tiers" in m:
+                # Tiered WTP: user picks which feature tier applies to their product
+                st.markdown("**Feature tier (determines WTP range)**")
+                tier_labels = [f"{t[0]} (${t[1]}-${t[2]})" for t in m["wtp_tiers"]]
+                tier_idx = st.selectbox("Your product tier", range(len(tier_labels)),
+                                          format_func=lambda x: tier_labels[x],
+                                          index=len(m["wtp_tiers"]) - 1,
+                                          key=f"w14b_ms_tier_{i}")
+                tier = m["wtp_tiers"][tier_idx]
+                wtp_low_d, wtp_high_d = tier[1], tier[2]
+                wtp_max_use = st.slider("Max WTP ($)",
+                                           int(wtp_low_d), int(wtp_high_d * 1.2),
+                                           int(wtp_high_d), step=10, key=f"w14b_ms_wtp_{i}")
+                wtp_mean_use = (wtp_low_d + wtp_max_use) / 2
+                wtp_std_use = max(1, (wtp_max_use - wtp_low_d) / 3.464)
+            else:
+                # Normal WTP: mid-range from Practice Game doc; treat uniform [wtp_low, wtp_high]
+                wtp_low_d = m["wtp_low"]
+                wtp_high_d = m["wtp_high"]
+                st.caption(f"WTP range: ${wtp_low_d} - ${wtp_high_d} (uniform assumption)")
+                wtp_max_use = st.slider("Max WTP ($)",
+                                           int(max(wtp_low_d + 1, 1)), int(max(wtp_high_d * 1.2, wtp_low_d + 10)),
+                                           int(max(wtp_high_d, wtp_low_d + 1)), step=10, key=f"w14b_ms_wtp_{i}")
+                wtp_mean_use = (wtp_low_d + wtp_max_use) / 2
+                wtp_std_use = max(1, (wtp_max_use - wtp_low_d) / 3.464)
+
+            # Price slider
+            ms_p_min = int(w14b_mkt_materials + W14B_HANDLING + W14B_SHIPPING)
+            ms_p_max = int(wtp_max_use * 1.1) if wtp_max_use > 0 else 1000
+
+            # Find optimum via cached function
+            opt_p = find_optimal_price_normal(
+                price_min=ms_p_min, price_max=ms_p_max,
+                mean_wtp=float(wtp_mean_use), std_wtp=float(max(1, wtp_std_use)),
+                materials=float(w14b_mkt_materials), shipping=float(W14B_SHIPPING),
+                handling=float(W14B_HANDLING), commission_frac=float(w14b_comm_frac),
+                step=5,
+            )
+
+            w14b_ms_price = st.slider("Your Price ($)",
+                                       ms_p_min, ms_p_max, opt_p,
+                                       step=10, key=f"w14b_ms_price_{i}",
+                                       help=f"Default = optimum (${opt_p})")
+
+            # P(buy) via Normal assumption
+            p_buy_ms = 1 - _normal_cdf(float(w14b_ms_price),
+                                          float(wtp_mean_use),
+                                          float(max(1, wtp_std_use)))
+
+            # CM
+            ms_comm = w14b_ms_price * w14b_comm_frac
+            ms_cm_u = w14b_ms_price - ms_comm - W14B_HANDLING - w14b_mkt_materials - W14B_SHIPPING
+            ms_cm_arr = ms_cm_u * p_buy_ms
+
+            # Bass peak
+            peak_q = mkt_size_in * ((m["p"]+m["q"])**2) / (4*m["q"]) if m["q"] > 0 else 0
+
+            cm_c = "#2d6a2e" if ms_cm_u > 0 else "#b22222"
+            st.markdown(f"""
+<div style="background:rgba({'45,106,46' if ms_cm_u > 0 else '178,34,34'},0.12);
+    border-left:3px solid {cm_c};padding:0.4rem 0.6rem;border-radius:5px;">
+<span style="font-size:0.65rem;opacity:0.7;">At ${w14b_ms_price}</span><br>
+P(buy): <b>{p_buy_ms:.0%}</b> | CM/u: <b style="color:{cm_c};">${ms_cm_u:,.0f}</b><br>
+CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_ms:,.1f}/d
+</div>
+""", unsafe_allow_html=True)
+
+            w14b_mkt_summary.append({
+                "Market": w14b_sel_mkt,
+                "Region": col_region,
+                "Size": f"{mkt_size_in:,}",
+                "WTP max": f"${wtp_max_use:,.0f}",
+                "Price": f"${w14b_ms_price}",
+                "P(buy)": f"{p_buy_ms:.0%}",
+                "CM/u": f"${ms_cm_u:,.0f}",
+                "CM/arr": f"${ms_cm_arr:,.0f}",
+                "Peak/d": f"{peak_q * p_buy_ms:,.1f}",
+                "DSO": f"{m['dso']}d",
+            })
+
+    st.markdown("**Market Summary**")
+    st.dataframe(pd.DataFrame(w14b_mkt_summary), use_container_width=True, hide_index=True)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 8: PRODUCT DESIGN ROI with NEW attributes + REAL base feature costs
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("8. Product Design ROI Calculator (Expanded)")
+    st.caption("Base features NOW have real costs. 3 NEW detection attributes: Cancer, Neurotoxins, Motion.")
+
+    pd_top1, pd_top2 = st.columns([1, 3])
+    with pd_top1:
+        w14b_n_prods = st.number_input("# Products", min_value=1, max_value=5,
+                                        value=5, step=1, key="w14b_n_prods")
+    with pd_top2:
+        st.caption(f"Region: **{W14B_REGION}** (shipping = ${W14B_SHIPPING}/u mail in-region). All costs from Practice Game Market Research page 23-24.")
+
+    # Updated presets matching the new research doc
+    W14B_PRESETS = {
+        "Heart View (flagship)": {
+            "Platform": "Chest", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer", "Finish": "Original",
+            "Heartbeat": "Temporal", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "None", "Motion": "None",
+            "price": 700, "target": "MD-Heart",
+        },
+        "Cancer Breast": {
+            "Platform": "Chest", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer", "Finish": "Original",
+            "Heartbeat": "Pulse only", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "Breast", "Neurotoxins": "None", "Motion": "None",
+            "price": 1250, "target": "MD Cancer (Breast)",
+        },
+        "Law Narcotic": {
+            "Platform": "Stockings", "GPS": "GPS", "Network": "5 GHz",
+            "Power": "Polymer pack", "Finish": "Black",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "Narcotic",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "None", "Motion": "None",
+            "price": 1350, "target": "Law (Narcotic)",
+        },
+        "Military Botulinum (Serenity)": {
+            "Platform": "Sleeves", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer pack", "Finish": "Camouflage",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "Botulinum", "Motion": "None",
+            "price": 1100, "target": "Military Botulinum",
+        },
+        "Athlete General": {
+            "Platform": "Wrists", "GPS": "No GPS", "Network": "Bluetooth",
+            "Power": "Polymer", "Finish": "Blue",
+            "Heartbeat": "Pulse only", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "None", "Motion": "Steps",
+            "price": 250, "target": "Athlete General",
+        },
+    }
+
+    preset_keys = list(W14B_PRESETS.keys())
+    w14b_pd_cols = st.columns(int(w14b_n_prods))
+    w14b_pd_summary = []
+
+    for i, col in enumerate(w14b_pd_cols):
         with col:
             default_idx = i if i < len(preset_keys) else 0
             p_sel = st.selectbox(f"Preset P{i+1}", preset_keys, index=default_idx,
-                                   key=f"w14_pd_preset_{i}")
-            preset = W14_PRESETS[p_sel]
+                                   key=f"w14b_pd_preset_{i}")
+            preset = W14B_PRESETS[p_sel]
 
-            st.markdown("**Base Features** (materials $/unit shown)")
-            w14_sel_base = {}
-            for attr, opts in W14_BASE_FEATURES.items():
+            st.markdown("**Base Features** (now with real costs!)")
+            sel_base = {}
+            for attr, opts in W14B_BASE.items():
                 default_feat = preset.get(attr, list(opts.keys())[0])
-                # Create labeled options: "Feature name — $X/u materials"
-                labeled = {f"{feat} — ${mat}/u mat": feat for feat, mat in opts.items()}
+                labeled = {f"{feat} — {d}d, ${c/1000:.1f}K, ${m}/u": feat
+                            for feat, (d, c, m) in opts.items()}
                 labels = list(labeled.keys())
                 default_label = next((l for l, f in labeled.items() if f == default_feat), labels[0])
                 idx = labels.index(default_label)
                 chosen = st.selectbox(attr, labels, index=idx,
-                                        key=f"w14_pd_base_{attr}_{i}")
-                w14_sel_base[attr] = labeled[chosen]
+                                        key=f"w14b_pd_base_{attr}_{i}")
+                sel_base[attr] = labeled[chosen]
 
-            st.markdown("**Detection Agenda** (days / design $ / materials $/u shown)")
-            w14_sel_det = {}
-            for attr, opts in W14_DETECTION.items():
+            st.markdown("**Detection Agenda** (9 attributes)")
+            sel_det = {}
+            for attr, opts in W14B_DETECTION.items():
                 default_feat = preset[attr]
-                # Create labeled options: "Feature — 60d, $75K, $60/u"
                 labeled = {f"{feat} — {d}d, ${c/1000:.0f}K, ${m}/u": feat
                             for feat, (d, c, m) in opts.items()}
                 labels = list(labeled.keys())
                 default_label = next((l for l, f in labeled.items() if f == default_feat), labels[0])
                 idx = labels.index(default_label)
                 chosen = st.selectbox(attr, labels, index=idx,
-                                        key=f"w14_pd_det_{attr}_{i}")
-                w14_sel_det[attr] = labeled[chosen]
+                                        key=f"w14b_pd_det_{attr}_{i}")
+                sel_det[attr] = labeled[chosen]
 
-            # Totals
-            base_mat = sum(W14_BASE_FEATURES[a][w14_sel_base[a]] for a in W14_BASE_FEATURES)
-            det_days = max(W14_DETECTION[a][w14_sel_det[a]][0] for a in W14_DETECTION)
-            det_cost = sum(W14_DETECTION[a][w14_sel_det[a]][1] for a in W14_DETECTION)
-            det_mat = sum(W14_DETECTION[a][w14_sel_det[a]][2] for a in W14_DETECTION)
+            # Totals (base + detection)
+            base_days = max(W14B_BASE[a][sel_base[a]][0] for a in W14B_BASE)
+            base_cost = sum(W14B_BASE[a][sel_base[a]][1] for a in W14B_BASE)
+            base_mat = sum(W14B_BASE[a][sel_base[a]][2] for a in W14B_BASE)
+            det_days = max(W14B_DETECTION[a][sel_det[a]][0] for a in W14B_DETECTION)
+            det_cost = sum(W14B_DETECTION[a][sel_det[a]][1] for a in W14B_DETECTION)
+            det_mat = sum(W14B_DETECTION[a][sel_det[a]][2] for a in W14B_DETECTION)
 
-            total_days = det_days
-            total_cost = det_cost
+            total_days = max(base_days, det_days)
+            total_cost = base_cost + det_cost
             total_mat = base_mat + det_mat
 
-            w14_pd_price = st.number_input("Price ($)", value=preset["price"], step=25,
-                                             key=f"w14_pd_price_{i}")
-            w14_pd_sales = st.number_input("Est. Sales/day", value=5, step=1,
-                                             key=f"w14_pd_sales_{i}")
+            w14b_pd_price = st.number_input("Price ($)", value=preset["price"], step=25,
+                                              key=f"w14b_pd_price_{i}")
+            w14b_pd_sales = st.number_input("Sales/day", value=5, step=1,
+                                              key=f"w14b_pd_sales_{i}")
 
-            w14_pd_margin = (w14_pd_price * (1 - w14_comm_frac)
-                              - W14_HANDLING - total_mat - W14_SHIPPING)
-            w14_pd_be = (total_cost / (w14_pd_margin * w14_pd_sales)
-                           if w14_pd_margin > 0 and w14_pd_sales > 0 else float("inf"))
+            w14b_pd_margin = (w14b_pd_price * (1 - w14b_comm_frac)
+                               - W14B_HANDLING - total_mat - W14B_SHIPPING)
+            w14b_pd_be = (total_cost / (w14b_pd_margin * w14b_pd_sales)
+                           if w14b_pd_margin > 0 and w14b_pd_sales > 0 else float("inf"))
 
             st.metric("Design Days", f"{total_days}")
             st.metric("Design Cost", f"${total_cost:,}")
             st.metric("Materials/u", f"${total_mat}")
-            st.metric("CM/u", f"${w14_pd_margin:,.0f}")
-            if w14_pd_be < float("inf"):
-                st.metric("Break-even", f"{w14_pd_be:.0f} days",
-                           delta=f"{w14_pd_be/30:.1f} months", delta_color="off")
+            st.metric("CM/u", f"${w14b_pd_margin:,.0f}")
+            if w14b_pd_be < float("inf"):
+                st.metric("Break-even", f"{w14b_pd_be:.0f}d ({w14b_pd_be/30:.1f} mo)",
+                           delta_color="off")
             else:
                 st.error("Negative margin")
 
-            # ── Cannibalization Checker (per Gleacher Tips: "do not put key features of
-            # high-WTP market into low-WTP product") ─────────────────────────
-            cann_target_market = st.selectbox(
-                "Target Market",
-                ["(select)", "MD-Heart", "MD-Breast Cancer", "MD-Estrogen", "Law-Narcotic", "Clinic-Fertility",
-                 "Trainers", "Military"],
-                index=0, key=f"w14_pd_mkt_{i}",
-                help="What market is this product intended for? We'll check for cannibalization risks."
-            )
+            # Cannibalization + fit checker with new rules
+            target = st.selectbox("Target Market",
+                                     ["(select)", "MD-Heart", "MD Cancer (Breast)",
+                                      "MD Cancer (Bladder & Kidney)", "MD Cancer (Base)",
+                                      "MD-Estrogen", "Law (Narcotic)", "Military Botulinum",
+                                      "Military Anatoxin-a", "Athlete General", "Athlete Fad",
+                                      "Clinical Cardiovascular", "Clinical Fertility",
+                                      "MD Metabolic", "MD Dissolved Gasses"],
+                                     index=0, key=f"w14b_pd_target_{i}")
 
             warnings = []
-            # Rule 1: Temporal heartbeat in non-MD-Heart products cannibalizes Heart View
-            if w14_sel_det["Heartbeat"] == "Temporal" and cann_target_market not in ["(select)", "MD-Heart"]:
-                warnings.append("🔴 **Temporal heartbeat** in non-MD-Heart product — cannibalizes Heart View sales")
-            # Rule 2: Pulse heartbeat in non-Heart markets might pull from Heart View (less severe)
-            if w14_sel_det["Heartbeat"] == "Pulse only" and cann_target_market not in ["(select)", "MD-Heart", "MD-Breast Cancer"]:
-                warnings.append("🟡 **Pulse heartbeat** in non-Heart market may cannibalize Heart View")
-            # Rule 3: Narcotic toxicology outside Law/Military wastes money
-            if w14_sel_det["Toxicology"] in ["Narcotic", "Amphetamine", "THC", "Barbiturate"] and cann_target_market not in ["(select)", "Law-Narcotic", "Military"]:
-                warnings.append(f"🟠 **{w14_sel_det['Toxicology']} toxicology** + non-Law/Mil market — $140/u materials wasted, may cannibalize Law product")
-            # Rule 4: Estrogen hormone outside fertility markets
-            if w14_sel_det["Hormone"] == "Estrogen" and cann_target_market not in ["(select)", "MD-Estrogen", "Clinic-Fertility"]:
-                warnings.append("🟡 **Estrogen** outside fertility markets — paying for materials unlikely to convert to WTP")
-            # Rule 5: Law Narcotic products must have GPS + cellular
-            if (w14_sel_det["Toxicology"] == "Narcotic" and cann_target_market == "Law-Narcotic"
-                    and (w14_sel_base["GPS"] == "No GPS" or w14_sel_base["Network"] == "Bluetooth")):
-                warnings.append("🔴 **Law-Narcotic deal breaker** — Needs GPS + cellular (not Bluetooth)")
-            # Rule 6: Fertility with bulky battery
-            if (w14_sel_det["Hormone"] in ["LH", "LH and FSH", "Estrogen"] and "Two-pack" in w14_sel_base["Power"]):
-                warnings.append("🟠 **Fertility deal breaker** — avoid bulky two-battery packs")
+            # Heartbeat cannibalization
+            if sel_det["Heartbeat"] == "Temporal" and target not in ["(select)", "MD-Heart"]:
+                warnings.append("🔴 Temporal heartbeat outside MD-Heart → cannibalizes Heart View")
+            # Narcotic only in Law/Military
+            if sel_det["Toxicology"] in ["Narcotic", "Amphetamine", "THC", "Barbiturate"] and target not in ["(select)", "Law (Narcotic)", "Military Botulinum", "Military Anatoxin-a"]:
+                warnings.append(f"🟠 {sel_det['Toxicology']} outside Law/Mil → $140/u wasted + cannibalization risk")
+            # Cancer only in Cancer markets
+            if sel_det["Cancer"] not in ["None"] and "Cancer" not in target:
+                warnings.append(f"🔴 Cancer {sel_det['Cancer']} outside Cancer market → $200+/u wasted materials")
+            # Neurotoxin only in Military
+            if sel_det["Neurotoxins"] not in ["None"] and "Military" not in target:
+                warnings.append(f"🔴 Neurotoxin {sel_det['Neurotoxins']} outside Military → $190+/u wasted")
+            # Law Narcotic needs GPS + cellular
+            if target == "Law (Narcotic)" and (sel_base["GPS"] == "No GPS" or sel_base["Network"] == "Bluetooth"):
+                warnings.append("🔴 Law-Narcotic deal breaker — needs GPS + cellular")
+            # Military needs GPS + polymer pack
+            if "Military" in target and (sel_base["GPS"] == "No GPS" or "Polymer pack" not in sel_base["Power"]):
+                warnings.append("🔴 Military deal breaker — needs GPS + polymer battery pack")
+            # Fertility avoid bulky battery
+            if target in ["Clinical Fertility", "MD-Estrogen"] and "pack" in sel_base["Power"]:
+                warnings.append("🟠 Fertility: avoid bulky battery packs")
+            # Cardiovascular needs GPS
+            if target == "Clinical Cardiovascular" and sel_base["GPS"] == "No GPS":
+                warnings.append("🟠 Cardiovascular: lack of GPS reduces perceived value")
+            # Platform-market mismatch
+            if target in ["Clinical Fertility", "MD-Estrogen"] and sel_base["Platform"] == "Chest":
+                warnings.append("🟡 Fertility users prefer wrists over chest")
+            # Athlete prefers wrists
+            if "Athlete" in target and sel_base["Platform"] == "Chest":
+                warnings.append("🟡 Athletes prefer wrists > sleeves > stockings > chest")
 
             if warnings:
-                st.warning("**Cannibalization / Fit Warnings:**\n\n" + "\n\n".join(warnings))
-            elif cann_target_market != "(select)":
-                st.success("✅ No cannibalization flags. Features fit target market.")
+                st.warning("**Flags:**\n\n" + "\n\n".join(warnings))
+            elif target != "(select)":
+                st.success("✅ No cannibalization/fit flags")
 
-            w14_pd_summary.append({
+            w14b_pd_summary.append({
                 "Product": f"P{i+1}: {p_sel}",
-                "Target": cann_target_market,
+                "Target": target,
                 "Days": total_days,
                 "Design $": f"${total_cost:,}",
                 "Mat/u": f"${total_mat}",
-                "Price": f"${w14_pd_price}",
-                "CM/u": f"${w14_pd_margin:,.0f}",
-                "Break-even": f"{w14_pd_be:.0f}d" if w14_pd_be < float("inf") else "N/A",
-                "Warnings": len(warnings) if cann_target_market != "(select)" else "—",
+                "Price": f"${w14b_pd_price}",
+                "CM/u": f"${w14b_pd_margin:,.0f}",
+                "Break-even": f"{w14b_pd_be:.0f}d" if w14b_pd_be < float("inf") else "N/A",
+                "Warnings": len(warnings) if target != "(select)" else "—",
             })
 
     st.markdown("**Product Comparison Summary**")
-    st.dataframe(pd.DataFrame(w14_pd_summary), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(w14b_pd_summary), use_container_width=True, hide_index=True)
 
     st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
 
     # ══════════════════════════════════════════════════════════════════════════
     # SECTION 9: SUPPLY CHAIN TRADE-OFF CALCULATOR
