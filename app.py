@@ -2287,77 +2287,126 @@ Given the D3 Exercise uses Normal, **we should assume Normal distribution** goin
     # SECTION 6: COBB-DOUGLAS + LITTLE'S LAW + CONTRIBUTION MARGIN TABLE
     # ══════════════════════════════════════════════════════════════════════════
     st.subheader("6. Cobb-Douglas + Little's Law + Contribution Margin")
-    st.caption("Custom α, β, K, L inputs → yearly & daily throughput → cycle time → inventory → CM")
+    st.caption("4 factories side-by-side (Bench, Line, Cell, Custom) with shared K, L, batch inputs")
 
-    W14_PROD_TECH = {
-        "Custom": {"A": 0.009, "alpha": 0.10, "beta": 0.85, "setup": 0.05, "min_K": 0},
-        "Benches": {"A": 0.009, "alpha": 0.10, "beta": 0.85, "setup": 0.05, "min_K": 0},
-        "Production Line": {"A": 0.010, "alpha": 0.30, "beta": 0.75, "setup": 0.50, "min_K": 500000},
-        "Automated Cell": {"A": 0.020, "alpha": 0.80, "beta": 0.30, "setup": 1.00, "min_K": 3000000},
-    }
-
-    w14_cd_preset = st.selectbox("Technology Preset", list(W14_PROD_TECH.keys()),
-                                   index=1, key="w14_cd_preset")
-    w14_preset = W14_PROD_TECH[w14_cd_preset]
-
-    w14_cd_p1, w14_cd_p2, w14_cd_p3, w14_cd_p4 = st.columns(4)
-    with w14_cd_p1:
-        w14_A = st.number_input("A", value=float(w14_preset["A"]), step=0.001,
-                                  format="%.4f", key="w14_A")
-    with w14_cd_p2:
-        w14_alpha = st.number_input("α (capital)", value=float(w14_preset["alpha"]),
-                                      step=0.05, format="%.2f", key="w14_alpha")
-    with w14_cd_p3:
-        w14_beta = st.number_input("β (labor)", value=float(w14_preset["beta"]),
-                                     step=0.05, format="%.2f", key="w14_beta")
-    with w14_cd_p4:
-        w14_setup = st.number_input("Setup (days)", value=float(w14_preset["setup"]),
-                                      step=0.05, format="%.2f", key="w14_setup")
-
-    w14_f1, w14_f2, w14_f3, w14_f4 = st.columns(4)
-    with w14_f1:
+    # Shared inputs (apply to all 4 factories)
+    st.markdown("**Shared Inputs** (same across all 4 factories)")
+    w14_sh1, w14_sh2, w14_sh3, w14_sh4 = st.columns(4)
+    with w14_sh1:
         w14_K = st.number_input("Capital K ($)", value=100000, step=10000, key="w14_K")
-    with w14_f2:
+    with w14_sh2:
         w14_l = st.number_input("Daily Labor l ($/day)", value=2500, step=100, key="w14_l")
-    with w14_f3:
+    with w14_sh3:
         w14_batch = st.number_input("Batch Size", value=100, step=10, key="w14_batch")
-    with w14_f4:
+    with w14_sh4:
         w14_dpy = st.number_input("Days/year", value=364, step=1, key="w14_dpy")
 
-    # Cobb-Douglas calculations
-    w14_L_yearly = w14_l * w14_dpy
-    w14_Y = w14_A * (w14_K ** w14_alpha) * (w14_L_yearly ** w14_beta)
-    w14_lambda_raw = w14_Y / w14_dpy
-    w14_batch_time = w14_batch / w14_lambda_raw if w14_lambda_raw > 0 else float("inf")
-    w14_CT = w14_batch_time + w14_setup
-    w14_lambda_eff = w14_batch / w14_CT if w14_CT > 0 else 0
-    w14_WIP = w14_lambda_eff * w14_CT
+    # 4 factory configurations (3 presets + 1 custom)
+    W14_FACTORIES = [
+        {"name": "Bench", "A": 0.009, "alpha": 0.10, "beta": 0.85, "setup": 0.05, "min_K": 0, "color": "#800000"},
+        {"name": "Production Line", "A": 0.010, "alpha": 0.30, "beta": 0.75, "setup": 0.50, "min_K": 500000, "color": "#1a3c5e"},
+        {"name": "Automated Cell", "A": 0.020, "alpha": 0.80, "beta": 0.30, "setup": 1.00, "min_K": 3000000, "color": "#2d6a2e"},
+        {"name": "Custom", "A": 0.009, "alpha": 0.10, "beta": 0.85, "setup": 0.05, "min_K": 0, "color": "#b8860b"},
+    ]
 
-    # Mfg overhead (for CM)
+    # Custom factory parameters (editable)
+    st.markdown("**Custom Factory Parameters** (4th column only)")
+    w14_c1, w14_c2, w14_c3, w14_c4 = st.columns(4)
+    with w14_c1:
+        custom_A = st.number_input("Custom A", value=0.009, step=0.001,
+                                     format="%.4f", key="w14_custom_A")
+    with w14_c2:
+        custom_alpha = st.number_input("Custom α", value=0.10, step=0.05,
+                                         format="%.2f", key="w14_custom_alpha")
+    with w14_c3:
+        custom_beta = st.number_input("Custom β", value=0.85, step=0.05,
+                                        format="%.2f", key="w14_custom_beta")
+    with w14_c4:
+        custom_setup = st.number_input("Custom setup (d)", value=0.05, step=0.05,
+                                         format="%.2f", key="w14_custom_setup")
+
+    # Apply custom values to 4th entry
+    W14_FACTORIES[3]["A"] = custom_A
+    W14_FACTORIES[3]["alpha"] = custom_alpha
+    W14_FACTORIES[3]["beta"] = custom_beta
+    W14_FACTORIES[3]["setup"] = custom_setup
+
     W14_DEP_YRS = 15
-    w14_daily_dep = w14_K / W14_DEP_YRS / w14_dpy
-    w14_daily_factory_cost = w14_l + w14_daily_dep
-    w14_mfg_oh = w14_daily_factory_cost / w14_lambda_eff if w14_lambda_eff > 0 else 0
 
-    # Results panels
-    w14_r1, w14_r2, w14_r3 = st.columns(3)
-    with w14_r1:
-        st.markdown("**📐 Cobb-Douglas**")
-        st.metric("Yearly Production", f"{w14_Y:,.0f} units/yr")
-        st.metric("Daily λ (raw)", f"{w14_lambda_raw:.2f} units/day")
-        st.metric("Daily λ (effective)", f"{w14_lambda_eff:.2f} units/day")
-    with w14_r2:
-        st.markdown("**⏱️ Cycle Time**")
-        st.metric("Batch Time", f"{w14_batch_time:.3f} days")
-        st.metric("Setup", f"{w14_setup:.2f} days")
-        st.metric("Total CT", f"{w14_CT:.3f} days")
-    with w14_r3:
-        st.markdown("**📦 Little's Law**")
-        st.metric("WIP Inventory", f"{w14_WIP:.1f} units")
-        st.metric("Mfg OH/unit", f"${w14_mfg_oh:.2f}")
-        rts = w14_alpha + w14_beta
-        rts_label = "Increasing" if rts > 1.02 else ("Decreasing" if rts < 0.98 else "Constant")
-        st.metric("α+β", f"{rts:.2f}", delta=f"{rts_label} returns", delta_color="off")
+    # Calculate for each factory
+    def calc_factory(f, K, l, batch, dpy):
+        if K < f["min_K"]:
+            return None
+        L_yearly = l * dpy
+        Y = f["A"] * (K ** f["alpha"]) * (L_yearly ** f["beta"])
+        lambda_raw = Y / dpy
+        batch_time = batch / lambda_raw if lambda_raw > 0 else float("inf")
+        CT = batch_time + f["setup"]
+        lambda_eff = batch / CT if CT > 0 else 0
+        WIP = lambda_eff * CT
+        daily_dep = K / W14_DEP_YRS / dpy
+        daily_cost = l + daily_dep
+        mfg_oh = daily_cost / lambda_eff if lambda_eff > 0 else 0
+        return {
+            "Y": Y, "lambda_raw": lambda_raw, "batch_time": batch_time,
+            "CT": CT, "lambda_eff": lambda_eff, "WIP": WIP,
+            "mfg_oh": mfg_oh, "daily_cost": daily_cost,
+        }
+
+    w14_fac_results = [calc_factory(f, w14_K, w14_l, w14_batch, w14_dpy) for f in W14_FACTORIES]
+
+    # 4 side-by-side factory columns
+    st.markdown("---")
+    st.markdown("### Factory Comparison (side-by-side)")
+    fac_cols = st.columns(4)
+    for idx, (col, f, r) in enumerate(zip(fac_cols, W14_FACTORIES, w14_fac_results)):
+        with col:
+            st.markdown(
+                f"<div style='background:{f['color']};color:white;padding:0.5rem 0.8rem;"
+                f"border-radius:6px;font-weight:700;text-align:center;'>{f['name']}</div>",
+                unsafe_allow_html=True,
+            )
+            st.caption(f"A={f['A']:.4f} | α={f['alpha']:.2f} | β={f['beta']:.2f} | setup={f['setup']:.2f}d")
+            if r is None:
+                st.error(f"Min K ${f['min_K']:,} not met")
+                continue
+
+            st.metric("Yearly Y", f"{r['Y']:,.0f} u/yr")
+            st.metric("Daily λ raw", f"{r['lambda_raw']:.2f} u/d")
+            st.metric("Daily λ eff", f"{r['lambda_eff']:.2f} u/d")
+            st.metric("Batch Time", f"{r['batch_time']:.3f} d")
+            st.metric("Setup", f"{f['setup']:.2f} d")
+            st.metric("Total CT", f"{r['CT']:.3f} d")
+            st.metric("WIP Inventory", f"{r['WIP']:.1f} units")
+            st.metric("Mfg OH/unit", f"${r['mfg_oh']:.2f}")
+            rts = f["alpha"] + f["beta"]
+            rts_label = "Incr." if rts > 1.02 else ("Decr." if rts < 0.98 else "Const.")
+            st.metric("α+β", f"{rts:.2f}", delta=f"{rts_label} returns", delta_color="off")
+
+    # Pick which factory's Mfg OH feeds the CM table below
+    st.markdown("---")
+    oh_pick_col1, oh_pick_col2 = st.columns([1, 3])
+    with oh_pick_col1:
+        cm_factory_choice = st.selectbox(
+            "CM Table uses overhead from:",
+            [f["name"] for f in W14_FACTORIES],
+            index=0, key="w14_cm_factory_pick",
+        )
+    picked_idx = [f["name"] for f in W14_FACTORIES].index(cm_factory_choice)
+    picked_result = w14_fac_results[picked_idx]
+    if picked_result is None:
+        # Fallback to Bench
+        picked_result = w14_fac_results[0]
+        cm_factory_choice = "Bench"
+    with oh_pick_col2:
+        st.caption(f"**{cm_factory_choice}** Mfg OH/unit = ${picked_result['mfg_oh']:,.2f}. "
+                   f"Effective λ = {picked_result['lambda_eff']:.2f} units/day. "
+                   f"Change selector to see CM with different factory overhead.")
+
+    # Export vars for CM table section below (preserves the original flow)
+    w14_mfg_oh = picked_result["mfg_oh"]
+    w14_lambda_eff = picked_result["lambda_eff"]
+    w14_daily_factory_cost = picked_result["daily_cost"]
 
     # Contribution Margin Table
     st.markdown("### 💰 Contribution Margin Table (Before Tax)")
