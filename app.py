@@ -21,6 +21,118 @@ from course_data import (
     get_all_frameworks, get_all_topics, search_frameworks,
     PROGRAM_START, PROGRAM_END,
 )
+import math as _math
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CACHED SIMULATION FUNCTIONS (speeds up slider interactions 10-100x)
+# ══════════════════════════════════════════════════════════════════════════════
+
+@st.cache_data(show_spinner=False, max_entries=50)
+def _normal_cdf(x: float, mu: float, sigma: float) -> float:
+    if sigma <= 0:
+        return 1.0 if x < mu else 0.0
+    z = (x - mu) / sigma
+    return 0.5 * (1 + _math.erf(z / _math.sqrt(2)))
+
+
+@st.cache_data(show_spinner=False, max_entries=30)
+def simulate_bass_normal(M: int, p: float, q: float, p_ad_per_500: float,
+                          ad_daily: float, ad_duration: int,
+                          price: float, mean_wtp: float, std_wtp: float,
+                          sim_days: int):
+    """
+    Simulate Bass model with Normal WTP and 3 arrival streams.
+    Returns dict with innovators, imitators, advertising, arrivals, purchases, cumulative.
+    """
+    p_buy = 1 - _normal_cdf(price, mean_wtp, std_wtp)
+    days = list(range(1, int(sim_days) + 1))
+    innovators_list, imitators_list, advertising_list = [], [], []
+    total_arrivals, purchases_list, cumulative_purchases = [], [], []
+    cumulative_adopters = 0.0
+
+    for t in days:
+        remaining = max(0, M - cumulative_adopters)
+        innovators = p * remaining
+        imitators = q * (cumulative_adopters / M) * remaining if M > 0 else 0
+        if t <= ad_duration and ad_daily > 0:
+            p_ad_boost = (ad_daily / 500) * p_ad_per_500
+            ad_customers = p_ad_boost * remaining
+        else:
+            ad_customers = 0
+        arrivals = innovators + imitators + ad_customers
+        buys = arrivals * p_buy
+        innovators_list.append(innovators)
+        imitators_list.append(imitators)
+        advertising_list.append(ad_customers)
+        total_arrivals.append(arrivals)
+        purchases_list.append(buys)
+        cumulative_adopters += buys
+        cumulative_purchases.append(cumulative_adopters)
+
+    return {
+        "days": days, "p_buy": p_buy,
+        "innovators": innovators_list, "imitators": imitators_list,
+        "advertising": advertising_list, "total_arrivals": total_arrivals,
+        "purchases": purchases_list, "cumulative": cumulative_purchases,
+    }
+
+
+@st.cache_data(show_spinner=False, max_entries=50)
+def simulate_scenario_traj(price: float, ad_daily: float, ad_duration: int,
+                            M: int, p: float, q: float, p_ad_per_500: float,
+                            mean_wtp: float, std_wtp: float,
+                            materials: float, mfg_oh: float,
+                            shipping: float, handling: float, commission_frac: float,
+                            days_total: int = 1460):
+    """
+    Simulate a single pricing/advertising scenario and return cumulative CM trajectory.
+    """
+    p_buy_sc = 1 - _normal_cdf(price, mean_wtp, std_wtp)
+    var_cost = materials + shipping + handling + mfg_oh
+    cm_per_unit = price * (1 - commission_frac) - var_cost
+    cum_adopters = 0.0
+    cum_cm = 0.0
+    trajectory = []
+
+    for t in range(1, days_total + 1):
+        remaining = max(0, M - cum_adopters)
+        innov = p * remaining
+        imit = q * (cum_adopters / M) * remaining if M > 0 else 0
+        if t <= ad_duration and ad_daily > 0:
+            ad_cust = (ad_daily / 500) * p_ad_per_500 * remaining
+        else:
+            ad_cust = 0
+        buys = (innov + imit + ad_cust) * p_buy_sc
+        cum_adopters += buys
+        cum_cm += cm_per_unit * buys
+        if t <= ad_duration:
+            cum_cm -= ad_daily
+        trajectory.append(cum_cm)
+
+    return {"p_buy": p_buy_sc, "cum_cm_final": cum_cm,
+            "cum_units": cum_adopters, "cm_per_unit": cm_per_unit,
+            "trajectory": trajectory}
+
+
+@st.cache_data(show_spinner=False, max_entries=50)
+def find_optimal_price_normal(price_min: int, price_max: int,
+                                mean_wtp: float, std_wtp: float,
+                                materials: float, shipping: float,
+                                handling: float, commission_frac: float,
+                                step: int = 5):
+    """
+    Find the retail price that maximizes CM per arriving customer under
+    Normal WTP distribution.
+    """
+    best_p, best_cm = price_min, -1e18
+    for test_p in range(price_min, price_max + 1, step):
+        pb = 1 - _normal_cdf(test_p, mean_wtp, std_wtp)
+        cm_u = test_p * (1 - commission_frac) - materials - shipping - handling
+        cm_per_arr = cm_u * pb
+        if cm_per_arr > best_cm:
+            best_cm = cm_per_arr
+            best_p = test_p
+    return best_p
 
 # ── Page Config ───────────────────────────────────────────────────────────────
 
@@ -1773,58 +1885,25 @@ elif page == "🚀 14 Trial War Room":
                                               key="b14_p_ad")
         b14_sim_days = st.number_input("Simulate Days", value=1460, step=30, key="b14_sim")
 
-    # Simulate the Bass model with three arrival types
-    import math
-
+    # Simulate the Bass model with three arrival types (CACHED — instant on slider repeat)
+    _bass_result = simulate_bass_normal(
+        M=int(b14_M), p=float(b14_p), q=float(b14_q),
+        p_ad_per_500=float(b14_p_ad_per_500),
+        ad_daily=float(b14_ad_daily), ad_duration=int(b14_ad_duration),
+        price=float(b14_price), mean_wtp=float(b14_mean), std_wtp=float(b14_std),
+        sim_days=int(b14_sim_days),
+    )
+    p_buy = _bass_result["p_buy"]
+    days = _bass_result["days"]
+    innovators_list = _bass_result["innovators"]
+    imitators_list = _bass_result["imitators"]
+    advertising_list = _bass_result["advertising"]
+    total_arrivals = _bass_result["total_arrivals"]
+    purchases_list = _bass_result["purchases"]
+    cumulative_purchases = _bass_result["cumulative"]
+    # Kept for local helper below (still used in inline helpers in other sections)
     def normal_cdf(x, mu, sigma):
-        """Standard normal CDF using erf approximation."""
-        if sigma <= 0:
-            return 1.0 if x < mu else 0.0
-        z = (x - mu) / sigma
-        return 0.5 * (1 + math.erf(z / math.sqrt(2)))
-
-    # P(WTP > price) = 1 - CDF(price) for Normal distribution
-    p_buy = 1 - normal_cdf(b14_price, b14_mean, b14_std)
-
-    # Simulate day by day
-    days = list(range(1, int(b14_sim_days) + 1))
-    innovators_list = []
-    imitators_list = []
-    advertising_list = []
-    total_arrivals = []
-    purchases_list = []
-    cumulative_adopters = 0  # A in Bass model — only PURCHASES deplete pool
-    cumulative_purchases = []
-
-    for t in days:
-        remaining = max(0, b14_M - cumulative_adopters)
-
-        # Innovators: p × remaining (no A/M dependence — they're first adopters)
-        innovators = b14_p * remaining
-
-        # Imitators: q × (A/M) × remaining
-        imitators = b14_q * (cumulative_adopters / b14_M) * remaining if b14_M > 0 else 0
-
-        # Advertising-attracted customers (same-day effect)
-        if t <= b14_ad_duration and b14_ad_daily > 0:
-            # Additional p from ad = (ad_daily / 500) × p_ad_per_500
-            p_ad_boost = (b14_ad_daily / 500) * b14_p_ad_per_500
-            ad_customers = p_ad_boost * remaining
-        else:
-            ad_customers = 0
-
-        arrivals = innovators + imitators + ad_customers
-        # Each arrival buys with probability p_buy (if surplus > 0)
-        buys = arrivals * p_buy
-
-        innovators_list.append(innovators)
-        imitators_list.append(imitators)
-        advertising_list.append(ad_customers)
-        total_arrivals.append(arrivals)
-        purchases_list.append(buys)
-
-        cumulative_adopters += buys
-        cumulative_purchases.append(cumulative_adopters)
+        return _normal_cdf(float(x), float(mu), float(sigma))
 
     with bass_col2:
         # Plot 3 arrival streams over time
@@ -1944,42 +2023,33 @@ elif page == "🚀 14 Trial War Room":
     with scc3:
         st.caption("Uses market params from Section 1. Adjust mean WTP, std, market size, etc. above to match your target market.")
 
-    # Simulate each scenario
-    def simulate_scenario(price, ad_daily, ad_duration, days_total=1460):
-        p_buy_sc = 1 - normal_cdf(price, b14_mean, b14_std)
-        cum_adopters = 0
-        cum_cm_local = 0
-        var_cost_local = b14_materials + W14_SHIPPING + W14_HANDLING + b14_mfg_oh
-        cm_per_unit_local = price * (1 - w14_comm_frac) - var_cost_local
-        for t in range(1, days_total + 1):
-            remaining = max(0, b14_M - cum_adopters)
-            innov = b14_p * remaining
-            imit = b14_q * (cum_adopters / b14_M) * remaining if b14_M > 0 else 0
-            if t <= ad_duration and ad_daily > 0:
-                ad_cust = (ad_daily / 500) * b14_p_ad_per_500 * remaining
-            else:
-                ad_cust = 0
-            arrivals = innov + imit + ad_cust
-            buys = arrivals * p_buy_sc
-            cum_adopters += buys
-            cum_cm_local += cm_per_unit_local * buys
-            if t <= ad_duration:
-                cum_cm_local -= ad_daily
-        return {
-            "price": price, "ad": ad_daily, "p_buy": p_buy_sc,
-            "cum_cm": cum_cm_local, "cum_units": cum_adopters,
-            "cm_per_unit": cm_per_unit_local,
-        }
-
+    # Scenarios — use cached simulate_scenario_traj for 100× speedup on slider repeats
     scenarios = [
         ("A", sc_p_low, 0, "Low price, no ad"),
         ("B", sc_p_low, sc_ad_amount, f"Low price, ${sc_ad_amount}/day ad for {sc_ad_days}d"),
         ("C", sc_p_high, 0, "High price, no ad"),
         ("D", sc_p_high, sc_ad_amount, f"High price, ${sc_ad_amount}/day ad for {sc_ad_days}d"),
     ]
+
+    def _run_scenario(price, ad):
+        return simulate_scenario_traj(
+            price=float(price), ad_daily=float(ad), ad_duration=int(sc_ad_days),
+            M=int(b14_M), p=float(b14_p), q=float(b14_q),
+            p_ad_per_500=float(b14_p_ad_per_500),
+            mean_wtp=float(b14_mean), std_wtp=float(b14_std),
+            materials=float(b14_materials), mfg_oh=float(b14_mfg_oh),
+            shipping=float(W14_SHIPPING), handling=float(W14_HANDLING),
+            commission_frac=float(w14_comm_frac), days_total=1460,
+        )
+
+    # Run each scenario ONCE and reuse result for table + chart (also cached)
+    scenario_results = {}
+    for label, price, ad, _ in scenarios:
+        scenario_results[label] = _run_scenario(price, ad)
+
     sc_results = []
     for label, price, ad, desc in scenarios:
-        r = simulate_scenario(price, ad, sc_ad_days)
+        r = scenario_results[label]
         sc_results.append({
             "Scenario": f"{label}: {desc}",
             "Price": f"${price:,}",
@@ -1987,47 +2057,29 @@ elif page == "🚀 14 Trial War Room":
             "P(buy)": f"{r['p_buy']:.1%}",
             "Units Sold (4yr)": f"{r['cum_units']:,.0f}",
             "CM/unit": f"${r['cm_per_unit']:.0f}",
-            "Cumulative CM": f"${r['cum_cm']:,.0f}",
+            "Cumulative CM": f"${r['cum_cm_final']:,.0f}",
             "vs Best": "",
         })
 
     # Identify best
-    best_cm = max(r["cum_cm"] for r in [simulate_scenario(p, a, sc_ad_days) for _, p, a, _ in scenarios])
+    best_cm = max(r["cum_cm_final"] for r in scenario_results.values())
     for i, r_row in enumerate(sc_results):
-        label, price, ad, _ = scenarios[i]
-        r = simulate_scenario(price, ad, sc_ad_days)
-        delta = r["cum_cm"] - best_cm
+        label, _, _, _ = scenarios[i]
+        r = scenario_results[label]
+        delta = r["cum_cm_final"] - best_cm
         r_row["vs Best"] = f"${delta:,.0f}" if delta < 0 else "🏆 Best"
 
     st.dataframe(pd.DataFrame(sc_results), use_container_width=True, hide_index=True)
 
-    # Visualize
+    # Visualize (reuses cached trajectories — zero extra compute)
     fig_sc = go.Figure()
-    for label, price, ad, desc in scenarios:
-        r = simulate_scenario(price, ad, sc_ad_days)
-        # Also get full trajectory for plotting
-        cum_adopters_traj = 0
-        cum_cm_traj = 0
-        p_buy_sc = 1 - normal_cdf(price, b14_mean, b14_std)
-        var_cost_local = b14_materials + W14_SHIPPING + W14_HANDLING + b14_mfg_oh
-        cm_per_unit_local = price * (1 - w14_comm_frac) - var_cost_local
-        traj = []
-        for t in range(1, 1461):
-            remaining = max(0, b14_M - cum_adopters_traj)
-            innov = b14_p * remaining
-            imit = b14_q * (cum_adopters_traj / b14_M) * remaining if b14_M > 0 else 0
-            if t <= sc_ad_days and ad > 0:
-                ad_cust = (ad / 500) * b14_p_ad_per_500 * remaining
-            else:
-                ad_cust = 0
-            buys = (innov + imit + ad_cust) * p_buy_sc
-            cum_adopters_traj += buys
-            cum_cm_traj += cm_per_unit_local * buys
-            if t <= sc_ad_days:
-                cum_cm_traj -= ad
-            traj.append(cum_cm_traj)
-        fig_sc.add_trace(go.Scatter(x=list(range(1, 1461)), y=traj, name=f"{label}: ${price} {'w/ ad' if ad > 0 else ''}",
-                                      mode="lines"))
+    for label, price, ad, _ in scenarios:
+        r = scenario_results[label]
+        fig_sc.add_trace(go.Scatter(
+            x=list(range(1, 1461)), y=r["trajectory"],
+            name=f"{label}: ${price} {'w/ ad' if ad > 0 else ''}",
+            mode="lines",
+        ))
     fig_sc.add_hline(y=0, line_dash="dot", line_color="gray")
     fig_sc.update_layout(height=450, xaxis_title="Day",
                           yaxis_title="Cumulative CM ($)", yaxis_tickformat="$,.0f",
@@ -2551,27 +2603,22 @@ DSO: <b>{m['dso']}d</b> | DB: <span style="color:{'#b22222' if m['dealbreaker'] 
                                           key=f"w14_m_size_{i}",
                                           help=f"Default from market research: {m['size']:,}. Actual in-game may differ.")
 
-            # Theoretical optimum (Normal): complex, so use numerical search
-            import math
+            # P(buy) helper — uses cached _normal_cdf
             def _pbuy(P, mu, sigma):
-                if sigma <= 0:
-                    return 1.0 if P < mu else 0.0
-                z = (P - mu) / sigma
-                return 1 - 0.5 * (1 + math.erf(z / math.sqrt(2)))
+                return 1 - _normal_cdf(float(P), float(mu), float(sigma))
 
             # Price slider from cost to mean + 3σ
             w14_p_min_slider = int(w14_m_materials + W14_HANDLING + W14_SHIPPING)
             w14_p_max_slider = int(w14_mean_in + 3 * w14_std_in)
 
-            # Find numerical optimum for default
-            best_p, best_cm_per_arr = w14_p_min_slider, -1e9
-            for test_p in range(w14_p_min_slider, w14_p_max_slider + 1, 5):
-                pb = _pbuy(test_p, w14_mean_in, w14_std_in)
-                cm_u = test_p * (1 - w14_comm_frac) - w14_m_materials - W14_SHIPPING - W14_HANDLING
-                cm_per_arr = cm_u * pb
-                if cm_per_arr > best_cm_per_arr:
-                    best_cm_per_arr = cm_per_arr
-                    best_p = test_p
+            # Find numerical optimum (CACHED — runs once per unique input set)
+            best_p = find_optimal_price_normal(
+                price_min=int(w14_p_min_slider), price_max=int(w14_p_max_slider),
+                mean_wtp=float(w14_mean_in), std_wtp=float(w14_std_in),
+                materials=float(w14_m_materials), shipping=float(W14_SHIPPING),
+                handling=float(W14_HANDLING), commission_frac=float(w14_comm_frac),
+                step=5,
+            )
 
             w14_m_price = st.slider("Your Price ($)",
                                       w14_p_min_slider, w14_p_max_slider, best_p,
