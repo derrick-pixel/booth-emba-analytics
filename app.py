@@ -1818,16 +1818,18 @@ elif page == "🚀 14 Trial War Room":
 
     with w14_intro_col2:
         st.success("""
-**📋 The 8 Components of this War Room:**
+**📋 The 10 Components of this War Room:**
 
-1. **Advanced Bass Model** — Normal WTP, 3 arrival streams, daily simulation over 4 years
-2. **Scenario Comparison** — 4 price × ad scenarios side-by-side with trajectory plots
+1. **Advanced Bass Model** — Normal WTP, 3 arrival streams, 4-year daily simulation
+2. **Scenario Comparison** — 4 price × ad scenarios with trajectory plots
 3. **Advertising Decision Framework** — when/when-not checklist + ROI calculator
 4. **Debt Capacity & Bond Issuance** — tranche-based (Excellent → Good → Poor)
 5. **Normal vs Uniform WTP** — side-by-side comparison tool
-6. **Cobb-Douglas + Little's Law + CM Table** — throughput → cycle time → WIP → contribution margin
-7. **Market Segment Analyzer** (up to **5 markets**) — Normal WTP, price slider, live CM
-8. **Product Design ROI** (up to **5 products**) — base features + detection agenda, break-even
+6. **Cobb-Douglas + Little's Law + CM Table** — 4 factory types side-by-side
+7. **Market Segment Analyzer** (up to 5 markets, **Metropolis toggle** for +4 military markets)
+8. **Product Design ROI** (up to 5 products, **cannibalization checker** built in)
+9. **🆕 Supply Chain Trade-Offs** — Mail vs Container, Own DC vs Wholesale, New Factory vs Capex
+10. **🆕 Cash & Tax Discipline Planner** — quarterly tax projection, cash buffer, waterfall
         """)
 
     # ══════════════════════════════════════════════════════════════════════════
@@ -2550,23 +2552,69 @@ Given the D3 Exercise uses Normal, **we should assume Normal distribution** goin
     st.subheader("7. Market Segment Analyzer (Side-by-Side, up to 5)")
     st.caption("Normal WTP distribution (per D3 material). Price slider → P(buy) + CM live.")
 
-    W14_MARKETS = {
+    W14_STANDARD_MARKETS = {
         "MD-Heart (Temporal)": {"mean": 732, "std": 73, "size": 30000, "p": 0.0002, "q": 0.0035, "dso": 30,
-                                  "feature": "Heartbeat Temporal", "dealbreaker": "GPS affects WTP"},
+                                  "feature": "Heartbeat Temporal", "dealbreaker": "GPS affects WTP",
+                                  "premium_feature": "Heartbeat=Temporal"},
         "MD-Breast (Cancer)": {"mean": 1250, "std": 125, "size": 15000, "p": 0.0002, "q": 0.0035, "dso": 30,
-                                 "feature": "Cancer Breast", "dealbreaker": "None"},
+                                 "feature": "Cancer Breast", "dealbreaker": "None",
+                                 "premium_feature": "Blood vessel + Cancer"},
         "MD-Estrogen (Fertility)": {"mean": 770, "std": 77, "size": 15000, "p": 0.0002, "q": 0.0035, "dso": 30,
-                                      "feature": "Hormone Estrogen", "dealbreaker": "None"},
+                                      "feature": "Hormone Estrogen", "dealbreaker": "None",
+                                      "premium_feature": "Hormone=Estrogen"},
         "Law-Narcotic": {"mean": 1350, "std": 135, "size": 10000, "p": 0.00025, "q": 0.0025, "dso": 90,
-                          "feature": "Toxicology Narcotic", "dealbreaker": "Needs GPS + cellular"},
+                          "feature": "Toxicology Narcotic", "dealbreaker": "Needs GPS + cellular",
+                          "premium_feature": "Toxicology=Narcotic"},
         "Clinic-Fertility (LH/FSH)": {"mean": 315, "std": 32, "size": 50000, "p": 0.00025, "q": 0.004, "dso": 10,
-                                        "feature": "Hormone LH/FSH", "dealbreaker": "Bulky battery packs"},
+                                        "feature": "Hormone LH/FSH", "dealbreaker": "Bulky battery packs",
+                                        "premium_feature": "Hormone=LH/FSH"},
     }
+
+    # Military markets — Metropolis-only, from D2 Case Brief ("4 military segments")
+    # Placeholders based on case brief (high WTP, moderate size, dark color preference)
+    W14_MILITARY_MARKETS = {
+        "Mil-Botulinum (Metropolis only)": {"mean": 1200, "std": 120, "size": 8000, "p": 0.00025, "q": 0.003, "dso": 60,
+                                              "feature": "Toxicology Botulinum", "dealbreaker": "Needs GPS + cellular + dark finish",
+                                              "premium_feature": "Toxicology=Botulinum"},
+        "Mil-Sarin (Metropolis only)": {"mean": 1250, "std": 125, "size": 8000, "p": 0.00025, "q": 0.003, "dso": 60,
+                                          "feature": "Toxicology Sarin", "dealbreaker": "Needs GPS + cellular + dark finish",
+                                          "premium_feature": "Toxicology=Sarin"},
+        "Mil-Cyclosarin (Metropolis only)": {"mean": 1250, "std": 125, "size": 8000, "p": 0.00025, "q": 0.003, "dso": 60,
+                                               "feature": "Toxicology Cyclosarin", "dealbreaker": "Needs GPS + cellular + dark finish",
+                                               "premium_feature": "Toxicology=Cyclosarin"},
+        "Mil-Anatoxin-A (Metropolis only)": {"mean": 1200, "std": 120, "size": 8000, "p": 0.00025, "q": 0.003, "dso": 60,
+                                               "feature": "Toxicology Anatoxin-A", "dealbreaker": "Needs GPS + cellular + dark finish",
+                                               "premium_feature": "Toxicology=Anatoxin-A"},
+    }
+
+    # Region toggle
+    w14_region_col1, w14_region_col2 = st.columns([1, 2])
+    with w14_region_col1:
+        w14_is_metropolis = st.checkbox("Analyzing Metropolis region",
+                                           value=False, key="w14_metropolis_toggle",
+                                           help="Metropolis has larger non-military markets AND 4 military markets unavailable elsewhere")
+    with w14_region_col2:
+        if w14_is_metropolis:
+            st.info("🏛️ **Metropolis mode:** non-military market sizes boosted ×1.5. 4 military markets unlocked (Metropolis-only). Deal breaker: all military needs GPS + cellular + dark finish.")
+        else:
+            st.caption("Standard region mode. Military markets hidden (only available in Metropolis per Case Brief).")
+
+    # Build market list based on region
+    W14_MARKETS = {}
+    for k, v in W14_STANDARD_MARKETS.items():
+        v_copy = dict(v)
+        if w14_is_metropolis:
+            # Non-military markets are LARGER in Metropolis
+            v_copy["size"] = int(v_copy["size"] * 1.5)
+        W14_MARKETS[k] = v_copy
+    if w14_is_metropolis:
+        W14_MARKETS.update(W14_MILITARY_MARKETS)
 
     w14_m_top1, w14_m_top2 = st.columns([1, 3])
     with w14_m_top1:
-        w14_n_markets = st.number_input("# Markets to compare", min_value=2, max_value=5,
-                                           value=5, step=1, key="w14_n_markets")
+        max_markets = min(5, len(W14_MARKETS))
+        w14_n_markets = st.number_input("# Markets to compare", min_value=2, max_value=max_markets,
+                                           value=max_markets, step=1, key="w14_n_markets")
     with w14_m_top2:
         w14_m_materials = st.number_input("Your Materials Cost ($/unit)",
                                              value=100, step=10, key="w14_m_materials")
@@ -2798,18 +2846,386 @@ Peak sales: {peak_q_val * w14_p_buy:,.1f}/day
             else:
                 st.error("Negative margin")
 
+            # ── Cannibalization Checker (per Gleacher Tips: "do not put key features of
+            # high-WTP market into low-WTP product") ─────────────────────────
+            cann_target_market = st.selectbox(
+                "Target Market",
+                ["(select)", "MD-Heart", "MD-Breast Cancer", "MD-Estrogen", "Law-Narcotic", "Clinic-Fertility",
+                 "Trainers", "Military"],
+                index=0, key=f"w14_pd_mkt_{i}",
+                help="What market is this product intended for? We'll check for cannibalization risks."
+            )
+
+            warnings = []
+            # Rule 1: Temporal heartbeat in non-MD-Heart products cannibalizes Heart View
+            if w14_sel_det["Heartbeat"] == "Temporal" and cann_target_market not in ["(select)", "MD-Heart"]:
+                warnings.append("🔴 **Temporal heartbeat** in non-MD-Heart product — cannibalizes Heart View sales")
+            # Rule 2: Pulse heartbeat in non-Heart markets might pull from Heart View (less severe)
+            if w14_sel_det["Heartbeat"] == "Pulse only" and cann_target_market not in ["(select)", "MD-Heart", "MD-Breast Cancer"]:
+                warnings.append("🟡 **Pulse heartbeat** in non-Heart market may cannibalize Heart View")
+            # Rule 3: Narcotic toxicology outside Law/Military wastes money
+            if w14_sel_det["Toxicology"] in ["Narcotic", "Amphetamine", "THC", "Barbiturate"] and cann_target_market not in ["(select)", "Law-Narcotic", "Military"]:
+                warnings.append(f"🟠 **{w14_sel_det['Toxicology']} toxicology** + non-Law/Mil market — $140/u materials wasted, may cannibalize Law product")
+            # Rule 4: Estrogen hormone outside fertility markets
+            if w14_sel_det["Hormone"] == "Estrogen" and cann_target_market not in ["(select)", "MD-Estrogen", "Clinic-Fertility"]:
+                warnings.append("🟡 **Estrogen** outside fertility markets — paying for materials unlikely to convert to WTP")
+            # Rule 5: Law Narcotic products must have GPS + cellular
+            if (w14_sel_det["Toxicology"] == "Narcotic" and cann_target_market == "Law-Narcotic"
+                    and (w14_sel_base["GPS"] == "No GPS" or w14_sel_base["Network"] == "Bluetooth")):
+                warnings.append("🔴 **Law-Narcotic deal breaker** — Needs GPS + cellular (not Bluetooth)")
+            # Rule 6: Fertility with bulky battery
+            if (w14_sel_det["Hormone"] in ["LH", "LH and FSH", "Estrogen"] and "Two-pack" in w14_sel_base["Power"]):
+                warnings.append("🟠 **Fertility deal breaker** — avoid bulky two-battery packs")
+
+            if warnings:
+                st.warning("**Cannibalization / Fit Warnings:**\n\n" + "\n\n".join(warnings))
+            elif cann_target_market != "(select)":
+                st.success("✅ No cannibalization flags. Features fit target market.")
+
             w14_pd_summary.append({
                 "Product": f"P{i+1}: {p_sel}",
+                "Target": cann_target_market,
                 "Days": total_days,
                 "Design $": f"${total_cost:,}",
                 "Mat/u": f"${total_mat}",
                 "Price": f"${w14_pd_price}",
                 "CM/u": f"${w14_pd_margin:,.0f}",
                 "Break-even": f"{w14_pd_be:.0f}d" if w14_pd_be < float("inf") else "N/A",
+                "Warnings": len(warnings) if cann_target_market != "(select)" else "—",
             })
 
     st.markdown("**Product Comparison Summary**")
     st.dataframe(pd.DataFrame(w14_pd_summary), use_container_width=True, hide_index=True)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 9: SUPPLY CHAIN TRADE-OFF CALCULATOR
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("9. Supply Chain Trade-Off Calculator")
+    st.caption("Per Gleacher Tips: trade-offs between mail vs container, own DC vs wholesale, new factory vs capex expansion")
+
+    sc_tab1, sc_tab2, sc_tab3 = st.tabs(["Mail vs Container", "Own DC vs Wholesale", "New Factory vs Capex"])
+
+    # ── Tab 1: Mail vs Container breakeven ──────────────────────────────────
+    with sc_tab1:
+        mc_col1, mc_col2 = st.columns([1, 2])
+        with mc_col1:
+            mc_region = st.radio("Shipping distance",
+                                    ["In-region", "Between regions"],
+                                    index=0, key="w14_mc_region")
+            mc_qty = st.slider("Order Quantity (units)", 10, 1500, 100, step=10, key="w14_mc_qty")
+
+            if mc_region == "In-region":
+                mail_total = (mc_qty / 10) * 200 if mc_qty > 0 else 0
+                container_total = 5000  # flat
+                mail_per_u = 20
+                container_per_u = 5000 / mc_qty if mc_qty > 0 else 0
+                mail_days = 1
+                container_days = 7
+                breakeven = 250  # $5000 / ($20 - $5)
+            else:
+                mail_total = (mc_qty / 10) * 400 if mc_qty > 0 else 0
+                container_total = 10000
+                mail_per_u = 40
+                container_per_u = 10000 / mc_qty if mc_qty > 0 else 0
+                mail_days = 3
+                container_days = 21
+                breakeven = 250  # $10,000 / ($40 - $10)
+
+            cheaper = "Container" if container_total < mail_total else "Mail"
+            faster = "Mail"
+            savings = abs(mail_total - container_total)
+
+        with mc_col2:
+            st.markdown("**Results**")
+            bc1, bc2, bc3 = st.columns(3)
+            with bc1:
+                st.metric("Mail Total", f"${mail_total:,.0f}", delta=f"{mail_days} day(s)")
+                st.metric("Mail per unit", f"${mail_per_u:.2f}")
+            with bc2:
+                st.metric("Container Total", f"${container_total:,.0f}", delta=f"{container_days} day(s)")
+                st.metric("Container per unit", f"${container_per_u:.2f}")
+            with bc3:
+                st.metric("Breakeven Qty", f"{breakeven} units")
+                st.metric("Savings (cheaper)", f"${savings:,.0f}", delta=cheaper)
+
+            # Plot: total cost vs quantity for both modes
+            qty_range = list(range(10, 1501, 10))
+            if mc_region == "In-region":
+                mail_costs = [(q/10) * 200 for q in qty_range]
+                container_costs = [5000] * len(qty_range)
+            else:
+                mail_costs = [(q/10) * 400 for q in qty_range]
+                container_costs = [10000] * len(qty_range)
+
+            fig_mc = go.Figure()
+            fig_mc.add_trace(go.Scatter(x=qty_range, y=mail_costs, name="Mail", line=dict(color="#800000", width=2)))
+            fig_mc.add_trace(go.Scatter(x=qty_range, y=container_costs, name="Container", line=dict(color="#1a3c5e", width=2)))
+            fig_mc.add_vline(x=breakeven, line_dash="dash", line_color="gray",
+                              annotation_text=f"Breakeven: {breakeven}")
+            fig_mc.add_vline(x=mc_qty, line_dash="dot", line_color="green",
+                              annotation_text=f"Your qty: {mc_qty}")
+            fig_mc.update_layout(height=300, xaxis_title="Order Quantity (units)",
+                                  yaxis_title="Total Shipping Cost ($)", yaxis_tickformat="$,.0f",
+                                  title=dict(text=f"Mail vs Container ({mc_region.lower()})",
+                                               x=0.5, xanchor="center", y=0.97, yanchor="top"),
+                                  margin=dict(l=0, r=0, t=70, b=0),
+                                  legend=dict(orientation="h", yanchor="top", y=1.07,
+                                                xanchor="center", x=0.5))
+            st.plotly_chart(fig_mc, use_container_width=True)
+
+            st.info(f"""
+**Decision:** At {mc_qty} units {mc_region.lower()}, **{cheaper}** is cheaper by **${savings:,.0f}** total.
+Mail is always faster ({mail_days}d vs {container_days}d). If the speed difference matters for stockout risk,
+the mail premium ({savings:,.0f} more) may be worth it even below the breakeven quantity.
+            """)
+
+    # ── Tab 2: Own DC vs Wholesale ─────────────────────────────────────────
+    with sc_tab2:
+        st.markdown("Compare: **build your own DC in a region** vs **sell through another team's DC** (wholesale).")
+        dc_col1, dc_col2 = st.columns([1, 2])
+        with dc_col1:
+            dc_price = st.number_input("Retail Price ($/u)", value=1200, step=50, key="w14_dc_price")
+            dc_expected_demand = st.number_input("Expected demand (units/day)", value=5, step=1, key="w14_dc_demand")
+            dc_days_left = st.number_input("Days remaining", value=1000, step=50, key="w14_dc_days")
+            dc_materials = st.number_input("Materials + ship ($/u)", value=140, step=10, key="w14_dc_mat")
+            # Build-your-own DC params
+            dc_build_cost = 2600000
+            dc_build_days = 60
+            dc_daily_cost = 2000
+            dc_depreciation = dc_build_cost / 15 / 364
+            # Wholesale: sell to another team at a discount, they retail
+            dc_wholesale_price = st.number_input("Wholesale price to partner ($/u)", value=600, step=25, key="w14_dc_wsp")
+
+        with dc_col2:
+            # Own DC: full retail price minus commission minus handling minus materials minus daily DC opex
+            own_dc_cm_per_unit = dc_price * (1 - w14_comm_frac) - 10 - dc_materials  # handling $10
+            operating_days = max(0, dc_days_left - dc_build_days)
+            own_dc_revenue_total = own_dc_cm_per_unit * dc_expected_demand * operating_days
+            own_dc_opex_total = (dc_daily_cost + dc_depreciation) * operating_days
+            own_dc_net = own_dc_revenue_total - own_dc_opex_total - dc_build_cost
+
+            # Wholesale: partner takes 20% commission + handles everything retail-side
+            # We ship to them, they retail
+            ws_cm_per_unit = dc_wholesale_price - dc_materials - 20  # materials + shipping
+            ws_revenue_total = ws_cm_per_unit * dc_expected_demand * dc_days_left
+            ws_net = ws_revenue_total  # no capex, no daily opex from us
+
+            winner = "Own DC" if own_dc_net > ws_net else "Wholesale"
+            delta = abs(own_dc_net - ws_net)
+
+            d1, d2, d3 = st.columns(3)
+            with d1:
+                st.markdown("**Own DC**")
+                st.metric("CM/unit", f"${own_dc_cm_per_unit:,.0f}")
+                st.metric("Operating days", f"{operating_days:.0f}")
+                st.metric("Gross CM", f"${own_dc_revenue_total:,.0f}")
+                st.metric("− Opex + capex", f"${own_dc_opex_total + dc_build_cost:,.0f}")
+                st.metric("Net", f"${own_dc_net:,.0f}")
+            with d2:
+                st.markdown("**Wholesale**")
+                st.metric("CM/unit", f"${ws_cm_per_unit:,.0f}")
+                st.metric("Operating days", f"{dc_days_left}")
+                st.metric("Gross CM", f"${ws_revenue_total:,.0f}")
+                st.metric("− Opex", "$0 (partner pays)")
+                st.metric("Net", f"${ws_net:,.0f}")
+            with d3:
+                color = "#2d6a2e" if winner == "Own DC" else "#1a3c5e"
+                st.markdown(f"""
+<div style="background:{color};color:white;border-radius:8px;padding:1rem;text-align:center;">
+<span style="font-size:0.85em;opacity:0.8;">Recommendation</span><br>
+<b style="font-size:1.6em;">{winner}</b><br>
+<span style="font-size:0.9em;">${delta:,.0f} advantage</span>
+</div>
+""", unsafe_allow_html=True)
+
+            st.info("""
+**Key factors:**
+- Own DC requires **60-day build** (no revenue during build)
+- Own DC has **$2.6M capex + $2K/day opex**
+- Wholesale preserves capital but caps price at wholesale level
+- **Breakeven** depends on days remaining and demand volume
+
+Per Gleacher Tips: *"Don't be shy about borrowing money and expanding, but make sure investments are positive NPV."*
+            """)
+
+    # ── Tab 3: New Factory vs Capex Expansion ──────────────────────────────
+    with sc_tab3:
+        st.markdown("Compare: **build a new factory** vs **add capital to existing factory**.")
+        fx_col1, fx_col2 = st.columns([1, 2])
+        with fx_col1:
+            fx_current_K = st.number_input("Current factory K ($)", value=100000, step=50000, key="w14_fx_K")
+            fx_add_capex = st.number_input("Additional capex to add ($)", value=400000, step=50000, key="w14_fx_add")
+            fx_new_K = st.number_input("New factory K ($)", value=500000, step=50000, key="w14_fx_newK")
+            fx_daily_l = st.number_input("Daily labor both options ($/day)", value=2500, step=500, key="w14_fx_l")
+            fx_days_left = st.number_input("Days remaining", value=1000, step=50, key="w14_fx_days")
+            fx_cm_per_unit = st.number_input("CM per unit ($)", value=400, step=50, key="w14_fx_cm")
+
+        with fx_col2:
+            # Option A: add capex to existing (30-day lead)
+            A_K = fx_current_K + fx_add_capex
+            A_lambda = 0.009 * (A_K ** 0.10) * ((fx_daily_l * 364) ** 0.85) / 364
+            A_batch_time = 100 / A_lambda if A_lambda > 0 else float("inf")
+            A_lambda_eff = 100 / (A_batch_time + 0.05)
+            A_lead = 30
+            A_operating_days = max(0, fx_days_left - A_lead)
+            A_revenue = A_lambda_eff * A_operating_days * fx_cm_per_unit
+            A_net = A_revenue - fx_add_capex - (fx_daily_l * (A_operating_days + A_lead))
+
+            # Option B: build new factory (90-day build, separate factory at new_K)
+            B_K = fx_new_K
+            B_land = 100000
+            B_lambda = 0.009 * (B_K ** 0.10) * ((fx_daily_l * 364) ** 0.85) / 364
+            B_batch_time = 100 / B_lambda if B_lambda > 0 else float("inf")
+            B_lambda_eff = 100 / (B_batch_time + 0.05)
+            B_lead = 90
+            B_operating_days = max(0, fx_days_left - B_lead)
+            # Plus existing factory keeps running at its current throughput during the 90 days
+            old_lambda = 0.009 * (fx_current_K ** 0.10) * ((fx_daily_l * 364) ** 0.85) / 364
+            old_lambda_eff = 100 / ((100 / old_lambda if old_lambda > 0 else float("inf")) + 0.05)
+            # B throughput during build = old only, after build = old + new
+            B_units_during_build = old_lambda_eff * B_lead
+            B_units_after_build = (old_lambda_eff + B_lambda_eff) * B_operating_days
+            B_total_units = B_units_during_build + B_units_after_build
+            B_revenue = B_total_units * fx_cm_per_unit
+            # Labor for both factories through building + operating
+            B_total_labor = fx_daily_l * fx_days_left + fx_daily_l * B_operating_days  # new factory uses labor only when running
+            B_net = B_revenue - (fx_new_K + B_land) - B_total_labor
+
+            winner = "Add Capex" if A_net > B_net else "New Factory"
+            delta = abs(A_net - B_net)
+
+            f1, f2, f3 = st.columns(3)
+            with f1:
+                st.markdown("**Option A: Add Capex**")
+                st.metric("K after upgrade", f"${A_K:,}")
+                st.metric("Effective λ", f"{A_lambda_eff:.2f}/day")
+                st.metric("Lead time", f"{A_lead} days")
+                st.metric("Operating days", f"{A_operating_days}")
+                st.metric("Net CM (after cost)", f"${A_net:,.0f}")
+            with f2:
+                st.markdown("**Option B: New Factory**")
+                st.metric("New factory K", f"${B_K:,}")
+                st.metric("New λ", f"{B_lambda_eff:.2f}/day")
+                st.metric("Combined λ", f"{old_lambda_eff + B_lambda_eff:.2f}/day")
+                st.metric("Lead time", f"{B_lead} days")
+                st.metric("Net CM (after cost)", f"${B_net:,.0f}")
+            with f3:
+                color = "#2d6a2e" if winner == "Add Capex" else "#1a3c5e"
+                st.markdown(f"""
+<div style="background:{color};color:white;border-radius:8px;padding:1rem;text-align:center;">
+<span style="font-size:0.85em;opacity:0.8;">Recommendation</span><br>
+<b style="font-size:1.5em;">{winner}</b><br>
+<span style="font-size:0.9em;">${delta:,.0f} advantage</span>
+</div>
+""", unsafe_allow_html=True)
+
+            st.info("""
+**Key factors:**
+- **Add Capex** = 30-day lead, existing factory keeps running at current rate during
+- **New Factory** = 90-day build, adds incremental throughput on TOP of existing
+- Cell/Line factories have minimum K requirements ($500K / $3M)
+- Each factory has its own daily labor cost — two factories = 2× labor
+            """)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 10: CASH & TAX DISCIPLINE PLANNER
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("10. Cash & Tax Discipline Planner")
+    st.caption("Per Gleacher Tips: make sure there's enough cash for quarterly taxes + plan for growth in working capital")
+
+    ct_col1, ct_col2 = st.columns([1, 2])
+    with ct_col1:
+        st.markdown("**Quarterly Inputs**")
+        ct_current_cash = st.number_input("Current Cash ($)", value=1579530, step=10000, key="w14_ct_cash")
+        ct_quarter_revenue = st.number_input("This Q Revenue ($)", value=683000, step=10000, key="w14_ct_rev")
+        ct_quarter_opex = st.number_input("This Q Opex ($)", value=680000, step=10000, key="w14_ct_opex",
+                                             help="COGS + selling + DC opex + depreciation")
+        ct_next_q_capex = st.number_input("Planned Capex next Q ($)", value=0, step=50000, key="w14_ct_capex")
+        ct_next_q_div = st.number_input("Planned Dividends next Q ($)", value=0, step=10000, key="w14_ct_div")
+        ct_next_q_ad = st.number_input("Planned Ad Spend next Q ($)", value=0, step=10000, key="w14_ct_ad")
+
+    with ct_col2:
+        # Tax calculation
+        ct_quarter_op_income = ct_quarter_revenue - ct_quarter_opex
+        ct_tax = max(0, ct_quarter_op_income) * 0.35
+
+        # Cash flow projection for next quarter
+        ct_next_q_opex_est = ct_quarter_opex  # assume similar
+        ct_next_q_rev_est = ct_quarter_revenue  # assume similar (conservative)
+        ct_next_q_operating_cash = ct_next_q_rev_est - ct_next_q_opex_est
+        ct_next_q_ending_cash = (ct_current_cash + ct_next_q_operating_cash
+                                    - ct_next_q_capex - ct_next_q_div - ct_next_q_ad - ct_tax)
+
+        # Buffer recommendation
+        recommended_buffer = ct_tax + ct_quarter_opex / 3  # tax + 1 month opex
+
+        st.markdown("**Cash Flow Projection — Next Quarter**")
+        ct_a, ct_b, ct_c = st.columns(3)
+        with ct_a:
+            st.metric("This Q Op. Income", f"${ct_quarter_op_income:,.0f}")
+            st.metric("Tax due (35%)", f"${ct_tax:,.0f}",
+                       delta="Paid end of quarter", delta_color="off")
+        with ct_b:
+            st.metric("Projected Op Cash Flow", f"${ct_next_q_operating_cash:,.0f}")
+            st.metric("Projected Ending Cash", f"${ct_next_q_ending_cash:,.0f}",
+                       delta=f"${ct_next_q_ending_cash - ct_current_cash:,.0f}")
+        with ct_c:
+            st.metric("Recommended Buffer", f"${recommended_buffer:,.0f}",
+                       help="Tax + 1 month opex")
+            buffer_status = "✅ Safe" if ct_next_q_ending_cash > recommended_buffer else "⚠️ Below buffer"
+            if ct_next_q_ending_cash < 0:
+                buffer_status = "🔴 EMERGENCY LOAN (40% APR!)"
+            st.metric("Status", buffer_status)
+
+        # Detailed waterfall for next quarter
+        fig_cash = go.Figure(go.Waterfall(
+            name="Q+1 cash flow",
+            orientation="v",
+            measure=["absolute", "relative", "relative", "relative", "relative", "relative", "total"],
+            x=["Start Cash", "Operating CF", "− Capex", "− Dividends", "− Ad Spend", "− Tax", "End Cash"],
+            y=[ct_current_cash, ct_next_q_operating_cash,
+               -ct_next_q_capex, -ct_next_q_div, -ct_next_q_ad, -ct_tax, 0],
+            connector={"line": {"color": "rgb(63, 63, 63)"}},
+            increasing={"marker": {"color": "#2d6a2e"}},
+            decreasing={"marker": {"color": "#b22222"}},
+            totals={"marker": {"color": "#1a3c5e"}},
+        ))
+        fig_cash.update_layout(height=300, yaxis_title="Cash ($)", yaxis_tickformat="$,.0f",
+                                title=dict(text="Next Quarter Cash Flow Waterfall",
+                                             x=0.5, xanchor="center", y=0.97, yanchor="top"),
+                                margin=dict(l=0, r=0, t=60, b=0))
+        st.plotly_chart(fig_cash, use_container_width=True)
+
+        if ct_next_q_ending_cash < 0:
+            st.error(f"""
+🔴 **CRITICAL: Emergency loan triggered at 40% APR.**
+Gap: ${-ct_next_q_ending_cash:,.0f}. Actions:
+1. Defer capex (${ct_next_q_capex:,}) to a later quarter
+2. Defer dividends (${ct_next_q_div:,})
+3. Cut ad spend (${ct_next_q_ad:,})
+4. Issue bonds now (Excellent rate 10% APR << 40% emergency)
+            """)
+        elif ct_next_q_ending_cash < recommended_buffer:
+            st.warning(f"""
+⚠️ **Cash below recommended buffer.**
+You'll survive this quarter but have no margin for surprises. Consider:
+- Delay non-critical capex
+- Build cash cushion before expansion
+            """)
+        else:
+            st.success(f"✅ Cash position is healthy. Buffer of ${ct_next_q_ending_cash - recommended_buffer:,.0f} above recommended minimum.")
+
+    # Going concern reminder
+    st.info("""
+**Going Concern Note (for Final Project valuation):**
+Per Gleacher Tips: *"The business remains a going concern after the period of active play."*
+Your firm's terminal value (post-day 1460) should be included in valuation. Use a **terminal value**
+= next-year cash flow / (discount rate − growth rate) or a 4-year DCF + terminal multiple.
+    """)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
