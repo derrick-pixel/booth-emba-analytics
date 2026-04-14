@@ -2029,11 +2029,13 @@ elif page == "🚀 14 Trial War Room":
         fig_sc.add_trace(go.Scatter(x=list(range(1, 1461)), y=traj, name=f"{label}: ${price} {'w/ ad' if ad > 0 else ''}",
                                       mode="lines"))
     fig_sc.add_hline(y=0, line_dash="dot", line_color="gray")
-    fig_sc.update_layout(height=400, xaxis_title="Day",
+    fig_sc.update_layout(height=450, xaxis_title="Day",
                           yaxis_title="Cumulative CM ($)", yaxis_tickformat="$,.0f",
-                          title="Cumulative Contribution over 4 Years",
-                          margin=dict(l=0, r=0, t=40, b=0),
-                          legend=dict(orientation="h", yanchor="bottom", y=1.02))
+                          title=dict(text="Cumulative Contribution over 4 Years",
+                                       x=0.5, xanchor="center", y=0.97, yanchor="top"),
+                          margin=dict(l=0, r=0, t=90, b=0),
+                          legend=dict(orientation="h", yanchor="top", y=1.07,
+                                        xanchor="center", x=0.5))
     st.plotly_chart(fig_sc, use_container_width=True)
 
     st.markdown("---")
