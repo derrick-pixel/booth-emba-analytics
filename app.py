@@ -2141,16 +2141,31 @@ DB: <span style="color:{db_color};">{m['dealbreaker']}</span>
                     wtp_max_use = additive_wtp
                     wtp_mean_use = additive_wtp * 0.85
                     wtp_std_use = additive_wtp * 0.1
+                elif "wtp_tiers" in m:
+                    # Tiered WTP: user picks which feature tier applies to their product
+                    st.markdown("**Feature tier (determines WTP range)**")
+                    tier_labels = [f"{t[0]} (${t[1]}-${t[2]})" for t in m["wtp_tiers"]]
+                    tier_idx = st.selectbox("Your product tier", range(len(tier_labels)),
+                                              format_func=lambda x: tier_labels[x],
+                                              index=len(m["wtp_tiers"]) - 1,  # default to highest
+                                              key=f"n14_ms_tier_{i}")
+                    tier = m["wtp_tiers"][tier_idx]
+                    wtp_low_d, wtp_high_d = tier[1], tier[2]
+                    wtp_max_use = st.slider("Max WTP ($)",
+                                               int(wtp_low_d), int(wtp_high_d * 1.2),
+                                               int(wtp_high_d), step=10, key=f"n14_ms_wtp_{i}")
+                    wtp_mean_use = (wtp_low_d + wtp_max_use) / 2
+                    wtp_std_use = max(1, (wtp_max_use - wtp_low_d) / 3.464)
                 else:
                     # Normal WTP: mid-range from Practice Game doc; treat uniform [wtp_low, wtp_high]
                     wtp_low_d = m["wtp_low"]
                     wtp_high_d = m["wtp_high"]
                     st.caption(f"WTP range: ${wtp_low_d} - ${wtp_high_d} (uniform assumption)")
                     wtp_max_use = st.slider("Max WTP ($)",
-                                               int(wtp_low_d), int(wtp_high_d * 1.2),
-                                               int(wtp_high_d), step=10, key=f"n14_ms_wtp_{i}")
+                                               int(max(wtp_low_d + 1, 1)), int(max(wtp_high_d * 1.2, wtp_low_d + 10)),
+                                               int(max(wtp_high_d, wtp_low_d + 1)), step=10, key=f"n14_ms_wtp_{i}")
                     wtp_mean_use = (wtp_low_d + wtp_max_use) / 2
-                    wtp_std_use = (wtp_max_use - wtp_low_d) / 3.464  # uniform → std
+                    wtp_std_use = max(1, (wtp_max_use - wtp_low_d) / 3.464)  # uniform → std
 
                 # Price slider
                 ms_p_min = int(n14_mkt_materials + N14_HANDLING + N14_SHIPPING)
