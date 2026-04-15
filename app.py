@@ -3545,6 +3545,102 @@ Cell's bigger setup (1d vs 0.5d) × much higher λ_raw means S is large — use 
             "dso": 30, "dealbreaker": "None",
             "type": "normal",
         },
+        "MD Metabolic (Thyroxine)": {
+            "sizes": {"Serenity": 750, "Metropolis": 30000, "Other Region": 15000},
+            "wtp_low": 750, "wtp_high": 1300,
+            "core_feature": "Metabolic Thyroxine",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "None",
+            "type": "normal",
+        },
+        "MD Metabolic (Proteins)": {
+            "sizes": {"Serenity": 750, "Metropolis": 30000, "Other Region": 15000},
+            "wtp_low": 900, "wtp_high": 1450,
+            "core_feature": "Metabolic Proteins",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "None",
+            "type": "normal",
+        },
+        "MD Metabolic (Uric Acid)": {
+            "sizes": {"Serenity": 750, "Metropolis": 30000, "Other Region": 15000},
+            "wtp_low": 750, "wtp_high": 1300,
+            "core_feature": "Metabolic Uric Acid",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "None",
+            "type": "normal",
+        },
+        "MD Fertility (Progesterone)": {
+            "sizes": {"Serenity": 750, "Metropolis": 30000, "Other Region": 15000},
+            "wtp_low": 575, "wtp_high": 965,
+            "core_feature": "Hormone Progesterone",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "None",
+            "type": "normal",
+        },
+        "MD Fertility (Testosterone)": {
+            "sizes": {"Serenity": 750, "Metropolis": 30000, "Other Region": 15000},
+            "wtp_low": 575, "wtp_high": 965,
+            "core_feature": "Hormone Testosterone",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "None",
+            "type": "normal",
+        },
+        "MD Cancer (Prostate)": {
+            "sizes": {"Serenity": 750, "Metropolis": 30000, "Other Region": 15000},
+            "wtp_low": 900, "wtp_high": 1600,
+            "core_feature": "Cancer Prostate",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "None",
+            "type": "normal",
+        },
+        "MD Cancer (Lymphoma)": {
+            "sizes": {"Serenity": 750, "Metropolis": 30000, "Other Region": 15000},
+            "wtp_low": 900, "wtp_high": 1700,
+            "core_feature": "Cancer Lymphoma",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "None",
+            "type": "normal",
+        },
+        "MD Cancer (Blood & Bone)": {
+            "sizes": {"Serenity": 750, "Metropolis": 30000, "Other Region": 15000},
+            "wtp_low": 900, "wtp_high": 1800,
+            "core_feature": "Cancer Blood & Bone",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "None",
+            "type": "normal",
+        },
+        "Law (Ethanol)": {
+            "sizes": {"Serenity": 1500, "Metropolis": 60000, "Other Region": 30000},
+            "wtp_low": 900, "wtp_high": 1000,
+            "core_feature": "Toxicology Ethanol (competitive)",
+            "p": 0.00025, "p_adv": 0.00025, "q": 0.0025,
+            "dso": 90, "dealbreaker": "Lack of GPS / cellular",
+            "type": "normal",
+        },
+        "Law (Amphetamine)": {
+            "sizes": {"Serenity": 500, "Metropolis": 20000, "Other Region": 10000},
+            "wtp_low": 1100, "wtp_high": 1300,
+            "core_feature": "Toxicology Amphetamine",
+            "p": 0.00025, "p_adv": 0.00025, "q": 0.0025,
+            "dso": 90, "dealbreaker": "Lack of GPS / cellular",
+            "type": "normal",
+        },
+        "Law (THC)": {
+            "sizes": {"Serenity": 500, "Metropolis": 20000, "Other Region": 10000},
+            "wtp_low": 1000, "wtp_high": 1200,
+            "core_feature": "Toxicology THC",
+            "p": 0.00025, "p_adv": 0.00025, "q": 0.0025,
+            "dso": 90, "dealbreaker": "Lack of GPS / cellular",
+            "type": "normal",
+        },
+        "Law (Barbiturate)": {
+            "sizes": {"Serenity": 500, "Metropolis": 20000, "Other Region": 10000},
+            "wtp_low": 1100, "wtp_high": 1300,
+            "core_feature": "Toxicology Barbiturate",
+            "p": 0.00025, "p_adv": 0.00025, "q": 0.0025,
+            "dso": 90, "dealbreaker": "Lack of GPS / cellular",
+            "type": "normal",
+        },
         "Military Botulinum (Serenity-only)": {
             "sizes": {"Serenity": 120000, "Metropolis": 0, "Other Region": 0},
             "wtp_low": 800, "wtp_high": 1300,
@@ -3557,6 +3653,22 @@ Cell's bigger setup (1d vs 0.5d) × much higher λ_raw means S is large — use 
             "sizes": {"Serenity": 60000, "Metropolis": 0, "Other Region": 0},
             "wtp_low": 800, "wtp_high": 1300,
             "core_feature": "Neurotoxin Anatoxin-a",
+            "p": 0.0003, "p_adv": 0.0003, "q": 0.0045,
+            "dso": 60, "dealbreaker": "Lack of GPS OR polymer battery pack",
+            "type": "normal",
+        },
+        "Military Sarin & Cyclosarin (Serenity-only)": {
+            "sizes": {"Serenity": 80000, "Metropolis": 0, "Other Region": 0},
+            "wtp_low": 1000, "wtp_high": 1300,
+            "core_feature": "Neurotoxin Sarin & Cyclosarin",
+            "p": 0.0003, "p_adv": 0.0003, "q": 0.0045,
+            "dso": 60, "dealbreaker": "Lack of GPS OR polymer battery pack",
+            "type": "normal",
+        },
+        "Military Soman (Serenity-only)": {
+            "sizes": {"Serenity": 60000, "Metropolis": 0, "Other Region": 0},
+            "wtp_low": 800, "wtp_high": 1200,
+            "core_feature": "Neurotoxin Soman",
             "p": 0.0003, "p_adv": 0.0003, "q": 0.0045,
             "dso": 60, "dealbreaker": "Lack of GPS OR polymer battery pack",
             "type": "normal",
@@ -3854,17 +3966,31 @@ CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_m
         "Clinical Cardiovascular": ["Blood vessel", "Dissolved gasses"],
         "Clinical Fertility (LH)": ["Hormone"],
         "Clinical Fertility (LH/FSH)": ["Hormone"],
+        "Law (Ethanol)": ["Toxicology"],
+        "Law (Amphetamine)": ["Toxicology"],
+        "Law (THC)": ["Toxicology"],
+        "Law (Barbiturate)": ["Toxicology"],
         "Law (Narcotic)": ["Toxicology"],
         "MD Cancer (Base Panel)": ["Cancer"],
+        "MD Cancer (Prostate)": ["Cancer"],
         "MD Cancer (Breast)": ["Cancer"],
         "MD Cancer (Bladder & Kidney)": ["Cancer"],
+        "MD Cancer (Lymphoma)": ["Cancer"],
+        "MD Cancer (Blood & Bone)": ["Cancer"],
         "MD Dissolved Gasses": ["Dissolved gasses"],
         "MD Fertility (Estrogen)": ["Hormone"],
+        "MD Fertility (Progesterone)": ["Hormone"],
+        "MD Fertility (Testosterone)": ["Hormone"],
         "MD Heart (Pulse only)": ["Heartbeat"],
         "MD Heart (Temporal)": ["Heartbeat"],
         "MD Metabolic (Bilirubin)": ["Metabolic"],
+        "MD Metabolic (Thyroxine)": ["Metabolic"],
+        "MD Metabolic (Proteins)": ["Metabolic"],
+        "MD Metabolic (Uric Acid)": ["Metabolic"],
         "Military Botulinum (Serenity-only)": ["Neurotoxins"],
         "Military Anatoxin-a (Serenity-only)": ["Neurotoxins"],
+        "Military Sarin & Cyclosarin (Serenity-only)": ["Neurotoxins"],
+        "Military Soman (Serenity-only)": ["Neurotoxins"],
         "Athlete (General)": ["Heartbeat", "Blood vessel", "Dissolved gasses", "Motion"],
         "Athlete (Fad)": ["Heartbeat", "Blood vessel", "Dissolved gasses", "Motion"],
     }
@@ -3993,6 +4119,122 @@ CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_m
             "Dissolved gasses": "None", "Toxicology": "None",
             "Hormone": "None", "Metabolic": "None",
             "Cancer": "None", "Neurotoxins": "Anatoxin-a", "Motion": "None",
+        },
+        "Military Sarin & Cyclosarin (Serenity-only)": {
+            "Platform": "Sleeves", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer pack", "Finish": "Camouflage",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "Sarin & Cyclosarin", "Motion": "None",
+        },
+        "Military Soman (Serenity-only)": {
+            "Platform": "Sleeves", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer pack", "Finish": "Camouflage",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "Soman", "Motion": "None",
+        },
+        # Cancer variants (Prostate/Lymphoma/Blood&Bone) — same base as Breast/B&K
+        "MD Cancer (Prostate)": {
+            "Platform": "Chest", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer", "Finish": "Original",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "Prostate", "Neurotoxins": "None", "Motion": "None",
+        },
+        "MD Cancer (Lymphoma)": {
+            "Platform": "Chest", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer", "Finish": "Original",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "Lymphoma", "Neurotoxins": "None", "Motion": "None",
+        },
+        "MD Cancer (Blood & Bone)": {
+            "Platform": "Chest", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer", "Finish": "Original",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "Blood & Bone", "Neurotoxins": "None", "Motion": "None",
+        },
+        # MD Fertility variants (Progesterone/Testosterone) — wrist preference
+        "MD Fertility (Progesterone)": {
+            "Platform": "Wrists", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer", "Finish": "Original",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "Progesterone", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "None", "Motion": "None",
+        },
+        "MD Fertility (Testosterone)": {
+            "Platform": "Wrists", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer", "Finish": "Original",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "Testosterone", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "None", "Motion": "None",
+        },
+        # MD Metabolic variants (Thyroxine/Proteins/Uric Acid)
+        "MD Metabolic (Thyroxine)": {
+            "Platform": "Chest", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer", "Finish": "Original",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "Thyroxine",
+            "Cancer": "None", "Neurotoxins": "None", "Motion": "None",
+        },
+        "MD Metabolic (Proteins)": {
+            "Platform": "Chest", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer", "Finish": "Original",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "Proteins",
+            "Cancer": "None", "Neurotoxins": "None", "Motion": "None",
+        },
+        "MD Metabolic (Uric Acid)": {
+            "Platform": "Chest", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer", "Finish": "Original",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "Uric acid",
+            "Cancer": "None", "Neurotoxins": "None", "Motion": "None",
+        },
+        # Law variants. Ethanol has competition and lower WTP. Others similar to Narcotic.
+        "Law (Ethanol)": {
+            "Platform": "Stockings", "GPS": "GPS", "Network": "5 GHz",
+            "Power": "Polymer pack", "Finish": "Black",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "Ethanol",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "None", "Motion": "None",
+        },
+        "Law (Amphetamine)": {
+            "Platform": "Stockings", "GPS": "GPS", "Network": "5 GHz",
+            "Power": "Polymer pack", "Finish": "Black",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "Amphetamine",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "None", "Motion": "None",
+        },
+        "Law (THC)": {
+            "Platform": "Stockings", "GPS": "GPS", "Network": "5 GHz",
+            "Power": "Polymer pack", "Finish": "Black",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "THC",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "None", "Motion": "None",
+        },
+        "Law (Barbiturate)": {
+            "Platform": "Stockings", "GPS": "GPS", "Network": "5 GHz",
+            "Power": "Polymer pack", "Finish": "Black",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "Barbiturate",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "None", "Motion": "None",
         },
         # Athlete: additive WTP. Maximize each feature at lowest materials cost:
         # HB=Pulse only $150 (= Pulse+temporal but cheaper), BV=Systolic&diastolic $35
@@ -4162,10 +4404,17 @@ CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_m
                 ("Premium finish", 0.10, bas.get("Finish") in ("Metallic", "Geometric")),
             ])
 
-        # ── Law (Narcotic) ─────────────────────────────────────────────────
-        if target == "Law (Narcotic)":
-            if det.get("Toxicology", "None") != "Narcotic":
-                return 0, "❌ Needs Narcotic toxicology detector"
+        # ── Law markets (Ethanol / Amphetamine / THC / Barbiturate / Narcotic) ─
+        if target.startswith("Law"):
+            needed_tox = {
+                "Law (Ethanol)": "Ethanol",
+                "Law (Amphetamine)": "Amphetamine",
+                "Law (THC)": "THC",
+                "Law (Barbiturate)": "Barbiturate",
+                "Law (Narcotic)": "Narcotic",
+            }.get(target)
+            if det.get("Toxicology", "None") != needed_tox:
+                return 0, f"❌ Needs {needed_tox} toxicology detector"
             if bas.get("GPS") != "GPS":
                 return 200, "❌ Dealbreaker: no GPS"
             if bas.get("Network") == "Bluetooth":
@@ -4214,10 +4463,15 @@ CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_m
                 ("Premium finish", 0.05, bas.get("Finish") in ("Metallic", "Geometric")),
             ])
 
-        # ── MD Fertility (Estrogen) ────────────────────────────────────────
-        if target == "MD Fertility (Estrogen)":
-            if det.get("Hormone") != "Estrogen":
-                return 0, "❌ Needs Estrogen hormone detection"
+        # ── MD Fertility (Estrogen / Progesterone / Testosterone) ──────────
+        if target.startswith("MD Fertility"):
+            needed_h = {
+                "MD Fertility (Estrogen)": "Estrogen",
+                "MD Fertility (Progesterone)": "Progesterone",
+                "MD Fertility (Testosterone)": "Testosterone",
+            }.get(target)
+            if det.get("Hormone") != needed_h:
+                return 0, f"❌ Needs {needed_h} hormone detection"
             low, high = m["wtp_low"], m["wtp_high"]
             return _score(low, high, [
                 ("Wrist platform (user pref)", 0.25, bas.get("Platform") == "Wrists"),
@@ -4245,10 +4499,16 @@ CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_m
                 ("Premium finish", 0.05, bas.get("Finish") in ("Metallic", "Geometric")),
             ])
 
-        # ── MD Metabolic (Bilirubin) ───────────────────────────────────────
-        if target == "MD Metabolic (Bilirubin)":
-            if det.get("Metabolic") != "Bilirubin":
-                return 0, "❌ Needs Bilirubin metabolic detector"
+        # ── MD Metabolic (Bilirubin / Thyroxine / Proteins / Uric Acid) ────
+        if target.startswith("MD Metabolic"):
+            needed_m = {
+                "MD Metabolic (Bilirubin)": "Bilirubin",
+                "MD Metabolic (Thyroxine)": "Thyroxine",
+                "MD Metabolic (Proteins)": "Proteins",
+                "MD Metabolic (Uric Acid)": "Uric acid",  # note casing per W14B_DETECTION
+            }.get(target)
+            if det.get("Metabolic") != needed_m:
+                return 0, f"❌ Needs {needed_m} metabolic detector"
             low, high = m["wtp_low"], m["wtp_high"]
             return _score(low, high, [
                 ("GPS tracking", 0.20, bas.get("GPS") == "GPS"),
@@ -4257,10 +4517,14 @@ CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_m
                 ("Premium finish", 0.05, bas.get("Finish") in ("Metallic", "Geometric")),
             ])
 
-        # ── Military (Botulinum / Anatoxin-a) ──────────────────────────────
+        # ── Military (Botulinum / Anatoxin-a / Sarin&Cyclosarin / Soman) ───
         if target.startswith("Military"):
-            need_n = {"Military Botulinum (Serenity-only)": "Botulinum",
-                      "Military Anatoxin-a (Serenity-only)": "Anatoxin-a"}.get(target, "")
+            need_n = {
+                "Military Botulinum (Serenity-only)": "Botulinum",
+                "Military Anatoxin-a (Serenity-only)": "Anatoxin-a",
+                "Military Sarin & Cyclosarin (Serenity-only)": "Sarin & Cyclosarin",
+                "Military Soman (Serenity-only)": "Soman",
+            }.get(target, "")
             if det.get("Neurotoxins") != need_n:
                 return 0, f"❌ Needs {need_n} neurotoxin detector"
             if bas.get("GPS") != "GPS":
