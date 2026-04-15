@@ -3146,6 +3146,156 @@ Given the D3 Exercise uses Normal, **we should assume Normal distribution** goin
             rts_label = "Incr." if rts > 1.02 else ("Decr." if rts < 0.98 else "Const.")
             st.metric("α+β", f"{rts:.2f}", delta=f"{rts_label} returns", delta_color="off")
 
+    # ══════════════════════════════════════════════════════════════════════════
+    # OPTIMAL BATCH SIZE PROPOSER
+    # λ_eff(B) = λ_raw · B / (B + S)   where S = setup × λ_raw
+    # Mfg OH/u(B) = daily_cost / λ_eff = (daily_cost/λ_raw) · (1 + S/B)
+    # For target efficiency t, optimal B* = S · t / (1−t)
+    # ══════════════════════════════════════════════════════════════════════════
+    st.markdown("---")
+    st.markdown("### 🎯 Optimal Batch Size Proposer")
+    st.caption(
+        "Trade-off: **small batch** → setup dominates → high Mfg OH/u. "
+        "**Large batch** → OH converges to the floor `daily_cost / λ_raw`, but WIP grows linearly. "
+        "The recommendation picks the batch where throughput is close to its ceiling before WIP balloons."
+    )
+
+    prop_c1, prop_c2, prop_c3 = st.columns([1, 1, 2])
+    with prop_c1:
+        target_eff = st.slider(
+            "Throughput target (% of λ_raw)",
+            min_value=0.70, max_value=0.995, value=0.95, step=0.01,
+            format="%.2f", key="w14_target_eff",
+            help="0.95 → capture 95% of max throughput with 5% setup drag. "
+                 "0.99 → 99% of max but WIP ~5× larger.",
+        )
+    with prop_c2:
+        expected_demand = st.number_input(
+            "Expected daily sales (0 = ignore)",
+            min_value=0, value=0, step=1, key="w14_expected_demand",
+            help="If >0, we also propose a demand-matched batch — the SMALLEST batch that "
+                 "just keeps up with demand. Avoids overproducing into unsold WIP.",
+        )
+    with prop_c3:
+        st.caption(
+            "**Formula:** B\\* = S · t / (1 − t), where S = setup × λ_raw (units lost per setup), "
+            "t = target efficiency. E.g. t=0.90 → B\\* = 9S. Going 0.95 → 0.99 adds only ~4% throughput "
+            "but 5× the WIP. Pick the highest t you can carry in inventory."
+        )
+
+    prop_rows = []
+    best_by_oh = None
+    for f, r in zip(W14_FACTORIES, w14_fac_results):
+        if r is None:
+            prop_rows.append({
+                "Factory": f["name"], "λ_raw (u/d)": "—", "S = setup·λ_raw": "—",
+                "B* (target)": "—", "λ_eff @B*": "—",
+                "Mfg OH/u @B*": "—", "Floor (B→∞)": "—", "WIP @B*": "—",
+                "B for demand": "—",
+            })
+            continue
+        lam_raw = r["lambda_raw"]
+        daily_cost = r["daily_cost"]
+        S = f["setup"] * lam_raw
+        B_star = S * target_eff / (1 - target_eff) if target_eff < 1.0 else float("inf")
+        B_star_int = max(1, int(round(B_star)))
+        CT_star = B_star_int / lam_raw + f["setup"]
+        lam_eff_star = B_star_int / CT_star
+        mfg_oh_star = daily_cost / lam_eff_star if lam_eff_star > 0 else float("inf")
+        floor_oh = daily_cost / lam_raw if lam_raw > 0 else float("inf")
+        WIP_star = B_star_int
+
+        if expected_demand > 0:
+            if expected_demand >= lam_raw:
+                B_dem_str = "∞ (beyond capacity)"
+            else:
+                B_dem = expected_demand * S / (lam_raw - expected_demand)
+                B_dem_str = f"{max(1, int(round(B_dem)))}"
+        else:
+            B_dem_str = "—"
+
+        prop_rows.append({
+            "Factory": f["name"],
+            "λ_raw (u/d)": f"{lam_raw:.2f}",
+            "S = setup·λ_raw": f"{S:.1f}",
+            "B* (target)": B_star_int,
+            "λ_eff @B*": f"{lam_eff_star:.2f}",
+            "Mfg OH/u @B*": f"${mfg_oh_star:.2f}",
+            "Floor (B→∞)": f"${floor_oh:.2f}",
+            "WIP @B*": f"{WIP_star}",
+            "B for demand": B_dem_str,
+        })
+        cand = {"factory": f["name"], "B": B_star_int, "lam_eff": lam_eff_star,
+                "oh": mfg_oh_star, "floor": floor_oh, "WIP": WIP_star, "color": f["color"]}
+        if best_by_oh is None or mfg_oh_star < best_by_oh["oh"]:
+            best_by_oh = cand
+
+    st.markdown("**Recommended batch per factory** (at chosen throughput target):")
+    st.dataframe(pd.DataFrame(prop_rows), use_container_width=True, hide_index=True)
+
+    b_sweep = list(range(5, 1001, 5))
+    fig_le = go.Figure()
+    fig_oh = go.Figure()
+    for f, r in zip(W14_FACTORIES, w14_fac_results):
+        if r is None:
+            continue
+        lam_raw = r["lambda_raw"]
+        daily_cost = r["daily_cost"]
+        lam_eff_sweep = [lam_raw * b / (b + f["setup"] * lam_raw) for b in b_sweep]
+        oh_sweep = [(daily_cost / le) if le > 0 else None for le in lam_eff_sweep]
+        fig_le.add_trace(go.Scatter(x=b_sweep, y=lam_eff_sweep, name=f["name"],
+                                      line=dict(color=f["color"], width=2)))
+        fig_oh.add_trace(go.Scatter(x=b_sweep, y=oh_sweep, name=f["name"],
+                                      line=dict(color=f["color"], width=2)))
+        if target_eff < 1.0:
+            S = f["setup"] * lam_raw
+            B_star = S * target_eff / (1 - target_eff)
+            fig_le.add_vline(x=B_star, line_dash="dash", line_color=f["color"], opacity=0.35)
+            fig_oh.add_vline(x=B_star, line_dash="dash", line_color=f["color"], opacity=0.35)
+
+    fig_le.add_vline(x=w14_batch, line_dash="dot", line_color="green",
+                      annotation_text=f"Current: {w14_batch}")
+    fig_le.update_layout(
+        height=320, xaxis_title="Batch Size (units)",
+        yaxis_title="λ_eff (units/day)",
+        title=dict(text="Throughput vs Batch Size (dashed = B* per factory)",
+                     x=0.5, xanchor="center", y=0.97),
+        margin=dict(l=0, r=0, t=50, b=0),
+        legend=dict(orientation="h", yanchor="top", y=1.10, xanchor="center", x=0.5),
+    )
+    fig_oh.add_vline(x=w14_batch, line_dash="dot", line_color="green",
+                      annotation_text=f"Current: {w14_batch}")
+    fig_oh.update_layout(
+        height=320, xaxis_title="Batch Size (units)",
+        yaxis_title="Mfg OH per unit ($)", yaxis_tickformat="$,.2f",
+        title=dict(text="Mfg OH/unit vs Batch Size (hyperbolic toward floor)",
+                     x=0.5, xanchor="center", y=0.97),
+        margin=dict(l=0, r=0, t=50, b=0),
+        legend=dict(orientation="h", yanchor="top", y=1.10, xanchor="center", x=0.5),
+    )
+    chart_c1, chart_c2 = st.columns(2)
+    with chart_c1:
+        st.plotly_chart(fig_le, use_container_width=True)
+    with chart_c2:
+        st.plotly_chart(fig_oh, use_container_width=True)
+
+    if best_by_oh is not None:
+        oh_premium = (best_by_oh["oh"] / best_by_oh["floor"] - 1) * 100 if best_by_oh["floor"] > 0 else 0
+        st.markdown(f"""
+<div style="background:{best_by_oh['color']};color:white;border-radius:8px;padding:1rem;text-align:center;">
+<span style="opacity:0.85;font-size:0.85em;">Lowest Mfg OH/u at {target_eff:.0%} throughput target</span><br>
+<b style="font-size:1.4em;">{best_by_oh['factory']} · Batch = {best_by_oh['B']}</b><br>
+<span style="font-size:0.9em;">
+λ_eff = {best_by_oh['lam_eff']:.2f} u/day · Mfg OH = <b>${best_by_oh['oh']:.2f}/u</b>
+(only +{oh_premium:.1f}% above the ${best_by_oh['floor']:.2f} floor) · WIP = {best_by_oh['WIP']} units
+</span>
+</div>
+""", unsafe_allow_html=True)
+        st.caption(
+            f"💡 To apply: set **Batch Size = {best_by_oh['B']}** in the Shared Inputs at the top of this section. "
+            f"Tune the throughput-target slider above to trade WIP ↔ overhead — 0.90 halves WIP vs 0.95 but only adds ~5% OH."
+        )
+
     # Pick which factory's Mfg OH feeds the CM table below
     st.markdown("---")
     oh_pick_col1, oh_pick_col2 = st.columns([1, 3])
