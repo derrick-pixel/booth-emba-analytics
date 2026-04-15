@@ -4108,18 +4108,35 @@ CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_m
             target = st.selectbox("🎯 Target Market", target_options,
                                      index=0, key=f"pd2_target_{i}")
 
-            # Build selections
+            # Build selections (defensive: validate against current opts to
+            # survive stale session state across deploys or preset changes)
+            def _safe_feat(val, opts):
+                return val if (val in opts) else list(opts.keys())[0]
+
             if is_master:
                 sel_base = {
-                    a: st.session_state.get(f"pd2_base_{a}_{i}",
-                                             preset.get(a, list(W14B_BASE[a].keys())[0]))
+                    a: _safe_feat(
+                        st.session_state.get(f"pd2_base_{a}_{i}",
+                                              preset.get(a, list(W14B_BASE[a].keys())[0])),
+                        W14B_BASE[a],
+                    )
                     for a in BASE_ATTRS
                 }
                 sel_det = {
-                    a: st.session_state.get(f"pd2_det_{a}_{i}",
-                                             preset.get(a, "None"))
+                    a: _safe_feat(
+                        st.session_state.get(f"pd2_det_{a}_{i}",
+                                              preset.get(a, "None")),
+                        W14B_DETECTION[a],
+                    )
                     for a in DETECTION_ATTRS
                 }
+                # Write back any corrections so downstream widgets stay in sync
+                for a in BASE_ATTRS:
+                    if st.session_state.get(f"pd2_base_{a}_{i}") != sel_base[a]:
+                        st.session_state[f"pd2_base_{a}_{i}"] = sel_base[a]
+                for a in DETECTION_ATTRS:
+                    if st.session_state.get(f"pd2_det_{a}_{i}") != sel_det[a]:
+                        st.session_state[f"pd2_det_{a}_{i}"] = sel_det[a]
             else:
                 p1 = p_selections["P1"]
                 sel_base = dict(p1["sel_base"])
