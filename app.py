@@ -3834,24 +3834,40 @@ CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_m
     st.markdown("---")
 
     # ══════════════════════════════════════════════════════════════════════════
-    # SECTION 8: PRODUCT DESIGN ROI — DERIVATIVE FRAMEWORK
-    # P1 = master (full design with presets). P2–P5 = derivatives of P1:
-    # only overridden attributes incur incremental design days + cost.
-    # Median WTP is INFERRED from target market + selected features.
+    # SECTION 8: PRODUCT DESIGN STUDIO (user-friendly: tabs + smart defaults)
+    # Master + up to 4 variants. Variants inherit from Master; only overrides
+    # count toward incremental dev days & cost. Median WTP inferred from market.
     # ══════════════════════════════════════════════════════════════════════════
-    st.subheader("8. Product Design ROI Calculator (Derivative Framework)")
-    st.caption("Column 1 = master (full design, preset-driven). Columns 2–5 derive from P1 — "
-               "only attributes you override cost extra dev days & $. Materials/u is always the "
-               "full bill-of-materials for that variant. Median WTP is inferred from the target market.")
+    st.subheader("8. Product Design Studio")
+    st.caption(
+        "Pick a **target market** → the UI narrows to the features that matter. "
+        "P1 is the master; P2–P5 are variants that inherit from P1 and only pay for the attributes you override."
+    )
 
-    pd_top1, pd_top2 = st.columns([1, 3])
-    with pd_top1:
-        w14b_n_prods = st.number_input("# Products", min_value=1, max_value=5,
-                                        value=5, step=1, key="w14b_n_prods")
-    with pd_top2:
-        st.caption(f"Region: **{W14B_REGION}** (shipping = ${W14B_SHIPPING}/u mail in-region). "
-                   f"Derivative dev cost = Σ(cost of attributes where P[i] ≠ P1). "
-                   f"Derivative dev days = P1 days + max(incremental attr days).")
+    # ── Data & helpers ──────────────────────────────────────────────────────
+    DETECTION_ATTRS = list(W14B_DETECTION.keys())
+    BASE_ATTRS = list(W14B_BASE.keys())
+    ALL_ATTRS = BASE_ATTRS + DETECTION_ATTRS
+
+    # Which detection attrs actually matter for each market (drives focused view)
+    MARKET_CORE_ATTRS = {
+        "Clinical Cardiovascular": ["Blood vessel", "Dissolved gasses"],
+        "Clinical Fertility (LH)": ["Hormone"],
+        "Clinical Fertility (LH/FSH)": ["Hormone"],
+        "Law (Narcotic)": ["Toxicology"],
+        "MD Cancer (Base Panel)": ["Cancer"],
+        "MD Cancer (Breast)": ["Cancer"],
+        "MD Cancer (Bladder & Kidney)": ["Cancer"],
+        "MD Dissolved Gasses": ["Dissolved gasses"],
+        "MD Fertility (Estrogen)": ["Hormone"],
+        "MD Heart (Pulse only)": ["Heartbeat"],
+        "MD Heart (Temporal)": ["Heartbeat"],
+        "MD Metabolic (Bilirubin)": ["Metabolic"],
+        "Military Botulinum (Serenity-only)": ["Neurotoxins"],
+        "Military Anatoxin-a (Serenity-only)": ["Neurotoxins"],
+        "Athlete (General)": ["Heartbeat", "Blood vessel", "Dissolved gasses", "Motion"],
+        "Athlete (Fad)": ["Heartbeat", "Blood vessel", "Dissolved gasses", "Motion"],
+    }
 
     W14B_PRESETS = {
         "Heart View (flagship)": {
@@ -3901,15 +3917,18 @@ CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_m
         },
     }
 
-    # ── Helper: infer median WTP from target market + features ──────────────
+    def _fmt_feat(attr, feat, opts):
+        """Compact label like 'Temporal · 90d · $135K · $25/u'."""
+        d, c, m = opts[feat]
+        return f"{feat} · {d}d · ${c/1000:.0f}K · ${m}/u"
+
     def _w14b_infer_median_wtp(target, sel_base, sel_det):
-        """Returns (median_wtp_or_None, explanation_string)."""
+        """Median WTP from target market + feature set. Returns (med_or_None, explanation)."""
         if target == "(none)" or target not in W14B_MARKETS:
             return None, "Select a target market to infer WTP."
         m = W14B_MARKETS[target]
         mtype = m.get("type", "normal")
 
-        # Athlete markets → additive WTP per feature
         if mtype in ("athlete", "athlete_fad"):
             hb = W14B_ATHLETE_WTP["Heartbeat"].get(sel_det.get("Heartbeat", "None"), 0)
             bv = W14B_ATHLETE_WTP["Blood vessel"].get(sel_det.get("Blood vessel", "None"), 0)
@@ -3918,17 +3937,14 @@ CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_m
             pl = W14B_ATHLETE_WTP["Platform"].get(sel_base.get("Platform", "Wrists"), 0)
             med = hb + bv + dg + mo + pl
             explain = f"Additive: HB ${hb} + BV ${bv} + DG ${dg} + Motion ${mo} + Platform ${pl}"
-            if mtype == "athlete_fad":
-                explain += " | Fad users pay premium for matching finish/platform"
             return med, explain
 
-        # Clinical Cardiovascular has tiered WTP based on feature bundle
         if "wtp_tiers" in m:
             bv = sel_det.get("Blood vessel", "None")
             dg = sel_det.get("Dissolved gasses", "None")
             gps = sel_base.get("GPS", "No GPS")
             if gps != "GPS":
-                tier_idx = 0  # lowest tier if no GPS
+                tier_idx = 0
             elif bv == "Full profile" and dg == "Full C,N,O":
                 tier_idx = 2
             elif bv in ("Systolic & diastolic", "Full profile") and dg in ("O2, N2, CO2", "Full C,N,O"):
@@ -3937,36 +3953,34 @@ CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_m
                 tier_idx = 0
             tier = m["wtp_tiers"][tier_idx]
             med = (tier[1] + tier[2]) / 2
-            explain = f"Tier {tier_idx+1}: {tier[0]} (range ${tier[1]}–${tier[2]}, median ${med:.0f})"
-            # GPS dealbreaker reduces WTP (per research: "significantly drive down perceived value")
+            explain = f"Tier {tier_idx+1}: {tier[0]} (${tier[1]}–${tier[2]})"
             if gps == "No GPS":
                 med *= 0.5
-                explain += " | ⚠ No GPS → ~50% WTP"
+                explain += " | No GPS → ×0.5"
             return med, explain
 
-        # Normal market: median = midpoint of stated WTP range, but with FIT check
         low, high = m.get("wtp_low", 0), m.get("wtp_high", 0)
         med = (low + high) / 2
-        explain = f"Range ${low}–${high}, median ${med:.0f}"
+        explain = f"Range ${low}–${high} · median ${med:.0f}"
 
-        # Fit gates: if the product lacks the CORE feature of the market, WTP collapses
-        # Each check returns (0, reason) if the product can't serve the market.
+        # Core-feature gates
         det = sel_det
         bas = sel_base
+        gate_msgs = []
         if target == "Law (Narcotic)" and det.get("Toxicology", "None") != "Narcotic":
             return 0, "❌ Law (Narcotic) requires Narcotic toxicology detector"
         if target.startswith("Military Botulinum") and det.get("Neurotoxins", "None") != "Botulinum":
-            return 0, "❌ Market requires Botulinum neurotoxin detector"
+            return 0, "❌ Requires Botulinum neurotoxin detector"
         if target.startswith("Military Anatoxin") and det.get("Neurotoxins", "None") != "Anatoxin-a":
-            return 0, "❌ Market requires Anatoxin-a neurotoxin detector"
+            return 0, "❌ Requires Anatoxin-a neurotoxin detector"
         if target == "MD Heart (Temporal)" and det.get("Heartbeat", "None") != "Temporal":
             return 0, "❌ MD Heart (Temporal) requires Temporal heartbeat"
         if target == "MD Heart (Pulse only)" and det.get("Heartbeat", "None") not in ("Pulse only", "Temporal"):
             return 0, "❌ MD Heart (Pulse only) requires Pulse heartbeat"
         if target == "Clinical Fertility (LH)" and det.get("Hormone", "None") not in ("LH", "LH and FSH"):
-            return 0, "❌ Fertility (LH) requires LH hormone detection"
+            return 0, "❌ Fertility (LH) requires LH hormone"
         if target == "Clinical Fertility (LH/FSH)" and det.get("Hormone", "None") != "LH and FSH":
-            return 0, "❌ Fertility (LH/FSH) requires combined LH+FSH"
+            return 0, "❌ Fertility (LH/FSH) requires LH+FSH combo"
         if target == "MD Fertility (Estrogen)" and det.get("Hormone", "None") != "Estrogen":
             return 0, "❌ MD Fertility (Estrogen) requires Estrogen hormone"
         if target == "MD Dissolved Gasses" and det.get("Dissolved gasses", "None") not in ("O2, N2, CO2", "Full C,N,O"):
@@ -3979,308 +3993,379 @@ CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_m
             if cancer_feat == "None":
                 return 0, "❌ Cancer market requires Cancer detector"
             if need and need != "Base Panel" and cancer_feat.lower() not in need.lower() and need.lower() not in cancer_feat.lower():
-                # allow fuzzy match (e.g. "Breast" vs "Breast")
                 if not any(tok in need.lower() for tok in cancer_feat.lower().split()):
                     return 0, f"❌ Market expects Cancer {need}, your product has {cancer_feat}"
 
-        # Dealbreaker modifiers on the midpoint (soft penalties, not zeroing)
+        # Dealbreaker modifiers
         db = m.get("dealbreaker", "None") or "None"
-        modifiers = []
+        mods = []
         if ("GPS" in db) and bas.get("GPS", "No GPS") == "No GPS":
             med *= 0.5
-            modifiers.append("No GPS → ×0.5 (safety/location dealbreaker)")
+            mods.append("No GPS ×0.5")
         if ("cellular" in db or "Network" in db) and bas.get("Network", "Bluetooth") == "Bluetooth":
             med *= 0.5
-            modifiers.append("No cellular network → ×0.5 (law dealbreaker)")
+            mods.append("No cellular ×0.5")
         if "polymer battery pack" in db and bas.get("Power", "") != "Polymer pack":
             med *= 0.5
-            modifiers.append("No polymer pack → ×0.5 (military battery life)")
+            mods.append("No polymer pack ×0.5")
         if "Bulky battery packs" in db and "pack" in bas.get("Power", ""):
             med *= 0.7
-            modifiers.append("Bulky battery pack → ×0.7 (fertility/athlete discomfort)")
-        # Platform preference for fertility/athlete
+            mods.append("Bulky pack ×0.7")
         if target in ("Clinical Fertility (LH)", "Clinical Fertility (LH/FSH)", "MD Fertility (Estrogen)"):
             if bas.get("Platform") == "Chest":
                 med *= 0.85
-                modifiers.append("Chest on fertility market → ×0.85 (wrist preferred)")
-        if modifiers:
-            explain += " | " + "; ".join(modifiers)
+                mods.append("Chest on fertility ×0.85")
+        if mods:
+            explain += " | " + ", ".join(mods)
         return med, explain
 
-    preset_keys = list(W14B_PRESETS.keys())
-    w14b_pd_cols = st.columns(int(w14b_n_prods))
-    w14b_pd_summary = []
+    def _fit_warnings(target, sel_base, sel_det):
+        ws = []
+        if target == "(none)":
+            return ws
+        if sel_det["Heartbeat"] == "Temporal" and not target.startswith("MD Heart (Temporal)"):
+            ws.append("🔴 Temporal heartbeat outside MD-Heart (Temporal) → cannibalizes Heart View")
+        if sel_det["Toxicology"] in ("Narcotic", "Amphetamine", "THC", "Barbiturate", "Ethanol") and \
+           not target.startswith("Law") and not target.startswith("Military"):
+            ws.append(f"🟠 {sel_det['Toxicology']} outside Law/Mil → $95–140/u wasted materials")
+        if sel_det["Cancer"] != "None" and not target.startswith("MD Cancer"):
+            ws.append(f"🔴 Cancer {sel_det['Cancer']} outside Cancer market → $200+/u wasted")
+        if sel_det["Neurotoxins"] != "None" and not target.startswith("Military"):
+            ws.append(f"🔴 Neurotoxin {sel_det['Neurotoxins']} outside Military → $190+/u wasted")
+        if target.startswith("Law") and (sel_base["GPS"] == "No GPS" or sel_base["Network"] == "Bluetooth"):
+            ws.append("🔴 Law deal-breaker — needs GPS + cellular network")
+        if target.startswith("Military") and (sel_base["GPS"] == "No GPS" or sel_base["Power"] != "Polymer pack"):
+            ws.append("🔴 Military deal-breaker — needs GPS + polymer battery pack")
+        if target in ("Clinical Fertility (LH)", "Clinical Fertility (LH/FSH)", "MD Fertility (Estrogen)") and \
+           "pack" in sel_base["Power"]:
+            ws.append("🟠 Fertility: bulky battery packs are a deal-breaker")
+        if target == "Clinical Cardiovascular" and sel_base["GPS"] == "No GPS":
+            ws.append("🟠 Cardiovascular: lack of GPS reduces perceived value")
+        if target in ("Clinical Fertility (LH)", "Clinical Fertility (LH/FSH)", "MD Fertility (Estrogen)") and \
+           sel_base["Platform"] == "Chest":
+            ws.append("🟡 Fertility users prefer wrists over chest")
+        if target.startswith("Athlete") and sel_base["Platform"] == "Chest":
+            ws.append("🟡 Athletes prefer wrists > sleeves > stockings > chest")
+        return ws
 
-    # Capture P1 selections for derivative columns
-    p1_base = {}
-    p1_det = {}
-    p1_price = None
-    p1_days = 0
-    p1_cost = 0
+    # ── Top controls ────────────────────────────────────────────────────────
+    top_c1, top_c2 = st.columns([1, 4])
+    with top_c1:
+        w14b_n_prods = st.number_input("# Products", min_value=1, max_value=5,
+                                         value=2, step=1, key="w14b_n_prods_v2")
+    with top_c2:
+        st.caption(f"Region: **{W14B_REGION}** · shipping ${W14B_SHIPPING}/u (mail) · "
+                   f"commission {W14B_COMMISSION:.0f}% · handling ${W14B_HANDLING}/u. "
+                   f"Tabs below: P1 is the master (full dev); P2+ inherit and only pay for overrides.")
 
     target_options = ["(none)"] + list(W14B_MARKETS.keys())
+    tab_labels = [f"P{i+1} · {'Master' if i == 0 else 'Variant of P1'}" for i in range(int(w14b_n_prods))]
+    product_tabs = st.tabs(tab_labels)
 
-    for i, col in enumerate(w14b_pd_cols):
-        with col:
+    p_selections = {}
+    w14b_pd_summary = []
+
+    for i, tab in enumerate(product_tabs):
+        with tab:
             is_master = (i == 0)
 
+            # ─── Top row: Preset (master only) + Target market ─────────────
             if is_master:
-                st.markdown("### 🎯 P1 — Master (Flagship)")
-                default_idx = 0
-                p_sel = st.selectbox("Preset", preset_keys, index=default_idx,
-                                       key=f"w14b_pd_preset_{i}")
-                preset = W14B_PRESETS[p_sel]
+                trow_c1, trow_c2, trow_c3 = st.columns([2, 2, 2])
+                with trow_c1:
+                    preset_keys = list(W14B_PRESETS.keys())
+                    preset_name = st.selectbox("🎯 Preset (fills defaults)",
+                                                  preset_keys,
+                                                  index=0, key=f"pd2_preset_{i}")
+                    preset = W14B_PRESETS[preset_name]
 
-                st.markdown("**Base Features**")
-                sel_base = {}
-                for attr, opts in W14B_BASE.items():
-                    default_feat = preset.get(attr, list(opts.keys())[0])
-                    labeled = {f"{feat} — {d}d, ${c/1000:.1f}K, ${m}/u": feat
-                                for feat, (d, c, m) in opts.items()}
-                    labels = list(labeled.keys())
-                    default_label = next((l for l, f in labeled.items() if f == default_feat), labels[0])
-                    chosen = st.selectbox(attr, labels, index=labels.index(default_label),
-                                            key=f"w14b_pd_base_{attr}_{i}")
-                    sel_base[attr] = labeled[chosen]
+                # Preset change → reset attribute state
+                last_key = f"pd2_last_preset_{i}"
+                if st.session_state.get(last_key) != preset_name:
+                    for attr in BASE_ATTRS:
+                        st.session_state[f"pd2_base_{attr}_{i}"] = preset.get(attr, list(W14B_BASE[attr].keys())[0])
+                    for attr in DETECTION_ATTRS:
+                        st.session_state[f"pd2_det_{attr}_{i}"] = preset.get(attr, "None")
+                    st.session_state[f"pd2_price_{i}"] = int(preset["price"])
+                    preset_target = preset.get("target")
+                    if preset_target in target_options:
+                        st.session_state[f"pd2_target_{i}"] = preset_target
+                    st.session_state[last_key] = preset_name
 
-                st.markdown("**Detection Agenda** (9 attributes)")
-                sel_det = {}
-                for attr, opts in W14B_DETECTION.items():
-                    default_feat = preset[attr]
-                    labeled = {f"{feat} — {d}d, ${c/1000:.0f}K, ${m}/u": feat
-                                for feat, (d, c, m) in opts.items()}
-                    labels = list(labeled.keys())
-                    default_label = next((l for l, f in labeled.items() if f == default_feat), labels[0])
-                    chosen = st.selectbox(attr, labels, index=labels.index(default_label),
-                                            key=f"w14b_pd_det_{attr}_{i}")
-                    sel_det[attr] = labeled[chosen]
+                with trow_c2:
+                    target = st.selectbox("🎯 Target Market", target_options,
+                                             index=0, key=f"pd2_target_{i}")
+                with trow_c3:
+                    st.caption("")
+                    st.caption(f"Preset target: **{preset.get('target','—')}**. "
+                               f"Change market to re-check fit for a different audience.")
+            else:
+                trow_c1, trow_c2 = st.columns([2, 3])
+                with trow_c1:
+                    target = st.selectbox(f"🎯 Target Market (P{i+1})", target_options,
+                                             index=0, key=f"pd2_target_{i}")
+                with trow_c2:
+                    st.caption(f"*Derived from P1. Pick attributes to override below — "
+                               f"everything else inherits from P1 and costs $0 extra.*")
+                preset = None
+                preset_name = f"Variant of P1"
 
-                # Full totals for master
-                base_days = max(W14B_BASE[a][sel_base[a]][0] for a in W14B_BASE)
-                base_cost = sum(W14B_BASE[a][sel_base[a]][1] for a in W14B_BASE)
-                base_mat = sum(W14B_BASE[a][sel_base[a]][2] for a in W14B_BASE)
-                det_days = max(W14B_DETECTION[a][sel_det[a]][0] for a in W14B_DETECTION)
-                det_cost = sum(W14B_DETECTION[a][sel_det[a]][1] for a in W14B_DETECTION)
-                det_mat = sum(W14B_DETECTION[a][sel_det[a]][2] for a in W14B_DETECTION)
+            # ─── Build current selections ──────────────────────────────────
+            if is_master:
+                sel_base = {
+                    attr: st.session_state.get(
+                        f"pd2_base_{attr}_{i}",
+                        preset.get(attr, list(W14B_BASE[attr].keys())[0])
+                    ) for attr in BASE_ATTRS
+                }
+                sel_det = {
+                    attr: st.session_state.get(
+                        f"pd2_det_{attr}_{i}",
+                        preset.get(attr, "None")
+                    ) for attr in DETECTION_ATTRS
+                }
+            else:
+                p1 = p_selections["P1"]
+                sel_base = dict(p1["sel_base"])
+                sel_det = dict(p1["sel_det"])
 
+                st.markdown("**✏️ Overrides from P1** (pick attributes to change)")
+                override_attrs = st.multiselect(
+                    "Attributes to override",
+                    ALL_ATTRS,
+                    default=[],
+                    key=f"pd2_override_{i}",
+                    label_visibility="collapsed",
+                    help="Anything not listed here inherits from P1 with no extra dev cost.",
+                )
+                if override_attrs:
+                    ov_cols = st.columns(min(3, len(override_attrs)))
+                    for j, attr in enumerate(override_attrs):
+                        col = ov_cols[j % len(ov_cols)]
+                        with col:
+                            opts = W14B_BASE[attr] if attr in BASE_ATTRS else W14B_DETECTION[attr]
+                            feat_list = list(opts.keys())
+                            p1_val = p1["sel_base"].get(attr) if attr in BASE_ATTRS else p1["sel_det"].get(attr)
+                            non_p1 = [f for f in feat_list if f != p1_val]
+                            default_feat = non_p1[0] if non_p1 else feat_list[0]
+                            default_idx = feat_list.index(default_feat)
+                            chosen = st.selectbox(
+                                f"{attr} *(P1: {p1_val})*",
+                                feat_list, index=default_idx,
+                                format_func=lambda f, a=attr, o=opts: _fmt_feat(a, f, o),
+                                key=f"pd2_ov_{attr}_{i}",
+                            )
+                            if attr in BASE_ATTRS:
+                                sel_base[attr] = chosen
+                            else:
+                                sel_det[attr] = chosen
+                else:
+                    st.caption("*No overrides — P2 is identical to P1 (zero incremental dev cost).*")
+
+            # ─── Economics ─────────────────────────────────────────────────
+            if is_master:
+                base_days = max(W14B_BASE[a][sel_base[a]][0] for a in BASE_ATTRS)
+                base_cost = sum(W14B_BASE[a][sel_base[a]][1] for a in BASE_ATTRS)
+                det_days = max(W14B_DETECTION[a][sel_det[a]][0] for a in DETECTION_ATTRS)
+                det_cost = sum(W14B_DETECTION[a][sel_det[a]][1] for a in DETECTION_ATTRS)
                 total_days = max(base_days, det_days)
                 total_cost = base_cost + det_cost
-                total_mat = base_mat + det_mat
                 incr_days = total_days
                 incr_cost = total_cost
-
-                w14b_pd_price = st.number_input("Price ($)", value=preset["price"], step=25,
-                                                  key=f"w14b_pd_price_{i}")
-                w14b_pd_sales = st.number_input("Sales/day", value=5, step=1,
-                                                  key=f"w14b_pd_sales_{i}")
-
-                # Persist for derivatives
-                p1_base = dict(sel_base)
-                p1_det = dict(sel_det)
-                p1_price = w14b_pd_price
-                p1_days = total_days
-                p1_cost = total_cost
-
-                # Default target from preset
-                default_target_idx = 0
-                preset_tgt = preset.get("target", "")
-                if preset_tgt in target_options:
-                    default_target_idx = target_options.index(preset_tgt)
-                target = st.selectbox("Target Market", target_options, index=default_target_idx,
-                                        key=f"w14b_pd_target_{i}")
-
             else:
-                st.markdown(f"### 🧬 P{i+1} — Derivative of P1")
-                st.caption("Uncheck 'same as P1' to override. Only overrides add to dev days/$ beyond P1.")
-
-                sel_base = {}
-                st.markdown("**Base Features**")
-                for attr, opts in W14B_BASE.items():
-                    feat_list = list(opts.keys())
-                    p1_feat = p1_base.get(attr, feat_list[0])
-                    p1_cost_info = W14B_BASE[attr][p1_feat]
-                    same = st.checkbox(
-                        f"{attr}: same as P1 · *{p1_feat}* ({p1_cost_info[0]}d, ${p1_cost_info[1]/1000:.1f}K)",
-                        value=True, key=f"w14b_pd_base_same_{attr}_{i}",
-                    )
-                    if same:
-                        sel_base[attr] = p1_feat
-                    else:
-                        labeled = {f"{feat} — {d}d, ${c/1000:.1f}K, ${m}/u": feat
-                                    for feat, (d, c, m) in opts.items()}
-                        labels = list(labeled.keys())
-                        non_p1 = [f for f in feat_list if f != p1_feat]
-                        default_feat = non_p1[0] if non_p1 else feat_list[0]
-                        default_label = next((l for l, f in labeled.items() if f == default_feat), labels[0])
-                        chosen = st.selectbox(f"{attr} override", labels,
-                                                index=labels.index(default_label),
-                                                key=f"w14b_pd_base_{attr}_{i}")
-                        sel_base[attr] = labeled[chosen]
-
-                sel_det = {}
-                st.markdown("**Detection Agenda**")
-                for attr, opts in W14B_DETECTION.items():
-                    feat_list = list(opts.keys())
-                    p1_feat = p1_det.get(attr, feat_list[0])
-                    p1_cost_info = W14B_DETECTION[attr][p1_feat]
-                    same = st.checkbox(
-                        f"{attr}: same as P1 · *{p1_feat}* ({p1_cost_info[0]}d, ${p1_cost_info[1]/1000:.0f}K)",
-                        value=True, key=f"w14b_pd_det_same_{attr}_{i}",
-                    )
-                    if same:
-                        sel_det[attr] = p1_feat
-                    else:
-                        labeled = {f"{feat} — {d}d, ${c/1000:.0f}K, ${m}/u": feat
-                                    for feat, (d, c, m) in opts.items()}
-                        labels = list(labeled.keys())
-                        non_p1 = [f for f in feat_list if f != p1_feat]
-                        default_feat = non_p1[0] if non_p1 else feat_list[0]
-                        default_label = next((l for l, f in labeled.items() if f == default_feat), labels[0])
-                        chosen = st.selectbox(f"{attr} override", labels,
-                                                index=labels.index(default_label),
-                                                key=f"w14b_pd_det_{attr}_{i}")
-                        sel_det[attr] = labeled[chosen]
-
-                # Incremental dev cost/days: only attributes where this variant ≠ P1
-                incr_days_candidates = []
+                p1 = p_selections["P1"]
+                incr_days_cands = []
                 incr_cost = 0
-                diffs = []
-                for attr in W14B_BASE:
-                    if sel_base[attr] != p1_base.get(attr):
+                for attr in BASE_ATTRS:
+                    if sel_base[attr] != p1["sel_base"][attr]:
                         d, c, _ = W14B_BASE[attr][sel_base[attr]]
-                        incr_days_candidates.append(d)
+                        incr_days_cands.append(d)
                         incr_cost += c
-                        diffs.append(f"{attr}: {p1_base.get(attr)} → {sel_base[attr]}")
-                for attr in W14B_DETECTION:
-                    if sel_det[attr] != p1_det.get(attr):
+                for attr in DETECTION_ATTRS:
+                    if sel_det[attr] != p1["sel_det"][attr]:
                         d, c, _ = W14B_DETECTION[attr][sel_det[attr]]
-                        incr_days_candidates.append(d)
+                        incr_days_cands.append(d)
                         incr_cost += c
-                        diffs.append(f"{attr}: {p1_det.get(attr)} → {sel_det[attr]}")
+                incr_days = max(incr_days_cands) if incr_days_cands else 0
+                total_days = p1["total_days"] + incr_days
+                total_cost = incr_cost  # variant's own-account dev $
 
-                incr_days = max(incr_days_candidates) if incr_days_candidates else 0
+            total_mat = (sum(W14B_BASE[a][sel_base[a]][2] for a in BASE_ATTRS) +
+                          sum(W14B_DETECTION[a][sel_det[a]][2] for a in DETECTION_ATTRS))
 
-                # Materials = full per-unit BOM for variant's actual features
-                total_mat = (sum(W14B_BASE[a][sel_base[a]][2] for a in W14B_BASE) +
-                             sum(W14B_DETECTION[a][sel_det[a]][2] for a in W14B_DETECTION))
+            # Price + sales row
+            ps_c1, ps_c2, ps_c3 = st.columns([1, 1, 3])
+            with ps_c1:
+                default_price = int(preset["price"]) if is_master else int(p_selections["P1"]["price"])
+                price = st.number_input("Price ($/u)", value=default_price, step=25, key=f"pd2_price_{i}")
+            with ps_c2:
+                sales_per_day = st.number_input("Expected sales/day", value=5, step=1,
+                                                   min_value=0, key=f"pd2_sales_{i}")
+            with ps_c3:
+                st.caption("")
+                st.caption("Break-even uses only the *incremental* dev cost for variants.")
 
-                # Total days-to-ship = P1 dev + incremental after flagship completes
-                total_days = p1_days + incr_days
-                total_cost = incr_cost  # only the delta is charged to this SKU
-
-                w14b_pd_price = st.number_input("Price ($)", value=int(p1_price or 700), step=25,
-                                                  key=f"w14b_pd_price_{i}")
-                w14b_pd_sales = st.number_input("Sales/day", value=5, step=1,
-                                                  key=f"w14b_pd_sales_{i}")
-
-                target = st.selectbox("Target Market", target_options, index=0,
-                                        key=f"w14b_pd_target_{i}")
-
-                if diffs:
-                    st.caption("**Overrides:** " + " • ".join(diffs))
-                else:
-                    st.caption("*Identical to P1 — no incremental dev cost.*")
-
-            # ── Inferred median WTP (both master + derivative) ──────────────
             med_wtp, wtp_explain = _w14b_infer_median_wtp(target, sel_base, sel_det)
-
-            # ── Economics ───────────────────────────────────────────────────
-            w14b_pd_margin = (w14b_pd_price * (1 - w14b_comm_frac)
-                               - W14B_HANDLING - total_mat - W14B_SHIPPING)
-            be_cost = total_cost
-            if w14b_pd_margin > 0 and w14b_pd_sales > 0 and be_cost > 0:
-                w14b_pd_be = be_cost / (w14b_pd_margin * w14b_pd_sales)
+            cm_per_u = price * (1 - w14b_comm_frac) - W14B_HANDLING - total_mat - W14B_SHIPPING
+            if cm_per_u > 0 and sales_per_day > 0 and incr_cost > 0:
+                be_days = incr_cost / (cm_per_u * sales_per_day)
+            elif incr_cost == 0 and not is_master:
+                be_days = 0.0
             else:
-                w14b_pd_be = float("inf") if be_cost > 0 else 0.0
+                be_days = float("inf")
 
-            # ── Display ────────────────────────────────────────────────────
-            if med_wtp is not None:
-                if med_wtp == 0:
-                    st.error(f"Inferred Median WTP: $0 — {wtp_explain}")
+            # ─── Summary card (3 columns) ─────────────────────────────────
+            st.markdown("---")
+            sc1, sc2, sc3 = st.columns(3)
+            with sc1:
+                st.markdown("##### 💻 Development")
+                if is_master:
+                    st.metric("Dev days", f"{total_days}d")
+                    st.metric("Dev cost", f"${total_cost:,}")
                 else:
-                    st.metric("Inferred Median WTP", f"${med_wtp:,.0f}")
+                    st.metric("Incremental days", f"+{incr_days}d",
+                               help=f"P1 takes {p_selections['P1']['total_days']}d · then +{incr_days}d for this variant = {total_days}d total")
+                    st.metric("Incremental cost", f"+${incr_cost:,}")
+                st.metric("Materials/u", f"${total_mat}")
+
+            with sc2:
+                st.markdown("##### 💵 Economics")
+                cm_color = "normal" if cm_per_u > 0 else "inverse"
+                st.metric("CM per unit", f"${cm_per_u:,.0f}")
+                if be_days == 0:
+                    st.success("Break-even: immediate (no dev cost)")
+                elif be_days == float("inf"):
+                    if cm_per_u <= 0:
+                        st.error("Negative CM/u — unviable")
+                    else:
+                        st.caption("Break-even: N/A")
+                else:
+                    st.metric("Break-even", f"{be_days:.0f}d", help=f"{be_days/30:.1f} months")
+                st.caption(f"CM/day at {sales_per_day}/d: **${cm_per_u * sales_per_day:,.0f}**")
+
+            with sc3:
+                st.markdown("##### 🎯 WTP Check")
+                if med_wtp is None:
+                    st.info("Pick a target market to infer WTP.")
+                elif med_wtp == 0:
+                    st.error(f"Cannot serve this market")
                     st.caption(wtp_explain)
-            else:
-                st.caption(wtp_explain)
+                else:
+                    st.metric("Median WTP", f"${med_wtp:,.0f}")
+                    ratio = price / med_wtp if med_wtp > 0 else 0
+                    pct_str = f"{ratio:.0%}"
+                    if ratio > 1.1:
+                        st.error(f"Price/WTP: {pct_str} — too expensive")
+                    elif ratio > 0.95:
+                        st.warning(f"Price/WTP: {pct_str} — thin demand")
+                    elif ratio < 0.5:
+                        st.info(f"Price/WTP: {pct_str} — room to raise price")
+                    else:
+                        st.success(f"Price/WTP: {pct_str} — sweet zone")
 
-            if is_master:
-                st.metric("Design Days (full)", f"{total_days}")
-                st.metric("Design Cost (full)", f"${total_cost:,}")
-            else:
-                st.metric("Incremental Days vs P1", f"+{incr_days}d",
-                           help=f"Ships at P1 ({p1_days}d) + {incr_days}d = {total_days}d total")
-                st.metric("Incremental Cost vs P1", f"+${incr_cost:,}")
-                st.caption(f"Total dev calendar: **{total_days}d** (P1 {p1_days}d + {incr_days}d)")
-            st.metric("Materials/u", f"${total_mat}")
-            st.metric("CM/u", f"${w14b_pd_margin:,.0f}")
-            if w14b_pd_be == 0:
-                st.info("Zero incremental dev cost — no break-even needed.")
-            elif w14b_pd_be < float("inf"):
-                st.metric("Break-even", f"{w14b_pd_be:.0f}d ({w14b_pd_be/30:.1f} mo)",
-                           delta_color="off")
-            else:
-                st.error("Negative margin")
-
-            # Price-vs-WTP sanity indicator
-            if med_wtp is not None and med_wtp > 0:
-                if w14b_pd_price > med_wtp * 1.2:
-                    st.warning(f"⚠ Price ${w14b_pd_price} is {w14b_pd_price/med_wtp:.0%} of median WTP — demand will be thin")
-                elif w14b_pd_price < med_wtp * 0.5:
-                    st.info(f"💡 Price ${w14b_pd_price} is well below median WTP ${med_wtp:,.0f} — room to raise")
-
-            # ── Cannibalization / fit warnings (reuse original logic) ───────
-            warnings = []
-            if sel_det["Heartbeat"] == "Temporal" and not target.startswith("MD Heart (Temporal)") and target != "(none)":
-                warnings.append("🔴 Temporal heartbeat outside MD-Heart → cannibalizes Heart View")
-            if sel_det["Toxicology"] in ["Narcotic", "Amphetamine", "THC", "Barbiturate", "Ethanol"] and \
-               not target.startswith("Law") and not target.startswith("Military") and target != "(none)":
-                warnings.append(f"🟠 {sel_det['Toxicology']} outside Law/Mil → $95–140/u wasted + cannibalization")
-            if sel_det["Cancer"] != "None" and not target.startswith("MD Cancer") and target != "(none)":
-                warnings.append(f"🔴 Cancer {sel_det['Cancer']} outside Cancer market → $200+/u wasted")
-            if sel_det["Neurotoxins"] != "None" and not target.startswith("Military") and target != "(none)":
-                warnings.append(f"🔴 Neurotoxin {sel_det['Neurotoxins']} outside Military → $190+/u wasted")
-            if target.startswith("Law") and (sel_base["GPS"] == "No GPS" or sel_base["Network"] == "Bluetooth"):
-                warnings.append("🔴 Law deal-breaker — needs GPS + cellular network")
-            if target.startswith("Military") and (sel_base["GPS"] == "No GPS" or sel_base["Power"] != "Polymer pack"):
-                warnings.append("🔴 Military deal-breaker — needs GPS + polymer battery pack")
-            if target in ("Clinical Fertility (LH)", "Clinical Fertility (LH/FSH)", "MD Fertility (Estrogen)") and \
-               "pack" in sel_base["Power"]:
-                warnings.append("🟠 Fertility: avoid bulky battery packs (dealbreaker)")
-            if target == "Clinical Cardiovascular" and sel_base["GPS"] == "No GPS":
-                warnings.append("🟠 Cardiovascular: lack of GPS reduces perceived value")
-            if target in ("Clinical Fertility (LH)", "Clinical Fertility (LH/FSH)", "MD Fertility (Estrogen)") and \
-               sel_base["Platform"] == "Chest":
-                warnings.append("🟡 Fertility users prefer wrists over chest")
-            if target.startswith("Athlete") and sel_base["Platform"] == "Chest":
-                warnings.append("🟡 Athletes prefer wrists > sleeves > stockings > chest")
-
+            # ─── Fit warnings (auto-expand when present) ─────────────────
+            warnings = _fit_warnings(target, sel_base, sel_det)
             if warnings:
-                st.warning("**Flags:**\n\n" + "\n\n".join(warnings))
+                with st.expander(f"⚠ Fit & cannibalization ({len(warnings)} flag{'s' if len(warnings)!=1 else ''})",
+                                  expanded=True):
+                    for w in warnings:
+                        st.warning(w)
             elif target != "(none)":
-                st.success("✅ No cannibalization/fit flags")
+                st.success("✓ No fit or cannibalization flags")
+
+            # ─── Attribute editors (master only, in expanders) ──────────────
+            if is_master:
+                core_attrs = MARKET_CORE_ATTRS.get(target, DETECTION_ATTRS)
+                show_all_default = (target == "(none)" or target not in MARKET_CORE_ATTRS)
+
+                with st.expander("🔬 Detection attributes", expanded=True):
+                    show_all = st.checkbox(
+                        "Show all 9 detection attributes",
+                        value=show_all_default,
+                        key=f"pd2_showall_{i}",
+                        help=("Focused view shows only the attrs that matter for your chosen market."
+                              if target != "(none)" else "Pick a market above to enable focused view."),
+                    )
+                    attrs_to_show = DETECTION_ATTRS if show_all else core_attrs
+                    if not show_all and target in MARKET_CORE_ATTRS:
+                        st.caption(f"Showing only **{target}**-relevant attributes. Toggle to see all 9.")
+                    n_cols = 3 if len(attrs_to_show) >= 3 else max(1, len(attrs_to_show))
+                    det_cols = st.columns(n_cols)
+                    for j, attr in enumerate(attrs_to_show):
+                        col = det_cols[j % n_cols]
+                        with col:
+                            opts = W14B_DETECTION[attr]
+                            feat_list = list(opts.keys())
+                            current = sel_det[attr]
+                            idx = feat_list.index(current) if current in feat_list else 0
+                            sel_det[attr] = st.selectbox(
+                                attr, feat_list, index=idx,
+                                format_func=lambda f, a=attr, o=opts: _fmt_feat(a, f, o),
+                                key=f"pd2_det_{attr}_{i}",
+                            )
+                    if not show_all:
+                        hidden = [a for a in DETECTION_ATTRS if a not in attrs_to_show]
+                        if hidden:
+                            non_none = [f"{a}: {sel_det[a]}" for a in hidden if sel_det[a] != "None"]
+                            if non_none:
+                                st.caption("*Hidden attrs (not None):* " + " · ".join(non_none))
+
+                with st.expander("🔧 Base features (Platform · GPS · Network · Power · Finish)", expanded=False):
+                    base_cols = st.columns(3)
+                    for j, attr in enumerate(BASE_ATTRS):
+                        col = base_cols[j % 3]
+                        with col:
+                            opts = W14B_BASE[attr]
+                            feat_list = list(opts.keys())
+                            current = sel_base[attr]
+                            idx = feat_list.index(current) if current in feat_list else 0
+                            sel_base[attr] = st.selectbox(
+                                attr, feat_list, index=idx,
+                                format_func=lambda f, a=attr, o=opts: _fmt_feat(a, f, o),
+                                key=f"pd2_base_{attr}_{i}",
+                            )
+
+            # Store for downstream tabs + summary
+            p_selections[f"P{i+1}"] = {
+                "target": target,
+                "preset_name": preset_name,
+                "sel_base": dict(sel_base),
+                "sel_det": dict(sel_det),
+                "price": price,
+                "sales_per_day": sales_per_day,
+                "total_days": total_days,
+                "total_cost": total_cost,
+                "incr_days": incr_days,
+                "incr_cost": incr_cost,
+                "total_mat": total_mat,
+                "cm_per_u": cm_per_u,
+                "med_wtp": med_wtp,
+                "be_days": be_days,
+                "warnings": warnings,
+            }
 
             w14b_pd_summary.append({
-                "Product": f"P{i+1}" + (" (master)" if is_master else " (deriv)"),
+                "Product": f"P{i+1}" + (" (master)" if is_master else " (variant)"),
                 "Target": target,
+                "Preset/Source": preset_name,
                 "Days to ship": total_days,
                 "Dev $": f"${total_cost:,}" if is_master else f"+${incr_cost:,}",
                 "Mat/u": f"${total_mat}",
-                "Price": f"${w14b_pd_price}",
+                "Price": f"${price}",
                 "Med WTP": f"${med_wtp:,.0f}" if med_wtp is not None else "—",
-                "Price/WTP": f"{w14b_pd_price/med_wtp:.0%}" if (med_wtp and med_wtp > 0) else "—",
-                "CM/u": f"${w14b_pd_margin:,.0f}",
-                "Break-even": (f"{w14b_pd_be:.0f}d" if 0 < w14b_pd_be < float("inf")
-                                else ("immediate" if w14b_pd_be == 0 else "N/A")),
+                "P/WTP": f"{price/med_wtp:.0%}" if (med_wtp and med_wtp > 0) else "—",
+                "CM/u": f"${cm_per_u:,.0f}",
+                "Break-even": (f"{be_days:.0f}d" if 0 < be_days < float("inf")
+                                else ("immediate" if be_days == 0 else "N/A")),
                 "Flags": len(warnings) if target != "(none)" else "—",
             })
 
-    st.markdown("**Product Comparison Summary**")
+    st.markdown("---")
+    st.markdown("**Product Portfolio Summary**")
     st.dataframe(pd.DataFrame(w14b_pd_summary), use_container_width=True, hide_index=True)
 
     st.markdown("---")
 
-
-    # ══════════════════════════════════════════════════════════════════════════
 
     # ══════════════════════════════════════════════════════════════════════════
     # SECTION 9: SUPPLY CHAIN TRADE-OFF CALCULATOR
