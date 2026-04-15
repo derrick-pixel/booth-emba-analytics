@@ -204,6 +204,7 @@ with st.sidebar:
     page = st.radio(
         "Navigate",
         [
+            "🎯 15-16 War Room",
             "🚀 14 Trial War Room",
             "🏭 13 Trial War Room",
             "⚔️ 12 Trial War Room",
@@ -2493,6 +2494,2491 @@ base features when the market requires them (Law: GPS+cellular; Military: polyme
 | **Fertility (LH/FSH or Estrogen)** | Matching Hormone + wrist preference | Bulky battery packs |
 | **Dissolved Gasses MD** | Full C, N, O | — |
 | **Metabolic (Bilirubin)** | Bilirubin metabolic | — |
+        """)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE 0.45: 15-16 WAR ROOM (duplicated from 14 Trial War Room)
+# ══════════════════════════════════════════════════════════════════════════════
+
+elif page == "🎯 15-16 War Room":
+    st.markdown('<p class="big-header">15-16 War Room</p>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-header">Day 4 Practice Game — April 15-16 | Normal-WTP Bass Model, Advertising Strategy, Debt Capacity, Scenario Analysis</p>',
+                unsafe_allow_html=True)
+    st.markdown("")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # WHAT'S NEW + 8-SECTION SUMMARY
+    # ══════════════════════════════════════════════════════════════════════════
+    w14_intro_col1, w14_intro_col2 = st.columns([1, 1])
+
+    with w14_intro_col1:
+        st.info("""
+**🆕 What's new today (from D3 materials):**
+
+1. **WTP is NORMALLY distributed** — mean + std dev, not uniform. Focus groups reveal mean/max.
+2. **Three arrival streams:** Innovators (decay over time) + Imitators (grow over time) + **Advertising-attracted** (same-day)
+3. **Advertising decision framework** — when to advertise, when not to, strategic use
+4. **Debt issuance is tranche-based** — exhaust Excellent → Good → Poor sequentially
+5. **Scenario comparison** — 4-year cumulative contribution under price × advertising combinations
+
+**Today's game:** Practice Game 7-9pm. **Tomorrow (Wed):** Competition begins. Today is last practice.
+        """)
+
+    with w14_intro_col2:
+        st.success("""
+**📋 The 10 Components of this War Room:**
+
+1. **Advanced Bass Model** — Normal WTP, 3 arrival streams, 4-year daily simulation
+2. **Scenario Comparison** — 4 price × ad scenarios with trajectory plots
+3. **Advertising Decision Framework** — when/when-not checklist + ROI calculator
+4. **Debt Capacity & Bond Issuance** — tranche-based (Excellent → Good → Poor)
+5. **Normal vs Uniform WTP** — side-by-side comparison tool
+6. **Cobb-Douglas + Little's Law + CM Table** — 4 factory types side-by-side
+7. **Market Segment Analyzer** (up to 5 markets, **Metropolis toggle** for +4 military markets)
+8. **Product Design ROI** (up to 5 products, **cannibalization checker** built in)
+9. **🆕 Supply Chain Trade-Offs** — Mail vs Container, Own DC vs Wholesale, New Factory vs Capex
+10. **🆕 Cash & Tax Discipline Planner** — quarterly tax projection, cash buffer, waterfall
+        """)
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # GAME PARAMETERS (shared with 13 War Room)
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("Game Parameters")
+    st.caption("Production Game (oligopoly, 8 teams, 4-year horizon starting day 365)")
+
+    r1c1, r1c2, r1c3, r1c4, r1c5 = st.columns(5)
+    with r1c1:
+        W14_STARTING_CASH = st.number_input("Starting Cash ($)", value=1579530, step=10000, key="w14_cash")
+    with r1c2:
+        W14_COMMISSION = st.number_input("Sales Commission (%)", value=20.0, step=1.0, key="w14_comm")
+    with r1c3:
+        W14_HANDLING = st.number_input("Handling ($/unit)", value=10, step=1, key="w14_handling")
+    with r1c4:
+        W14_SHIPPING = st.number_input("Shipping Mail in-region ($/u)", value=20, step=5, key="w14_ship")
+    with r1c5:
+        W14_TAX = st.number_input("Tax Rate (%)", value=35.0, step=1.0, key="w14_tax")
+
+    w14_comm_frac = W14_COMMISSION / 100
+    w14_tax_frac = W14_TAX / 100
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 1: ADVANCED BASS MODEL with NORMAL WTP + ADVERTISING
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("1. Advanced Bass Model — Normal WTP + Advertising")
+    st.caption("Three arrival streams: Innovators (p) + Imitators (q, from cumulative adopters) + Advertising-attracted (same-day)")
+
+    bass_col1, bass_col2 = st.columns([1, 2])
+    with bass_col1:
+        st.markdown("**Market Parameters** (from focus group)")
+        b14_mean = st.number_input("Mean WTP ($)", value=1300, step=50, key="b14_mean",
+                                     help="Center of the normal WTP distribution")
+        b14_std = st.number_input("Std Dev WTP ($)", value=130, step=10, key="b14_std",
+                                    help="Spread of WTP. Typically mean/10.")
+        b14_M = st.number_input("Market Size (M)", value=15000, step=1000, key="b14_M")
+        b14_p = st.number_input("Innovation coef (p)", value=0.0002, step=0.00005,
+                                  format="%.5f", key="b14_p")
+        b14_q = st.number_input("Imitation coef (q)", value=0.0035, step=0.0005,
+                                  format="%.4f", key="b14_q")
+
+        st.markdown("**Pricing & Costs**")
+        b14_price = st.number_input("Retail Price ($)", value=900, step=25, key="b14_price")
+        b14_materials = st.number_input("Materials ($/u)", value=375, step=10, key="b14_mat")
+        b14_mfg_oh = st.number_input("Mfg Overhead ($/u)", value=80, step=10, key="b14_oh")
+
+        st.markdown("**Advertising**")
+        b14_ad_daily = st.number_input("Ad Spend ($/day)", value=0, step=500, key="b14_ad")
+        b14_ad_duration = st.number_input("Ad Duration (days)", value=364, step=30, key="b14_ad_days")
+        b14_p_ad_per_500 = st.number_input("Incremental p per $500 ad/day",
+                                              value=0.0002, step=0.00005, format="%.5f",
+                                              key="b14_p_ad")
+        b14_sim_days = st.number_input("Simulate Days", value=1460, step=30, key="b14_sim")
+
+    # Simulate the Bass model with three arrival types (CACHED — instant on slider repeat)
+    _bass_result = simulate_bass_normal(
+        M=int(b14_M), p=float(b14_p), q=float(b14_q),
+        p_ad_per_500=float(b14_p_ad_per_500),
+        ad_daily=float(b14_ad_daily), ad_duration=int(b14_ad_duration),
+        price=float(b14_price), mean_wtp=float(b14_mean), std_wtp=float(b14_std),
+        sim_days=int(b14_sim_days),
+    )
+    p_buy = _bass_result["p_buy"]
+    days = _bass_result["days"]
+    innovators_list = _bass_result["innovators"]
+    imitators_list = _bass_result["imitators"]
+    advertising_list = _bass_result["advertising"]
+    total_arrivals = _bass_result["total_arrivals"]
+    purchases_list = _bass_result["purchases"]
+    cumulative_purchases = _bass_result["cumulative"]
+    # Kept for local helper below (still used in inline helpers in other sections)
+    def normal_cdf(x, mu, sigma):
+        return _normal_cdf(float(x), float(mu), float(sigma))
+
+    with bass_col2:
+        # Plot 3 arrival streams over time
+        fig_arrivals = go.Figure()
+        fig_arrivals.add_trace(go.Scatter(x=days, y=innovators_list, name="Innovators (p)",
+                                            line=dict(color="#1a3c5e", width=2)))
+        fig_arrivals.add_trace(go.Scatter(x=days, y=imitators_list, name="Imitators (q × A/M)",
+                                            line=dict(color="#800000", width=2)))
+        if b14_ad_daily > 0:
+            fig_arrivals.add_trace(go.Scatter(x=days, y=advertising_list,
+                                                name=f"Advertising (${b14_ad_daily}/day, {b14_ad_duration}d)",
+                                                line=dict(color="#b8860b", width=2)))
+        fig_arrivals.add_trace(go.Scatter(x=days, y=total_arrivals, name="Total arrivals",
+                                            line=dict(color="#2d6a2e", width=2.5, dash="dash")))
+        fig_arrivals.update_layout(
+            height=400, xaxis_title="Day",
+            yaxis_title="Daily Arrivals",
+            title=dict(text=f"Daily Customer Arrivals (P(buy at ${b14_price}) = {p_buy:.1%})",
+                         x=0.5, xanchor="center", y=0.97, yanchor="top"),
+            margin=dict(l=0, r=0, t=90, b=0),
+            legend=dict(orientation="h", yanchor="top", y=1.07,
+                         xanchor="center", x=0.5),
+        )
+        st.plotly_chart(fig_arrivals, use_container_width=True)
+
+        # Key check metrics at specific days (matching exercise)
+        st.markdown("**Arrivals at Key Days** (Day 1, 364, 728)")
+        check_days = [0, 363, 727]  # 0-indexed: day 1, day 364, day 728
+        check_data = []
+        for dx in check_days:
+            if dx < len(days):
+                check_data.append({
+                    "Day": days[dx],
+                    "Innovators": f"{innovators_list[dx]:.2f}",
+                    "Imitators": f"{imitators_list[dx]:.2f}",
+                    "Ad-attracted": f"{advertising_list[dx]:.2f}",
+                    "Total arrivals": f"{total_arrivals[dx]:.2f}",
+                    "Purchases": f"{purchases_list[dx]:.2f}",
+                })
+        st.dataframe(pd.DataFrame(check_data), use_container_width=True, hide_index=True)
+
+        # Cumulative contribution (4-year) — inside right column, fills whitespace next to advertising inputs
+        var_cost = b14_materials + W14_SHIPPING + W14_HANDLING + b14_mfg_oh
+        cm_per_unit = b14_price * (1 - w14_comm_frac) - var_cost
+        daily_cm = [cm_per_unit * p for p in purchases_list]
+        cumulative_cm = []
+        cum = 0
+        total_ad_spend = 0
+        for t, d_cm in zip(days, daily_cm):
+            cum += d_cm
+            if t <= b14_ad_duration:
+                cum -= b14_ad_daily
+                total_ad_spend += b14_ad_daily
+            cumulative_cm.append(cum)
+
+        fig_cum = go.Figure()
+        fig_cum.add_trace(go.Scatter(x=days, y=cumulative_cm, name="Cumulative Contribution",
+                                       line=dict(color="#2d6a2e", width=2.5),
+                                       fill="tozeroy", fillcolor="rgba(45,106,46,0.1)"))
+        fig_cum.add_hline(y=0, line_dash="dot", line_color="gray")
+        fig_cum.update_layout(height=300, xaxis_title="Day",
+                               yaxis_title="Cumulative Contribution ($)",
+                               yaxis_tickformat="$,.0f",
+                               title="4-Year Cumulative Contribution (net of advertising)",
+                               margin=dict(l=0, r=0, t=40, b=0))
+        st.plotly_chart(fig_cum, use_container_width=True)
+
+    # 6 metric boxes in horizontal alignment (full width)
+    total_purchases = sum(purchases_list)
+    final_cum_cm = cumulative_cm[-1] if cumulative_cm else 0
+    m1, m2, m3, m4, m5, m6 = st.columns(6)
+    m1.metric("P(buy)", f"{p_buy:.1%}")
+    m2.metric("Total Purchases", f"{total_purchases:,.0f} u")
+    m3.metric("Market Served", f"{total_purchases/b14_M*100:.1f}%")
+    m4.metric("Ad Spend", f"${total_ad_spend:,}")
+    m5.metric("Cumulative CM", f"${final_cum_cm:,.0f}",
+               delta=f"${final_cum_cm/1000:.0f}K")
+    m6.metric("CM / unit", f"${cm_per_unit:.2f}")
+
+    # D3 Exercise verification
+    with st.expander("**D3 Exercise Verification** (default params: MD Cancer Bladder/Kidney)", expanded=False):
+        st.markdown("""
+**D3 Solutions check** (market size 15K, mean WTP $1,300, std $130, materials $375, OH $80, ship $20):
+
+| Scenario | Expected Year 4 Cumulative CM |
+|---|---|
+| P=$900, no ad | **$3,249K** |
+| P=$900, $3,000/day for 364 days | **$2,391K** |
+| P=$1,200, no ad | **$4,597K** (BEST) |
+| P=$1,200, $3,000/day for 364 days | **$4,287K** |
+
+**Key insight:** At $900 retail, advertising HURTS profit ($2,391K < $3,249K). Why?
+- At $900, P(buy) ≈ 99.9% (well above 3σ below mean), so nearly all arrivals buy anyway
+- Advertising just accelerates when they arrive, doesn't increase total demand
+- $3,000 × 364 = $1.09M in ad spend minus minor value = net loss
+
+**Better to price at $1,200** (P(buy) ≈ 22%) without ad:
+- More profit per sale covers slower cumulative adoption
+- Ad at $1,200 provides marginal benefit but still loses to no-ad
+        """)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 2: SCENARIO COMPARISON (Price × Advertising)
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("2. Scenario Comparison — Price × Advertising")
+    st.caption("Compare 4 scenarios side-by-side: 2 price points × (no ad vs with ad)")
+
+    scc1, scc2, scc3 = st.columns([1, 1, 2])
+    with scc1:
+        sc_p_low = st.number_input("Price Low", value=900, step=25, key="sc_p_low")
+        sc_p_high = st.number_input("Price High", value=1200, step=25, key="sc_p_high")
+    with scc2:
+        sc_ad_amount = st.number_input("Ad Spend ($/day)", value=3000, step=500, key="sc_ad_amount")
+        sc_ad_days = st.number_input("Ad Duration (days)", value=364, step=30, key="sc_ad_days")
+    with scc3:
+        st.caption("Uses market params from Section 1. Adjust mean WTP, std, market size, etc. above to match your target market.")
+
+    # Scenarios — use cached simulate_scenario_traj for 100× speedup on slider repeats
+    scenarios = [
+        ("A", sc_p_low, 0, "Low price, no ad"),
+        ("B", sc_p_low, sc_ad_amount, f"Low price, ${sc_ad_amount}/day ad for {sc_ad_days}d"),
+        ("C", sc_p_high, 0, "High price, no ad"),
+        ("D", sc_p_high, sc_ad_amount, f"High price, ${sc_ad_amount}/day ad for {sc_ad_days}d"),
+    ]
+
+    def _run_scenario(price, ad):
+        return simulate_scenario_traj(
+            price=float(price), ad_daily=float(ad), ad_duration=int(sc_ad_days),
+            M=int(b14_M), p=float(b14_p), q=float(b14_q),
+            p_ad_per_500=float(b14_p_ad_per_500),
+            mean_wtp=float(b14_mean), std_wtp=float(b14_std),
+            materials=float(b14_materials), mfg_oh=float(b14_mfg_oh),
+            shipping=float(W14_SHIPPING), handling=float(W14_HANDLING),
+            commission_frac=float(w14_comm_frac), days_total=1460,
+        )
+
+    # Run each scenario ONCE and reuse result for table + chart (also cached)
+    scenario_results = {}
+    for label, price, ad, _ in scenarios:
+        scenario_results[label] = _run_scenario(price, ad)
+
+    sc_results = []
+    for label, price, ad, desc in scenarios:
+        r = scenario_results[label]
+        sc_results.append({
+            "Scenario": f"{label}: {desc}",
+            "Price": f"${price:,}",
+            "Ad Spend Total": f"${ad * sc_ad_days:,}",
+            "P(buy)": f"{r['p_buy']:.1%}",
+            "Units Sold (4yr)": f"{r['cum_units']:,.0f}",
+            "CM/unit": f"${r['cm_per_unit']:.0f}",
+            "Cumulative CM": f"${r['cum_cm_final']:,.0f}",
+            "vs Best": "",
+        })
+
+    # Identify best
+    best_cm = max(r["cum_cm_final"] for r in scenario_results.values())
+    for i, r_row in enumerate(sc_results):
+        label, _, _, _ = scenarios[i]
+        r = scenario_results[label]
+        delta = r["cum_cm_final"] - best_cm
+        r_row["vs Best"] = f"${delta:,.0f}" if delta < 0 else "🏆 Best"
+
+    st.dataframe(pd.DataFrame(sc_results), use_container_width=True, hide_index=True)
+
+    # Visualize (reuses cached trajectories — zero extra compute)
+    fig_sc = go.Figure()
+    for label, price, ad, _ in scenarios:
+        r = scenario_results[label]
+        fig_sc.add_trace(go.Scatter(
+            x=list(range(1, 1461)), y=r["trajectory"],
+            name=f"{label}: ${price} {'w/ ad' if ad > 0 else ''}",
+            mode="lines",
+        ))
+    fig_sc.add_hline(y=0, line_dash="dot", line_color="gray")
+    fig_sc.update_layout(height=450, xaxis_title="Day",
+                          yaxis_title="Cumulative CM ($)", yaxis_tickformat="$,.0f",
+                          title=dict(text="Cumulative Contribution over 4 Years",
+                                       x=0.5, xanchor="center", y=0.97, yanchor="top"),
+                          margin=dict(l=0, r=0, t=90, b=0),
+                          legend=dict(orientation="h", yanchor="top", y=1.07,
+                                        xanchor="center", x=0.5))
+    st.plotly_chart(fig_sc, use_container_width=True)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 3: ADVERTISING DECISION FRAMEWORK
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("3. Advertising Decision Framework")
+
+    adv_col1, adv_col2 = st.columns(2)
+    with adv_col1:
+        st.markdown("**✅ Advertise when...**")
+        st.markdown("""
+- **Early in product lifecycle** — most arrivals are innovators, maximum leverage on future imitators
+- **Product is profitable** at current price — otherwise advertising amplifies losses
+- **You have supply capacity** — customers arrive same day $ is spent; stockouts = lost forever
+- **To stave off competitor entry** — signal commitment, build brand loyalty
+- **To avoid price wars** — differentiated demand via advertising buys you time
+- **Low P(buy)** at current price — advertising creates new arrivals that wouldn't come organically
+        """)
+    with adv_col2:
+        st.markdown("**❌ Don't advertise when...**")
+        st.markdown("""
+- **Late in product lifecycle** — few customers remain, most arrivals are imitators (already coming)
+- **Unprofitable product** — ad spend compounds losses
+- **At stockout risk** — you'll turn away paying customers
+- **At low prices (high P(buy))** — customers arrive anyway, ad just pulls demand forward
+- **When competitors match** — Bertrand-like race to zero
+- **Short horizon remaining** — not enough time to recoup ad investment via imitator cascade
+        """)
+
+    st.markdown("#### Advertising ROI Calculator")
+    ar_col1, ar_col2, ar_col3 = st.columns(3)
+    with ar_col1:
+        ar_current_price = st.number_input("Current Price ($)", value=1200, step=50, key="ar_price")
+        ar_cm_per_unit = st.number_input("CM per Unit ($)", value=500, step=25, key="ar_cm")
+    with ar_col2:
+        ar_cur_arrivals = st.number_input("Current Arrivals/day (from Bass)", value=5, step=1, key="ar_arr")
+        ar_p_buy_cur = st.number_input("Current P(buy)", value=0.22, step=0.05, format="%.2f", key="ar_pbuy")
+    with ar_col3:
+        ar_ad_spend = st.number_input("Proposed Ad $/day", value=3000, step=500, key="ar_spend")
+        ar_ad_incr_p = st.number_input("Incremental customers/day", value=18, step=1, key="ar_incr",
+                                          help="Ad customers = (ad/$500) × p_inc × remaining market. Check Bass model above.")
+
+    ar_incremental_daily_cm = ar_ad_incr_p * ar_p_buy_cur * ar_cm_per_unit - ar_ad_spend
+    ar_breakeven_incr = ar_ad_spend / (ar_p_buy_cur * ar_cm_per_unit) if ar_p_buy_cur * ar_cm_per_unit > 0 else float("inf")
+
+    if ar_incremental_daily_cm > 0:
+        st.success(f"✅ Advertising adds ${ar_incremental_daily_cm:.0f}/day in net CM. "
+                    f"Need {ar_breakeven_incr:.1f} incremental customers/day to break even — currently projecting {ar_ad_incr_p}.")
+    else:
+        st.error(f"❌ Advertising costs ${-ar_incremental_daily_cm:.0f}/day in net CM. "
+                  f"Need {ar_breakeven_incr:.1f} incremental customers/day to break even — currently only {ar_ad_incr_p}. "
+                  f"Either raise price to increase CM per unit, or skip ads.")
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 4: ENHANCED DEBT MODEL (Tranche-based)
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("4. Debt Capacity & Bond Issuance")
+    st.caption("Zero-coupon bonds, $1,000 face, 5-year maturity, semi-annual compounding. Sequential tranche: Excellent → Good → Poor.")
+
+    debt_col1, debt_col2 = st.columns([1, 2])
+    with debt_col1:
+        d_ebit = st.number_input("Yearly EBIT / Operating Income ($)", value=100000, step=10000, key="d_ebit",
+                                   help="Last full quarter × 4")
+        d_existing_interest = st.number_input("Existing Interest ($/yr)", value=0, step=500, key="d_exist")
+
+    RATES = {"Excellent": (20, 0.10), "Good": (7, 0.15), "Poor": (2, 0.25)}
+
+    # Calculate debt capacity by tranche
+    # Rule: exhaust Excellent first, then Good, then Poor
+    # At each rating, max total interest = EBIT / hurdle
+    # EAR = (1 + APR/2)^2 - 1
+    def ear(apr):
+        return (1 + apr/2) ** 2 - 1
+
+    def bond_price(apr, years=5):
+        # Zero-coupon price from face $1000
+        return 1000 / (1 + apr/2) ** (2 * years)
+
+    tranche_data = []
+    used_interest = d_existing_interest
+    cum_bonds_face = 0
+    cum_bonds_cash = 0
+    for rating, (hurdle, apr) in RATES.items():
+        max_total_interest_for_this_rating = d_ebit / hurdle if hurdle > 0 else 0
+        incremental_interest = max(0, max_total_interest_for_this_rating - used_interest)
+        # Each bond face $1000 at APR rate → annual imputed interest ≈ $1000 × EAR
+        interest_per_bond = 1000 * ear(apr) / 5  # approx — actually accreting, use simple avg
+        # For simplicity, use total interest over 5 years = 1000 - price, then divide by 5
+        price = bond_price(apr)
+        total_interest_per_bond_5yr = 1000 - price
+        annual_interest_per_bond = total_interest_per_bond_5yr / 5
+        # But the EAR formula is more accurate
+        # Use simple: num bonds × APR × face = annual interest
+        # Actually zero-coupon bonds don't pay coupons — imputed interest accretes
+        # Game uses: yearly_interest = face × APR (approximation per assignment)
+        yearly_interest_per_bond = 1000 * apr  # per game convention (approx)
+        num_bonds = incremental_interest / yearly_interest_per_bond if yearly_interest_per_bond > 0 else 0
+        face_value = num_bonds * 1000
+        cash_received = num_bonds * price
+
+        tranche_data.append({
+            "Rating": rating,
+            "Coverage Hurdle": f"{hurdle}×",
+            "APR": f"{apr*100:.0f}%",
+            "EAR": f"{ear(apr)*100:.2f}%",
+            "Max Cumulative Interest": f"${max_total_interest_for_this_rating:,.0f}",
+            "Incremental Interest": f"${incremental_interest:,.0f}",
+            "# Bonds Issuable": f"{num_bonds:.1f}",
+            "Face Value": f"${face_value:,.0f}",
+            "Cash Received": f"${cash_received:,.0f}",
+        })
+        used_interest = max_total_interest_for_this_rating
+        cum_bonds_face += face_value
+        cum_bonds_cash += cash_received
+
+    with debt_col2:
+        st.dataframe(pd.DataFrame(tranche_data), use_container_width=True, hide_index=True)
+
+        st.markdown(f"""
+<div style="background:rgba(26,60,94,0.15); border-left:4px solid #1a3c5e;
+    border-radius:6px; padding:0.8rem 1rem;">
+<b>Total Debt Capacity</b><br>
+<span style="font-size:1.2em;">Face Value: <b>${cum_bonds_face:,.0f}</b> | Cash Received: <b>${cum_bonds_cash:,.0f}</b></span>
+</div>
+""", unsafe_allow_html=True)
+
+        st.caption(f"""
+Bond price formula: P = $1,000 / (1 + APR/2)^10 (semi-annual compounding, 5 years).
+Prices: Excellent={bond_price(0.10):,.2f} | Good={bond_price(0.15):,.2f} | Poor={bond_price(0.25):,.2f}
+To go from no debt to maximum: cash received = ${cum_bonds_cash:,.0f}, but you commit to
+${cum_bonds_face:,.0f} face value due in 5 years + interest expense reducing future flexibility.
+        """)
+
+    with st.expander("**Debt Decision Guide**", expanded=False):
+        st.markdown(f"""
+### When to Issue Bonds
+
+**Rating-specific guidance:**
+
+**Excellent ({RATES['Excellent'][0]}× coverage, {RATES['Excellent'][1]*100:.0f}% APR):**
+- Cheapest debt, lowest risk. Issue aggressively if NPV > 0 at 15% cost of capital.
+- Rule: coverage stays ≥ 20× → rating protected
+
+**Good ({RATES['Good'][0]}× coverage, {RATES['Good'][1]*100:.0f}% APR):**
+- Same as cost of capital (15%) — neutral NPV threshold
+- Only issue if project NPV > 0 AT 15% (i.e., returns > 15%)
+
+**Poor ({RATES['Poor'][0]}× coverage, {RATES['Poor'][1]*100:.0f}% APR):**
+- 25% APR > 15% cost of capital → destroys value unless project IRR > 25%
+- Usually a bad idea; emergency loans at 40% are even worse
+
+### Strategic Moves
+
+1. **Build to EBIT before issuing** — higher EBIT → bigger Excellent tranche at 10%
+2. **Use for growth capex, not operating losses** — NPV-positive projects only
+3. **Avoid Poor rating** unless you're confident of a big payoff
+4. **Plan for 5-year maturity** — bonds come due at game end (day 1460). Match cash flows.
+
+### Tranche Logic (per D3 model)
+
+The simulation **automatically** fills tranches in order:
+1. First bonds go at Excellent rate (cheapest) until 20× coverage breached
+2. Next bonds go at Good rate until 7× coverage breached
+3. Final bonds at Poor rate until 2× coverage breached
+4. Beyond: no more issuance possible
+
+**Current tranche result for your EBIT (${d_ebit:,}):**
+- Excellent tranche face: **${float(tranche_data[0]['Face Value'].replace('$','').replace(',','')):,.0f}**
+- Good tranche face: **${float(tranche_data[1]['Face Value'].replace('$','').replace(',','')):,.0f}**
+- Poor tranche face: **${float(tranche_data[2]['Face Value'].replace('$','').replace(',','')):,.0f}**
+        """)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 5: NORMAL WTP vs UNIFORM WTP COMPARISON
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("5. Normal WTP vs Uniform WTP — Pricing Implications")
+    st.caption("Pricing formulas differ by distribution assumption. Know which you're using.")
+
+    with st.expander("**When to use which distribution**", expanded=False):
+        st.markdown("""
+### Normal Distribution (New per D3)
+- Focus group reveals **mean and std dev** (or median and max, where mean ≈ median)
+- WTP ~ N(μ, σ²) — most customers cluster near mean, tails on both sides
+- P(buy at price P) = 1 − Φ((P − μ) / σ) where Φ is standard normal CDF
+- No explicit min/max — theoretically unbounded
+- Practical min/max: μ ± 3σ captures 99.7% of customers
+- For the MD Cancer Bladder example: μ=$1,300, σ=$130 → practical range [$910, $1,690]
+
+### Uniform Distribution [min, max] (V1 assumption)
+- Focus group reveals **min and max** (or derive from median)
+- WTP ~ Uniform[a, b] — equal mass everywhere in range
+- P(buy at P) = (b − P) / (b − a) for P in (a, b)
+- Optimal P = b/2 + var_fixed/1.6 (with 20% commission)
+
+### Which is Right for the Gleacher Game?
+
+The D3 Bass Model Exercise uses **Normal WTP** (mean $1,300, std $130).
+The focus group UI screenshot showed **median and max** — which could indicate either:
+- Normal: median = mean (for symmetric distribution)
+- Uniform: median = (min+max)/2
+
+Given the D3 Exercise uses Normal, **we should assume Normal distribution** going forward.
+        """)
+
+        # Side-by-side comparison at same price
+        comp_col1, comp_col2, comp_col3 = st.columns(3)
+        with comp_col1:
+            comp_price = st.number_input("Test Price ($)", value=1200, step=50, key="comp_price")
+            comp_mean = st.number_input("Normal: Mean WTP", value=1300, step=50, key="comp_mean")
+            comp_std = st.number_input("Normal: Std Dev", value=130, step=10, key="comp_std")
+        with comp_col2:
+            comp_min = st.number_input("Uniform: Min WTP", value=1000, step=50, key="comp_min")
+            comp_max = st.number_input("Uniform: Max WTP", value=1600, step=50, key="comp_max")
+
+        p_buy_normal = 1 - normal_cdf(comp_price, comp_mean, comp_std)
+        if comp_price <= comp_min:
+            p_buy_unif = 1.0
+        elif comp_price >= comp_max:
+            p_buy_unif = 0.0
+        else:
+            p_buy_unif = (comp_max - comp_price) / (comp_max - comp_min)
+
+        with comp_col3:
+            st.metric("P(buy) — Normal", f"{p_buy_normal:.1%}")
+            st.metric("P(buy) — Uniform", f"{p_buy_unif:.1%}")
+            diff = p_buy_normal - p_buy_unif
+            st.metric("Difference", f"{diff:+.1%}",
+                       help="Positive = Normal predicts higher demand than Uniform")
+
+    st.markdown("---")
+    st.success("""
+**🎯 Key Takeaways from D3 Practice:**
+1. Use **Normal WTP distribution** with mean/std (not uniform)
+2. Advertising has **diminishing returns** at high P(buy) — skip at low prices
+3. Price higher → fewer sales but more profit per sale. Usually wins over 4 years.
+4. Issue debt at **Excellent rate first** (10% APR < 15% cost of capital = NPV positive)
+5. Customers attracted by advertising arrive **same day** — don't advertise without inventory
+    """)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 6: COBB-DOUGLAS + LITTLE'S LAW + CONTRIBUTION MARGIN TABLE
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("6. Cobb-Douglas + Little's Law + Contribution Margin")
+    st.caption("4 factories side-by-side (Bench, Line, Cell, Custom) with shared K, L, batch inputs")
+
+    # Shared inputs (apply to all 4 factories)
+    st.markdown("**Shared Inputs** (same across all 4 factories)")
+    w14_sh1, w14_sh2, w14_sh3, w14_sh4 = st.columns(4)
+    with w14_sh1:
+        w14_K = st.number_input("Capital K ($)", value=100000, step=10000, key="w14_K")
+    with w14_sh2:
+        w14_l = st.number_input("Daily Labor l ($/day)", value=2500, step=100, key="w14_l")
+    with w14_sh3:
+        w14_batch = st.number_input("Batch Size", value=100, step=10, key="w14_batch")
+    with w14_sh4:
+        w14_dpy = st.number_input("Days/year", value=364, step=1, key="w14_dpy")
+
+    # 4 factory configurations (3 presets + 1 custom)
+    W14_FACTORIES = [
+        {"name": "Bench", "A": 0.009, "alpha": 0.10, "beta": 0.85, "setup": 0.05, "min_K": 0, "color": "#800000"},
+        {"name": "Production Line", "A": 0.010, "alpha": 0.30, "beta": 0.75, "setup": 0.50, "min_K": 500000, "color": "#1a3c5e"},
+        {"name": "Automated Cell", "A": 0.020, "alpha": 0.80, "beta": 0.30, "setup": 1.00, "min_K": 3000000, "color": "#2d6a2e"},
+        {"name": "Custom", "A": 0.009, "alpha": 0.10, "beta": 0.85, "setup": 0.05, "min_K": 0, "color": "#b8860b"},
+    ]
+
+    # Custom factory parameters (editable)
+    st.markdown("**Custom Factory Parameters** (4th column only)")
+    w14_c1, w14_c2, w14_c3, w14_c4 = st.columns(4)
+    with w14_c1:
+        custom_A = st.number_input("Custom A", value=0.009, step=0.001,
+                                     format="%.4f", key="w14_custom_A")
+    with w14_c2:
+        custom_alpha = st.number_input("Custom α", value=0.10, step=0.05,
+                                         format="%.2f", key="w14_custom_alpha")
+    with w14_c3:
+        custom_beta = st.number_input("Custom β", value=0.85, step=0.05,
+                                        format="%.2f", key="w14_custom_beta")
+    with w14_c4:
+        custom_setup = st.number_input("Custom setup (d)", value=0.05, step=0.05,
+                                         format="%.2f", key="w14_custom_setup")
+
+    # Apply custom values to 4th entry
+    W14_FACTORIES[3]["A"] = custom_A
+    W14_FACTORIES[3]["alpha"] = custom_alpha
+    W14_FACTORIES[3]["beta"] = custom_beta
+    W14_FACTORIES[3]["setup"] = custom_setup
+
+    W14_DEP_YRS = 15
+
+    # Calculate for each factory
+    def calc_factory(f, K, l, batch, dpy):
+        if K < f["min_K"]:
+            return None
+        L_yearly = l * dpy
+        Y = f["A"] * (K ** f["alpha"]) * (L_yearly ** f["beta"])
+        lambda_raw = Y / dpy
+        batch_time = batch / lambda_raw if lambda_raw > 0 else float("inf")
+        CT = batch_time + f["setup"]
+        lambda_eff = batch / CT if CT > 0 else 0
+        WIP = lambda_eff * CT
+        daily_dep = K / W14_DEP_YRS / dpy
+        daily_cost = l + daily_dep
+        mfg_oh = daily_cost / lambda_eff if lambda_eff > 0 else 0
+        return {
+            "Y": Y, "lambda_raw": lambda_raw, "batch_time": batch_time,
+            "CT": CT, "lambda_eff": lambda_eff, "WIP": WIP,
+            "mfg_oh": mfg_oh, "daily_cost": daily_cost,
+        }
+
+    w14_fac_results = [calc_factory(f, w14_K, w14_l, w14_batch, w14_dpy) for f in W14_FACTORIES]
+
+    # 4 side-by-side factory columns
+    st.markdown("---")
+    st.markdown("### Factory Comparison (side-by-side)")
+    fac_cols = st.columns(4)
+    for idx, (col, f, r) in enumerate(zip(fac_cols, W14_FACTORIES, w14_fac_results)):
+        with col:
+            st.markdown(
+                f"<div style='background:{f['color']};color:white;padding:0.5rem 0.8rem;"
+                f"border-radius:6px;font-weight:700;text-align:center;'>{f['name']}</div>",
+                unsafe_allow_html=True,
+            )
+            st.caption(f"A={f['A']:.4f} | α={f['alpha']:.2f} | β={f['beta']:.2f} | setup={f['setup']:.2f}d")
+            if r is None:
+                st.error(f"Min K ${f['min_K']:,} not met")
+                continue
+
+            st.metric("Yearly Y", f"{r['Y']:,.0f} u/yr")
+            st.metric("Daily λ raw", f"{r['lambda_raw']:.2f} u/d")
+            st.metric("Daily λ eff", f"{r['lambda_eff']:.2f} u/d")
+            st.metric("Batch Time", f"{r['batch_time']:.3f} d")
+            st.metric("Setup", f"{f['setup']:.2f} d")
+            st.metric("Total CT", f"{r['CT']:.3f} d")
+            st.metric("WIP Inventory", f"{r['WIP']:.1f} units")
+            st.metric("Mfg OH/unit", f"${r['mfg_oh']:.2f}")
+            rts = f["alpha"] + f["beta"]
+            rts_label = "Incr." if rts > 1.02 else ("Decr." if rts < 0.98 else "Const.")
+            st.metric("α+β", f"{rts:.2f}", delta=f"{rts_label} returns", delta_color="off")
+
+    # Pick which factory's Mfg OH feeds the CM table below
+    st.markdown("---")
+    oh_pick_col1, oh_pick_col2 = st.columns([1, 3])
+    with oh_pick_col1:
+        cm_factory_choice = st.selectbox(
+            "CM Table uses overhead from:",
+            [f["name"] for f in W14_FACTORIES],
+            index=0, key="w14_cm_factory_pick",
+        )
+    picked_idx = [f["name"] for f in W14_FACTORIES].index(cm_factory_choice)
+    picked_result = w14_fac_results[picked_idx]
+    if picked_result is None:
+        # Fallback to Bench
+        picked_result = w14_fac_results[0]
+        cm_factory_choice = "Bench"
+    with oh_pick_col2:
+        st.caption(f"**{cm_factory_choice}** Mfg OH/unit = ${picked_result['mfg_oh']:,.2f}. "
+                   f"Effective λ = {picked_result['lambda_eff']:.2f} units/day. "
+                   f"Change selector to see CM with different factory overhead.")
+
+    # Export vars for CM table section below (preserves the original flow)
+    w14_mfg_oh = picked_result["mfg_oh"]
+    w14_lambda_eff = picked_result["lambda_eff"]
+    w14_daily_factory_cost = picked_result["daily_cost"]
+
+    # Contribution Margin Table — now with SELLER vs RETAILER cost allocation
+    st.markdown("### 💰 Contribution Margin — Cost Allocation")
+    st.caption("Per Gleacher Tips: **Retailer pays commission + handling. Wholesaler pays shipping + materials + mfg OH.** "
+               "Use this to model wholesale price negotiation below.")
+
+    w14_cm_c1, w14_cm_c2, w14_cm_c3, w14_cm_c4 = st.columns(4)
+    with w14_cm_c1:
+        w14_cm_price = st.number_input("Retail Price ($)", value=1200, step=25, key="w14_cm_price")
+    with w14_cm_c2:
+        w14_cm_materials = st.number_input("Materials ($/u)", value=100, step=10, key="w14_cm_mat")
+    with w14_cm_c3:
+        w14_cm_shipping = st.number_input("Shipping ($/u)", value=20, step=5, key="w14_cm_ship")
+    with w14_cm_c4:
+        w14_cm_handling = st.number_input("Handling ($/u)", value=10, step=1, key="w14_cm_hand")
+
+    w14_cm_commission = w14_cm_price * w14_comm_frac
+
+    # Cost groupings by who bears them
+    SELLER = "#1a3c5e"   # blue for wholesaler/seller-borne
+    RETAILER = "#b8860b"  # gold for retailer-borne
+    seller_costs = w14_mfg_oh + w14_cm_materials + w14_cm_shipping
+    retailer_costs = w14_cm_handling + w14_cm_commission
+
+    # Integrated (own DC + own factory) CM: bear all costs
+    w14_cm_total_cost = seller_costs + retailer_costs
+    w14_cm_before_tax = w14_cm_price - w14_cm_total_cost
+    w14_cm_day = w14_cm_before_tax * w14_lambda_eff
+
+    cm_color = "#2d6a2e" if w14_cm_before_tax > 0 else "#b22222"
+    pct_rev = lambda v: f"{v/w14_cm_price*100:.1f}%" if w14_cm_price > 0 else "—"
+
+    st.markdown(f"""
+<div style="border:1px solid rgba(128,128,128,0.3); border-radius:8px; padding:1rem;">
+<table style="width:100%; border-collapse:collapse;">
+<tr style="border-bottom:2px solid rgba(128,128,128,0.5);">
+<th style="text-align:left;">Line</th>
+<th style="text-align:center;">Borne by</th>
+<th style="text-align:right;">Per Unit</th>
+<th style="text-align:right;">Per Day (at λ_eff={w14_lambda_eff:.2f})</th>
+<th style="text-align:right;">% Rev</th>
+</tr>
+<tr><td>Revenue</td>
+<td style="text-align:center;"><b style="color:{RETAILER};">Retailer collects</b></td>
+<td style="text-align:right;"><b>${w14_cm_price:,.2f}</b></td>
+<td style="text-align:right;"><b>${w14_cm_price * w14_lambda_eff:,.2f}</b></td>
+<td style="text-align:right;">100.0%</td></tr>
+<tr style="background:rgba(26,60,94,0.08);">
+<td>(−) Manufacturing Overhead</td>
+<td style="text-align:center;"><b style="color:{SELLER};">Wholesaler (Seller)</b></td>
+<td style="text-align:right;color:#b22222;">$({w14_mfg_oh:,.2f})</td>
+<td style="text-align:right;color:#b22222;">$({w14_daily_factory_cost:,.2f})</td>
+<td style="text-align:right;">{pct_rev(w14_mfg_oh)}</td></tr>
+<tr style="background:rgba(26,60,94,0.08);">
+<td>(−) Materials</td>
+<td style="text-align:center;"><b style="color:{SELLER};">Wholesaler (Seller)</b></td>
+<td style="text-align:right;color:#b22222;">$({w14_cm_materials:,.2f})</td>
+<td style="text-align:right;color:#b22222;">$({w14_cm_materials * w14_lambda_eff:,.2f})</td>
+<td style="text-align:right;">{pct_rev(w14_cm_materials)}</td></tr>
+<tr style="background:rgba(26,60,94,0.08);">
+<td>(−) Shipping</td>
+<td style="text-align:center;"><b style="color:{SELLER};">Wholesaler (Seller)</b></td>
+<td style="text-align:right;color:#b22222;">$({w14_cm_shipping:,.2f})</td>
+<td style="text-align:right;color:#b22222;">$({w14_cm_shipping * w14_lambda_eff:,.2f})</td>
+<td style="text-align:right;">{pct_rev(w14_cm_shipping)}</td></tr>
+<tr style="border-top:1px solid rgba(26,60,94,0.5);background:rgba(26,60,94,0.12);">
+<td><b>Subtotal: Wholesaler's COGS</b></td>
+<td style="text-align:center;"><b style="color:{SELLER};">Seller bears</b></td>
+<td style="text-align:right;color:{SELLER};"><b>$({seller_costs:,.2f})</b></td>
+<td style="text-align:right;color:{SELLER};"><b>$({seller_costs * w14_lambda_eff:,.2f})</b></td>
+<td style="text-align:right;">{pct_rev(seller_costs)}</td></tr>
+<tr style="background:rgba(184,134,11,0.08);">
+<td>(−) Handling</td>
+<td style="text-align:center;"><b style="color:{RETAILER};">Retailer</b></td>
+<td style="text-align:right;color:#b22222;">$({w14_cm_handling:,.2f})</td>
+<td style="text-align:right;color:#b22222;">$({w14_cm_handling * w14_lambda_eff:,.2f})</td>
+<td style="text-align:right;">{pct_rev(w14_cm_handling)}</td></tr>
+<tr style="background:rgba(184,134,11,0.08);">
+<td>(−) Commission ({W14_COMMISSION:.0f}%)</td>
+<td style="text-align:center;"><b style="color:{RETAILER};">Retailer</b></td>
+<td style="text-align:right;color:#b22222;">$({w14_cm_commission:,.2f})</td>
+<td style="text-align:right;color:#b22222;">$({w14_cm_commission * w14_lambda_eff:,.2f})</td>
+<td style="text-align:right;">{pct_rev(w14_cm_commission)}</td></tr>
+<tr style="border-top:1px solid rgba(184,134,11,0.5);background:rgba(184,134,11,0.15);border-bottom:2px solid rgba(128,128,128,0.5);">
+<td><b>Subtotal: Retailer's cost of sale</b></td>
+<td style="text-align:center;"><b style="color:{RETAILER};">Retailer bears</b></td>
+<td style="text-align:right;color:{RETAILER};"><b>$({retailer_costs:,.2f})</b></td>
+<td style="text-align:right;color:{RETAILER};"><b>$({retailer_costs * w14_lambda_eff:,.2f})</b></td>
+<td style="text-align:right;">{pct_rev(retailer_costs)}</td></tr>
+<tr style="background:rgba({'45,106,46' if w14_cm_before_tax > 0 else '178,34,34'},0.2);">
+<td><b>= Integrated CM (same party owns DC + factory)</b></td>
+<td></td>
+<td style="text-align:right;color:{cm_color};font-size:1.15em;"><b>${w14_cm_before_tax:,.2f}</b></td>
+<td style="text-align:right;color:{cm_color};font-size:1.15em;"><b>${w14_cm_day:,.2f}</b></td>
+<td style="text-align:right;color:{cm_color};"><b>{pct_rev(w14_cm_before_tax)}</b></td></tr>
+</table>
+</div>
+""", unsafe_allow_html=True)
+
+    # Waterfall chart with seller/retailer color grouping
+    fig_wf = go.Figure(go.Waterfall(
+        name="Per Unit",
+        orientation="v",
+        measure=["absolute", "relative", "relative", "relative", "relative", "relative", "total"],
+        x=["Revenue", "Mfg OH<br>(seller)", "Materials<br>(seller)", "Shipping<br>(seller)",
+           "Handling<br>(retailer)", "Commission<br>(retailer)", "CM"],
+        y=[w14_cm_price, -w14_mfg_oh, -w14_cm_materials, -w14_cm_shipping,
+           -w14_cm_handling, -w14_cm_commission, 0],
+        connector={"line": {"color": "rgb(63, 63, 63)"}},
+        increasing={"marker": {"color": "#2d6a2e"}},
+        decreasing={"marker": {"color": "#b22222"}},
+        totals={"marker": {"color": "#1a3c5e"}},
+    ))
+    fig_wf.update_layout(height=350, yaxis_title="$ per unit", yaxis_tickformat="$,.0f",
+                          title=f"Waterfall: ${w14_cm_price} price → ${w14_cm_before_tax:,.2f} CM (integrated)",
+                          margin=dict(l=0, r=0, t=40, b=0))
+    st.plotly_chart(fig_wf, use_container_width=True)
+
+    # ── Wholesale Price Negotiation Tool ─────────────────────────────────────
+    st.markdown("### 🤝 Wholesale Price Negotiation Tool")
+    st.caption("If you sell to another team (wholesale), split the CM between Seller (you) and Retailer (partner). "
+               "Use the slider to find a win-win wholesale price.")
+
+    wpn_col1, wpn_col2 = st.columns([1, 2])
+    with wpn_col1:
+        # Wholesale price must be:
+        # - >= seller's cost (materials + mfg OH + shipping) for seller to want the deal
+        # - <= retail - retailer's cost (commission + handling) for retailer to make any margin
+        seller_min_ws = seller_costs  # wholesale price = seller_costs → seller makes $0
+        retailer_max_ws = w14_cm_price - retailer_costs  # retailer CM = 0 at this wholesale price
+
+        if retailer_max_ws > seller_min_ws:
+            default_ws = (seller_min_ws + retailer_max_ws) / 2  # ZOPA midpoint
+            ws_slider = st.slider(
+                "Wholesale Price ($)",
+                int(seller_min_ws), int(retailer_max_ws),
+                int(default_ws), step=10, key="w14_ws_slider",
+                help=f"ZOPA: ${seller_min_ws:,.0f} (seller breakeven) to ${retailer_max_ws:,.0f} (retailer breakeven)",
+            )
+            has_zopa = True
+        else:
+            ws_slider = int(seller_min_ws)
+            has_zopa = False
+
+        st.markdown(f"""
+**ZOPA Range (Zone of Possible Agreement):**
+- Seller min (breakeven): **${seller_min_ws:,.2f}**
+- Retailer max (breakeven): **${retailer_max_ws:,.2f}**
+- Width: **${retailer_max_ws - seller_min_ws:,.2f}**
+        """)
+        if not has_zopa:
+            st.error("🔴 **NO ZOPA** — seller's cost > retailer's revenue after commission/handling. Deal impossible at this retail price.")
+
+    with wpn_col2:
+        seller_cm = ws_slider - seller_costs
+        retailer_cm = w14_cm_price - ws_slider - retailer_costs
+        total_cm = seller_cm + retailer_cm
+        seller_share = seller_cm / total_cm * 100 if total_cm > 0 else 0
+        retailer_share = retailer_cm / total_cm * 100 if total_cm > 0 else 0
+
+        # Side-by-side metrics
+        sc_a, sc_b, sc_c = st.columns(3)
+        with sc_a:
+            st.markdown(f"""
+<div style="background:{SELLER};color:white;border-radius:8px;padding:0.8rem;text-align:center;">
+<b>Seller (Wholesaler)</b><br>
+<span style="font-size:0.8em;opacity:0.8;">Receives ${ws_slider:,.0f} wholesale</span><br>
+<b style="font-size:1.5em;">${seller_cm:,.0f}</b><br>
+<span style="font-size:0.8em;">CM/unit ({seller_share:.0f}% of total)</span>
+</div>
+""", unsafe_allow_html=True)
+        with sc_b:
+            st.markdown(f"""
+<div style="background:{RETAILER};color:white;border-radius:8px;padding:0.8rem;text-align:center;">
+<b>Retailer</b><br>
+<span style="font-size:0.8em;opacity:0.8;">Pays ${ws_slider:,.0f}, sells at ${w14_cm_price:,.0f}</span><br>
+<b style="font-size:1.5em;">${retailer_cm:,.0f}</b><br>
+<span style="font-size:0.8em;">CM/unit ({retailer_share:.0f}% of total)</span>
+</div>
+""", unsafe_allow_html=True)
+        with sc_c:
+            status_color = "#2d6a2e" if seller_cm > 0 and retailer_cm > 0 else "#b22222"
+            status_text = "✅ Win-win" if seller_cm > 0 and retailer_cm > 0 else "⚠️ One side loses"
+            st.markdown(f"""
+<div style="background:{status_color};color:white;border-radius:8px;padding:0.8rem;text-align:center;">
+<b>Combined</b><br>
+<span style="font-size:0.8em;opacity:0.8;">Total CM split</span><br>
+<b style="font-size:1.5em;">${total_cm:,.0f}</b><br>
+<span style="font-size:0.8em;">{status_text}</span>
+</div>
+""", unsafe_allow_html=True)
+
+        # Sweep chart: seller CM vs retailer CM across wholesale prices
+        ws_range = list(range(int(seller_min_ws), int(retailer_max_ws) + 1, 10)) if retailer_max_ws > seller_min_ws else [int(seller_min_ws)]
+        seller_cms = [ws - seller_costs for ws in ws_range]
+        retailer_cms = [w14_cm_price - ws - retailer_costs for ws in ws_range]
+
+        fig_ws = go.Figure()
+        fig_ws.add_trace(go.Scatter(x=ws_range, y=seller_cms, name="Seller CM",
+                                      line=dict(color=SELLER, width=2.5),
+                                      fill="tozeroy", fillcolor=f"rgba(26,60,94,0.1)"))
+        fig_ws.add_trace(go.Scatter(x=ws_range, y=retailer_cms, name="Retailer CM",
+                                      line=dict(color=RETAILER, width=2.5),
+                                      fill="tozeroy", fillcolor="rgba(184,134,11,0.1)"))
+        fig_ws.add_vline(x=ws_slider, line_dash="dash", line_color="green",
+                          annotation_text=f"Your WS: ${ws_slider}")
+        fig_ws.add_hline(y=0, line_dash="dot", line_color="gray")
+        fig_ws.update_layout(
+            height=300, xaxis_title="Wholesale Price ($)",
+            yaxis_title="CM per unit ($)", yaxis_tickformat="$,.0f",
+            title=dict(text="CM Split Across Wholesale Prices",
+                         x=0.5, xanchor="center", y=0.97, yanchor="top"),
+            margin=dict(l=0, r=0, t=60, b=0),
+            legend=dict(orientation="h", yanchor="top", y=1.07, xanchor="center", x=0.5),
+        )
+        st.plotly_chart(fig_ws, use_container_width=True)
+
+    st.info(f"""
+**Negotiation Strategy:**
+- **If you are the seller**, push for wholesale price ABOVE midpoint (${(seller_min_ws + retailer_max_ws)/2:,.0f})
+- **If you are the retailer**, push BELOW midpoint
+- **Fair split**: wholesale = midpoint → 50/50 CM split
+- Include WTP info in your shipping agreement comments (per Gleacher Tips) to accelerate negotiation
+- Remember: total CM is FIXED at ${retailer_max_ws - seller_min_ws:,.0f} regardless of wholesale price —
+  the split determines who takes how much
+    """)
+
+    st.markdown("---")
+
+    # ── REGION SELECTOR (global for page) ────────────────────────────────────
+    reg_col1, reg_col2 = st.columns([1, 3])
+    with reg_col1:
+        W14B_REGION = st.selectbox("Region",
+                                    ["Metropolis", "Other Region", "Serenity"],
+                                    index=1, key="w14b_region",
+                                    help="Metropolis: up to 2× market sizes (per Class 3 slide 47). Serenity: very small EXCEPT military (huge). Other: standard.")
+    with reg_col2:
+        if W14B_REGION == "Serenity":
+            st.warning("🏜️ **Serenity mode** — All medical/law/athlete markets very small (250-5000). "
+                       "BUT military markets are HUGE (Botulinum 100-140K, Anatoxin-a 50-70K) — only region where military exists.")
+        elif W14B_REGION == "Metropolis":
+            st.info("🏙️ **Metropolis mode** — Non-military markets **up to 2×** larger than other regions (per Class 3). No military.")
+        else:
+            st.caption("🌍 **Standard Region** — medium market sizes, no military.")
+
+    # ── COST PARAMETERS (global for page) ────────────────────────────────────
+    # Commission fixed at 20% per Class 3 lecture (slide 53 spreadsheet / Practice Game default)
+    # Shipping: mail is per-unit; container is fixed per-container (capacity-dependent)
+    st.markdown("**Cost Parameters** (global — per Class 3 Practice Game)")
+    cost_col1, cost_col2, cost_col3, cost_col4 = st.columns(4)
+    with cost_col1:
+        W14B_COMMISSION = st.number_input("Sales Commission (%)", value=20.0, step=1.0, key="w14b_comm",
+                                            help="20% flat per Class 3 (paid by retailer). Rarely changes.")
+    with cost_col2:
+        W14B_HANDLING = st.number_input("Handling ($/unit)", value=10, step=1, key="w14b_handling",
+                                           help="Flat $10/u in-region per Practice Game spreadsheet.")
+    with cost_col3:
+        W14B_SHIP_MODE = st.radio("Shipping mode",
+                                     ["Mail (per-unit)", "Container (bulk)"],
+                                     index=0, key="w14b_ship_mode",
+                                     help="Mail = pay $/unit. Container = flat cost per container; economic only above breakeven volume.")
+    with cost_col4:
+        if W14B_SHIP_MODE == "Mail (per-unit)":
+            W14B_MAIL_PER_U = st.number_input("Mail cost ($/u, in-region)", value=50, step=5, key="w14b_mail",
+                                                  help="Class 3 slide 53 shows $50/u for Practice Game in-region mail.")
+            W14B_CONT_COST = 0
+            W14B_CONT_CAP = 1
+            W14B_SHIPPING = W14B_MAIL_PER_U
+        else:
+            W14B_CONT_COST = st.number_input("Container cost ($)", value=1000, step=100, key="w14b_cont_cost",
+                                                 help="Flat cost per container. Check Quick Ref for exact Practice Game value.")
+            W14B_CONT_CAP = st.number_input("Units per container", value=50, step=10, key="w14b_cont_cap",
+                                                help="How many units fit. Breakeven vs mail drives the decision.")
+            W14B_MAIL_PER_U = 50
+            W14B_SHIPPING = W14B_CONT_COST / max(1, W14B_CONT_CAP)
+    w14b_comm_frac = W14B_COMMISSION / 100
+
+    # Mail vs container breakeven hint
+    if W14B_SHIP_MODE == "Container (bulk)":
+        breakeven_units = W14B_CONT_COST / max(1, W14B_MAIL_PER_U)
+        if W14B_CONT_CAP >= breakeven_units:
+            st.success(f"📦 Container beats mail at **{breakeven_units:.0f}+ units/container**. "
+                        f"You've got {W14B_CONT_CAP}u → effective **${W14B_SHIPPING:.2f}/u** vs ${W14B_MAIL_PER_U}/u mail. "
+                        f"**Savings: ${W14B_MAIL_PER_U - W14B_SHIPPING:.2f}/u**.")
+        else:
+            st.warning(f"📮 Container **loses** at {W14B_CONT_CAP}u → ${W14B_SHIPPING:.2f}/u vs ${W14B_MAIL_PER_U}/u mail. "
+                        f"Breakeven is {breakeven_units:.0f}u/container. Ship by mail until volumes justify containers.")
+    else:
+        st.caption(f"📮 Mail mode: **${W14B_SHIPPING}/u** in-region. Switch to container once batch volumes clear breakeven.")
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # MASTER DATABASES
+    # ══════════════════════════════════════════════════════════════════════════
+    # Markets: 3-tier region sizes (mid-range values for defaults)
+    W14B_MARKETS = {
+        "Clinical Cardiovascular": {
+            "sizes": {"Serenity": 2000, "Metropolis": 40000, "Other Region": 20000},
+            "wtp_tiers": [
+                ("Systolic + O2 + GPS", 40, 290),
+                ("Sys & Dia + O2/N2/CO2 + GPS", 85, 380),
+                ("Full BP + Full DG + GPS", 350, 600),
+            ],
+            "core_feature": "Blood pressure + Dissolved gasses + GPS",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "Lack of GPS (significant)",
+            "type": "normal",
+        },
+        "Clinical Fertility (LH)": {
+            "sizes": {"Serenity": 2500, "Metropolis": 100000, "Other Region": 50000},
+            "wtp_low": 130, "wtp_high": 300,
+            "core_feature": "Hormone LH",
+            "p": 0.00025, "p_adv": 0.00025, "q": 0.004,
+            "dso": 10, "dealbreaker": "Bulky battery packs",
+            "type": "normal",
+        },
+        "Clinical Fertility (LH/FSH)": {
+            "sizes": {"Serenity": 2500, "Metropolis": 100000, "Other Region": 50000},
+            "wtp_low": 230, "wtp_high": 400,
+            "core_feature": "Hormone LH/FSH",
+            "p": 0.00025, "p_adv": 0.00025, "q": 0.004,
+            "dso": 10, "dealbreaker": "Bulky battery packs",
+            "type": "normal",
+        },
+        "Law (Narcotic)": {
+            "sizes": {"Serenity": 500, "Metropolis": 20000, "Other Region": 10000},
+            "wtp_low": 1100, "wtp_high": 1600,
+            "core_feature": "Toxicology Narcotic",
+            "p": 0.00025, "p_adv": 0.00025, "q": 0.0025,
+            "dso": 90, "dealbreaker": "Lack of GPS / cellular",
+            "type": "normal",
+        },
+        "MD Cancer (Base Panel)": {
+            "sizes": {"Serenity": 750, "Metropolis": 30000, "Other Region": 15000},
+            "wtp_low": 0, "wtp_high": 900,
+            "core_feature": "Cancer Base",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "None",
+            "type": "normal",
+        },
+        "MD Cancer (Breast)": {
+            "sizes": {"Serenity": 750, "Metropolis": 30000, "Other Region": 15000},
+            "wtp_low": 900, "wtp_high": 1600,
+            "core_feature": "Cancer Breast",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "None",
+            "type": "normal",
+        },
+        "MD Cancer (Bladder & Kidney)": {
+            "sizes": {"Serenity": 750, "Metropolis": 30000, "Other Region": 15000},
+            "wtp_low": 900, "wtp_high": 1700,
+            "core_feature": "Cancer Bladder & Kidney",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "None",
+            "type": "normal",
+        },
+        "MD Dissolved Gasses": {
+            "sizes": {"Serenity": 750, "Metropolis": 30000, "Other Region": 15000},
+            "wtp_low": 350, "wtp_high": 550,
+            "core_feature": "Full C, N, O",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "None",
+            "type": "normal",
+        },
+        "MD Fertility (Estrogen)": {
+            "sizes": {"Serenity": 750, "Metropolis": 30000, "Other Region": 15000},
+            "wtp_low": 575, "wtp_high": 965,
+            "core_feature": "Hormone Estrogen",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "None",
+            "type": "normal",
+        },
+        "MD Heart (Pulse only)": {
+            "sizes": {"Serenity": 2500, "Metropolis": 60000, "Other Region": 30000},
+            "wtp_low": 0, "wtp_high": 115,
+            "core_feature": "Heartbeat Pulse",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "Lack of GPS (safety)",
+            "type": "normal",
+        },
+        "MD Heart (Temporal)": {
+            "sizes": {"Serenity": 2500, "Metropolis": 60000, "Other Region": 30000},
+            "wtp_low": 600, "wtp_high": 865,
+            "core_feature": "Heartbeat Temporal",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "Lack of GPS (safety)",
+            "type": "normal",
+        },
+        "MD Metabolic (Bilirubin)": {
+            "sizes": {"Serenity": 750, "Metropolis": 30000, "Other Region": 15000},
+            "wtp_low": 750, "wtp_high": 1300,
+            "core_feature": "Metabolic Bilirubin",
+            "p": 0.0002, "p_adv": 0.0002, "q": 0.0035,
+            "dso": 30, "dealbreaker": "None",
+            "type": "normal",
+        },
+        "Military Botulinum (Serenity-only)": {
+            "sizes": {"Serenity": 120000, "Metropolis": 0, "Other Region": 0},
+            "wtp_low": 800, "wtp_high": 1300,
+            "core_feature": "Neurotoxin Botulinum",
+            "p": 0.0003, "p_adv": 0.0003, "q": 0.0045,
+            "dso": 60, "dealbreaker": "Lack of GPS OR polymer battery pack",
+            "type": "normal",
+        },
+        "Military Anatoxin-a (Serenity-only)": {
+            "sizes": {"Serenity": 60000, "Metropolis": 0, "Other Region": 0},
+            "wtp_low": 800, "wtp_high": 1300,
+            "core_feature": "Neurotoxin Anatoxin-a",
+            "p": 0.0003, "p_adv": 0.0003, "q": 0.0045,
+            "dso": 60, "dealbreaker": "Lack of GPS OR polymer battery pack",
+            "type": "normal",
+        },
+        "Athlete (General)": {
+            "sizes": {"Serenity": 10000, "Metropolis": 220000, "Other Region": 115000},
+            "wtp_low": 0, "wtp_high": 500,   # placeholder; actual is additive per-feature
+            "core_feature": "Motion / Pulse / BP / Dissolved Gas",
+            "p": 0.0003, "p_adv": 0.0003, "q": 0.003,
+            "dso": 5, "dealbreaker": "Bulky battery packs",
+            "type": "athlete",
+        },
+        "Athlete (Fad)": {
+            "sizes": {"Serenity": 10000, "Metropolis": 220000, "Other Region": 115000},
+            "wtp_low": 0, "wtp_high": 500,
+            "core_feature": "Motion + preferred finish/platform",
+            "p": 0.0009, "p_adv": 0.0009, "q": 0.009,
+            "dso": 5, "dealbreaker": "Wrong finish or platform (fad customers)",
+            "type": "athlete_fad",
+        },
+    }
+
+    # Athlete WTP is additive by feature (from Practice Game Market Research p.22)
+    W14B_ATHLETE_WTP = {
+        "Heartbeat": {"None": 0, "Pulse only": 150, "Pulse + temporal": 150},
+        "Blood vessel": {"None": 0, "Systolic only": 27, "Systolic & diastolic": 35, "Full profile": 35},
+        "Dissolved gasses": {"None": 0, "O2 only": 22, "O2, N2, CO2": 27, "Full C,N,O": 27},
+        "Motion": {"None": 0, "Steps": 20, "Steps + balance": 37, "Steps + balance + gait": 57},
+        "Platform": {"Chest": 5, "Stockings": 20, "Sleeves": 30, "Wrists": 37},
+    }
+
+    # Product design attributes — FULL from page 23-24 of new research doc
+    W14B_DETECTION = {
+        "Heartbeat": {
+            "None": (3, 1000, 0), "Pulse only": (15, 30000, 15), "Temporal": (90, 135000, 25),
+        },
+        "Blood vessel": {
+            "None": (3, 1000, 0), "Systolic only": (30, 75000, 10),
+            "Systolic & diastolic": (90, 135000, 15), "Full profile": (120, 180000, 40),
+        },
+        "Dissolved gasses": {
+            "None": (3, 1000, 0), "O2 only": (30, 75000, 15),
+            "O2, N2, CO2": (90, 135000, 20), "Full C,N,O": (90, 135000, 40),
+        },
+        "Toxicology": {
+            "None": (3, 1000, 0), "Ethanol": (30, 150000, 95),
+            "Amphetamine": (90, 250000, 140), "THC": (90, 250000, 140),
+            "Barbiturate": (90, 250000, 140), "Narcotic": (90, 250000, 140),
+        },
+        "Hormone": {
+            "None": (3, 1000, 0), "LH": (30, 45000, 20),
+            "LH and FSH": (60, 75000, 50), "Estrogen": (60, 75000, 60),
+            "Progesterone": (60, 75000, 60), "Testosterone": (60, 75000, 50),
+        },
+        "Metabolic": {
+            "None": (3, 1000, 0), "Thyroxine": (90, 90000, 155),
+            "Bilirubin": (90, 90000, 150), "Proteins": (90, 90000, 170),
+            "Uric acid": (90, 90000, 160),
+        },
+        "Cancer": {
+            "None": (3, 1000, 0), "Base": (60, 200000, 100),
+            "Prostate": (90, 300000, 210), "Breast": (90, 300000, 200),
+            "Bladder & Kidney": (90, 300000, 300), "Lymphoma": (90, 300000, 250),
+            "Blood & Bone": (90, 300000, 310),
+        },
+        "Neurotoxins": {
+            "None": (3, 1000, 0), "Botulinum": (90, 135000, 190),
+            "Anatoxin-a": (90, 135000, 210), "Sarin & Cyclosarin": (90, 135000, 220),
+            "Soman": (90, 135000, 280),
+        },
+        "Motion": {
+            "None": (3, 1000, 0), "Steps": (15, 30000, 15),
+            "Steps + balance": (30, 45000, 30), "Steps + balance + gait": (45, 60000, 45),
+        },
+    }
+
+    # Base features now with REAL costs from Product Design Guide (page 24)
+    W14B_BASE = {
+        "Platform": {
+            "Wrists": (90, 135000, 20), "Chest": (15, 3000, 10),
+            "Sleeves": (30, 30000, 15), "Stockings": (30, 30000, 15),
+        },
+        "GPS": {
+            "No GPS": (3, 1000, 0), "GPS": (30, 45000, 50),
+        },
+        "Network": {
+            "Bluetooth": (15, 1000, 5), "2.4 GHz": (30, 30000, 10),
+            "5 GHz": (45, 36000, 20),
+        },
+        "Power": {
+            "Ni-Cd": (5, 1500, 5), "Ni-Cd pack": (10, 15000, 20),
+            "Polymer": (5, 1500, 35), "Polymer pack": (10, 15000, 140),
+        },
+        "Finish": {
+            "Original": (3, 2400, 0), "Blue": (5, 3000, 3), "Red": (5, 3000, 3),
+            "Green": (5, 3000, 3), "Black": (5, 3000, 3), "White": (5, 3000, 3),
+            "Metallic": (90, 27000, 6), "Geometric": (90, 27000, 6),
+            "Camouflage": (20, 27000, 6),
+        },
+    }
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 7: MARKET SEGMENT ANALYZER (Region-aware, all 16 markets)
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("7. Market Segment Analyzer (Region-Aware, up to 5 markets)")
+    st.caption(f"Region: **{W14B_REGION}**. Market sizes auto-scaled. Athlete markets use additive WTP.")
+
+    ms_top1, ms_top2 = st.columns([1, 3])
+    with ms_top1:
+        w14b_n_mkts = st.number_input("# Markets", min_value=2, max_value=5,
+                                        value=5, step=1, key="w14b_n_mkts")
+    with ms_top2:
+        w14b_mkt_materials = st.number_input("Your Materials Cost ($/u)",
+                                               value=100, step=10, key="w14b_mkt_mat")
+
+    # ALL markets always visible — per-column region override
+    st.caption(f"💡 Global region above = default for new columns. Each column has its OWN region selector so you can compare multi-region strategy (e.g. Military in Serenity + MD Heart in Metropolis).")
+
+    mkt_keys = list(W14B_MARKETS.keys())  # show all 16 markets including military
+    max_cols = min(int(w14b_n_mkts), len(mkt_keys))
+    w14b_mkt_cols = st.columns(max_cols)
+    w14b_mkt_summary = []
+
+    REGION_OPTIONS = ["Metropolis", "Other Region", "Serenity"]
+
+    for i, col in enumerate(w14b_mkt_cols):
+        with col:
+            default_idx = i if i < len(mkt_keys) else 0
+            w14b_sel_mkt = st.selectbox(f"Market {i+1}", mkt_keys, index=default_idx,
+                                         key=f"w14b_ms_sel_{i}")
+            m = W14B_MARKETS[w14b_sel_mkt]
+
+            # Per-column region override
+            # If this is a military market, force Serenity
+            is_military = "Military" in w14b_sel_mkt
+            if is_military:
+                st.markdown("**Region: Serenity** 🏜️ (military only exists here)")
+                col_region = "Serenity"
+            else:
+                default_region_idx = REGION_OPTIONS.index(W14B_REGION) if W14B_REGION in REGION_OPTIONS else 1
+                col_region = st.selectbox("Region",
+                                             REGION_OPTIONS,
+                                             index=default_region_idx,
+                                             key=f"w14b_ms_region_{i}")
+
+            m_size = m["sizes"].get(col_region, 0)
+            if m_size == 0:
+                st.error(f"{w14b_sel_mkt} not available in {col_region}. Pick different market or region.")
+                continue
+
+            # Info card
+            db_color = "#b22222" if m["dealbreaker"] != "None" else "#2d6a2e"
+            st.markdown(f"""
+<div style="background:rgba(26,60,94,0.15);border-left:3px solid #1a3c5e;
+    border-radius:6px;padding:0.5rem 0.7rem;font-size:0.72rem;margin-bottom:0.3rem;">
+<b>{w14b_sel_mkt}</b> <span style="opacity:0.7;">in {col_region}</span><br>
+Feature: {m['core_feature']}<br>
+Size @ {col_region}: {m_size:,}<br>
+Bass p: {m['p']} q: {m['q']} | DSO: {m['dso']}d<br>
+DB: <span style="color:{db_color};">{m['dealbreaker']}</span>
+</div>
+""", unsafe_allow_html=True)
+
+            # Market size slider (adjustable around default)
+            mkt_size_in = st.slider("Market Size",
+                                      int(m_size * 0.3), int(m_size * 2.5),
+                                      int(m_size), step=max(100, m_size // 50),
+                                      key=f"w14b_ms_size_{i}")
+
+            # Handle Athlete markets with additive WTP
+            if m.get("type") == "athlete" or m.get("type") == "athlete_fad":
+                st.markdown("**Athlete Features (additive WTP)**")
+                a_heart = st.selectbox("Heartbeat", list(W14B_ATHLETE_WTP["Heartbeat"].keys()),
+                                          index=1, key=f"w14b_ath_hb_{i}")
+                a_bv = st.selectbox("Blood Vessel", list(W14B_ATHLETE_WTP["Blood vessel"].keys()),
+                                      index=0, key=f"w14b_ath_bv_{i}")
+                a_dg = st.selectbox("Dissolved Gasses", list(W14B_ATHLETE_WTP["Dissolved gasses"].keys()),
+                                      index=0, key=f"w14b_ath_dg_{i}")
+                a_mo = st.selectbox("Motion", list(W14B_ATHLETE_WTP["Motion"].keys()),
+                                      index=1, key=f"w14b_ath_mo_{i}")
+                a_pl = st.selectbox("Platform", list(W14B_ATHLETE_WTP["Platform"].keys()),
+                                      index=3, key=f"w14b_ath_pl_{i}")
+                additive_wtp = (W14B_ATHLETE_WTP["Heartbeat"][a_heart] +
+                                 W14B_ATHLETE_WTP["Blood vessel"][a_bv] +
+                                 W14B_ATHLETE_WTP["Dissolved gasses"][a_dg] +
+                                 W14B_ATHLETE_WTP["Motion"][a_mo] +
+                                 W14B_ATHLETE_WTP["Platform"][a_pl])
+                st.metric("Summed Max WTP", f"${additive_wtp}")
+                wtp_max_use = additive_wtp
+                wtp_mean_use = additive_wtp * 0.85
+                wtp_std_use = max(1, additive_wtp * 0.1)
+            elif "wtp_tiers" in m:
+                # Tiered WTP: user picks which feature tier applies to their product
+                st.markdown("**Feature tier (determines WTP range)**")
+                tier_labels = [f"{t[0]} (${t[1]}-${t[2]})" for t in m["wtp_tiers"]]
+                tier_idx = st.selectbox("Your product tier", range(len(tier_labels)),
+                                          format_func=lambda x: tier_labels[x],
+                                          index=len(m["wtp_tiers"]) - 1,
+                                          key=f"w14b_ms_tier_{i}")
+                tier = m["wtp_tiers"][tier_idx]
+                wtp_low_d, wtp_high_d = tier[1], tier[2]
+                wtp_max_use = st.slider("Max WTP ($)",
+                                           int(wtp_low_d), int(wtp_high_d * 1.2),
+                                           int(wtp_high_d), step=10, key=f"w14b_ms_wtp_{i}")
+                wtp_mean_use = (wtp_low_d + wtp_max_use) / 2
+                wtp_std_use = max(1, (wtp_max_use - wtp_low_d) / 3.464)
+            else:
+                # Normal WTP: mid-range from Practice Game doc; treat uniform [wtp_low, wtp_high]
+                wtp_low_d = m["wtp_low"]
+                wtp_high_d = m["wtp_high"]
+                st.caption(f"WTP range: ${wtp_low_d} - ${wtp_high_d} (uniform assumption)")
+                wtp_max_use = st.slider("Max WTP ($)",
+                                           int(max(wtp_low_d + 1, 1)), int(max(wtp_high_d * 1.2, wtp_low_d + 10)),
+                                           int(max(wtp_high_d, wtp_low_d + 1)), step=10, key=f"w14b_ms_wtp_{i}")
+                wtp_mean_use = (wtp_low_d + wtp_max_use) / 2
+                wtp_std_use = max(1, (wtp_max_use - wtp_low_d) / 3.464)
+
+            # Price slider
+            ms_p_min = int(w14b_mkt_materials + W14B_HANDLING + W14B_SHIPPING)
+            ms_p_max = int(wtp_max_use * 1.1) if wtp_max_use > 0 else 1000
+
+            # Find optimum via cached function
+            opt_p = find_optimal_price_normal(
+                price_min=ms_p_min, price_max=ms_p_max,
+                mean_wtp=float(wtp_mean_use), std_wtp=float(max(1, wtp_std_use)),
+                materials=float(w14b_mkt_materials), shipping=float(W14B_SHIPPING),
+                handling=float(W14B_HANDLING), commission_frac=float(w14b_comm_frac),
+                step=5,
+            )
+
+            w14b_ms_price = st.slider("Your Price ($)",
+                                       ms_p_min, ms_p_max, opt_p,
+                                       step=10, key=f"w14b_ms_price_{i}",
+                                       help=f"Default = optimum (${opt_p})")
+
+            # P(buy) via Normal assumption
+            p_buy_ms = 1 - _normal_cdf(float(w14b_ms_price),
+                                          float(wtp_mean_use),
+                                          float(max(1, wtp_std_use)))
+
+            # CM
+            ms_comm = w14b_ms_price * w14b_comm_frac
+            ms_cm_u = w14b_ms_price - ms_comm - W14B_HANDLING - w14b_mkt_materials - W14B_SHIPPING
+            ms_cm_arr = ms_cm_u * p_buy_ms
+
+            # Bass peak
+            peak_q = mkt_size_in * ((m["p"]+m["q"])**2) / (4*m["q"]) if m["q"] > 0 else 0
+
+            cm_c = "#2d6a2e" if ms_cm_u > 0 else "#b22222"
+            st.markdown(f"""
+<div style="background:rgba({'45,106,46' if ms_cm_u > 0 else '178,34,34'},0.12);
+    border-left:3px solid {cm_c};padding:0.4rem 0.6rem;border-radius:5px;">
+<span style="font-size:0.65rem;opacity:0.7;">At ${w14b_ms_price}</span><br>
+P(buy): <b>{p_buy_ms:.0%}</b> | CM/u: <b style="color:{cm_c};">${ms_cm_u:,.0f}</b><br>
+CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_ms:,.1f}/d
+</div>
+""", unsafe_allow_html=True)
+
+            w14b_mkt_summary.append({
+                "Market": w14b_sel_mkt,
+                "Region": col_region,
+                "Size": f"{mkt_size_in:,}",
+                "WTP max": f"${wtp_max_use:,.0f}",
+                "Price": f"${w14b_ms_price}",
+                "P(buy)": f"{p_buy_ms:.0%}",
+                "CM/u": f"${ms_cm_u:,.0f}",
+                "CM/arr": f"${ms_cm_arr:,.0f}",
+                "Peak/d": f"{peak_q * p_buy_ms:,.1f}",
+                "DSO": f"{m['dso']}d",
+            })
+
+    st.markdown("**Market Summary**")
+    st.dataframe(pd.DataFrame(w14b_mkt_summary), use_container_width=True, hide_index=True)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 8: PRODUCT DESIGN ROI with NEW attributes + REAL base feature costs
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("8. Product Design ROI Calculator (Expanded)")
+    st.caption("Base features NOW have real costs. 3 NEW detection attributes: Cancer, Neurotoxins, Motion.")
+
+    pd_top1, pd_top2 = st.columns([1, 3])
+    with pd_top1:
+        w14b_n_prods = st.number_input("# Products", min_value=1, max_value=5,
+                                        value=5, step=1, key="w14b_n_prods")
+    with pd_top2:
+        st.caption(f"Region: **{W14B_REGION}** (shipping = ${W14B_SHIPPING}/u mail in-region). All costs from Practice Game Market Research page 23-24.")
+
+    # Updated presets matching the new research doc
+    W14B_PRESETS = {
+        "Heart View (flagship)": {
+            "Platform": "Chest", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer", "Finish": "Original",
+            "Heartbeat": "Temporal", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "None", "Motion": "None",
+            "price": 700, "target": "MD-Heart",
+        },
+        "Cancer Breast": {
+            "Platform": "Chest", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer", "Finish": "Original",
+            "Heartbeat": "Pulse only", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "Breast", "Neurotoxins": "None", "Motion": "None",
+            "price": 1250, "target": "MD Cancer (Breast)",
+        },
+        "Law Narcotic": {
+            "Platform": "Stockings", "GPS": "GPS", "Network": "5 GHz",
+            "Power": "Polymer pack", "Finish": "Black",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "Narcotic",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "None", "Motion": "None",
+            "price": 1350, "target": "Law (Narcotic)",
+        },
+        "Military Botulinum (Serenity)": {
+            "Platform": "Sleeves", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer pack", "Finish": "Camouflage",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "Botulinum", "Motion": "None",
+            "price": 1100, "target": "Military Botulinum",
+        },
+        "Athlete General": {
+            "Platform": "Wrists", "GPS": "No GPS", "Network": "Bluetooth",
+            "Power": "Polymer", "Finish": "Blue",
+            "Heartbeat": "Pulse only", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "None", "Motion": "Steps",
+            "price": 250, "target": "Athlete General",
+        },
+    }
+
+    preset_keys = list(W14B_PRESETS.keys())
+    w14b_pd_cols = st.columns(int(w14b_n_prods))
+    w14b_pd_summary = []
+
+    for i, col in enumerate(w14b_pd_cols):
+        with col:
+            default_idx = i if i < len(preset_keys) else 0
+            p_sel = st.selectbox(f"Preset P{i+1}", preset_keys, index=default_idx,
+                                   key=f"w14b_pd_preset_{i}")
+            preset = W14B_PRESETS[p_sel]
+
+            st.markdown("**Base Features** (now with real costs!)")
+            sel_base = {}
+            for attr, opts in W14B_BASE.items():
+                default_feat = preset.get(attr, list(opts.keys())[0])
+                labeled = {f"{feat} — {d}d, ${c/1000:.1f}K, ${m}/u": feat
+                            for feat, (d, c, m) in opts.items()}
+                labels = list(labeled.keys())
+                default_label = next((l for l, f in labeled.items() if f == default_feat), labels[0])
+                idx = labels.index(default_label)
+                chosen = st.selectbox(attr, labels, index=idx,
+                                        key=f"w14b_pd_base_{attr}_{i}")
+                sel_base[attr] = labeled[chosen]
+
+            st.markdown("**Detection Agenda** (9 attributes)")
+            sel_det = {}
+            for attr, opts in W14B_DETECTION.items():
+                default_feat = preset[attr]
+                labeled = {f"{feat} — {d}d, ${c/1000:.0f}K, ${m}/u": feat
+                            for feat, (d, c, m) in opts.items()}
+                labels = list(labeled.keys())
+                default_label = next((l for l, f in labeled.items() if f == default_feat), labels[0])
+                idx = labels.index(default_label)
+                chosen = st.selectbox(attr, labels, index=idx,
+                                        key=f"w14b_pd_det_{attr}_{i}")
+                sel_det[attr] = labeled[chosen]
+
+            # Totals (base + detection)
+            base_days = max(W14B_BASE[a][sel_base[a]][0] for a in W14B_BASE)
+            base_cost = sum(W14B_BASE[a][sel_base[a]][1] for a in W14B_BASE)
+            base_mat = sum(W14B_BASE[a][sel_base[a]][2] for a in W14B_BASE)
+            det_days = max(W14B_DETECTION[a][sel_det[a]][0] for a in W14B_DETECTION)
+            det_cost = sum(W14B_DETECTION[a][sel_det[a]][1] for a in W14B_DETECTION)
+            det_mat = sum(W14B_DETECTION[a][sel_det[a]][2] for a in W14B_DETECTION)
+
+            total_days = max(base_days, det_days)
+            total_cost = base_cost + det_cost
+            total_mat = base_mat + det_mat
+
+            w14b_pd_price = st.number_input("Price ($)", value=preset["price"], step=25,
+                                              key=f"w14b_pd_price_{i}")
+            w14b_pd_sales = st.number_input("Sales/day", value=5, step=1,
+                                              key=f"w14b_pd_sales_{i}")
+
+            w14b_pd_margin = (w14b_pd_price * (1 - w14b_comm_frac)
+                               - W14B_HANDLING - total_mat - W14B_SHIPPING)
+            w14b_pd_be = (total_cost / (w14b_pd_margin * w14b_pd_sales)
+                           if w14b_pd_margin > 0 and w14b_pd_sales > 0 else float("inf"))
+
+            st.metric("Design Days", f"{total_days}")
+            st.metric("Design Cost", f"${total_cost:,}")
+            st.metric("Materials/u", f"${total_mat}")
+            st.metric("CM/u", f"${w14b_pd_margin:,.0f}")
+            if w14b_pd_be < float("inf"):
+                st.metric("Break-even", f"{w14b_pd_be:.0f}d ({w14b_pd_be/30:.1f} mo)",
+                           delta_color="off")
+            else:
+                st.error("Negative margin")
+
+            # Cannibalization + fit checker with new rules
+            target = st.selectbox("Target Market",
+                                     ["(select)", "MD-Heart", "MD Cancer (Breast)",
+                                      "MD Cancer (Bladder & Kidney)", "MD Cancer (Base)",
+                                      "MD-Estrogen", "Law (Narcotic)", "Military Botulinum",
+                                      "Military Anatoxin-a", "Athlete General", "Athlete Fad",
+                                      "Clinical Cardiovascular", "Clinical Fertility",
+                                      "MD Metabolic", "MD Dissolved Gasses"],
+                                     index=0, key=f"w14b_pd_target_{i}")
+
+            warnings = []
+            # Heartbeat cannibalization
+            if sel_det["Heartbeat"] == "Temporal" and target not in ["(select)", "MD-Heart"]:
+                warnings.append("🔴 Temporal heartbeat outside MD-Heart → cannibalizes Heart View")
+            # Narcotic only in Law/Military
+            if sel_det["Toxicology"] in ["Narcotic", "Amphetamine", "THC", "Barbiturate"] and target not in ["(select)", "Law (Narcotic)", "Military Botulinum", "Military Anatoxin-a"]:
+                warnings.append(f"🟠 {sel_det['Toxicology']} outside Law/Mil → $140/u wasted + cannibalization risk")
+            # Cancer only in Cancer markets
+            if sel_det["Cancer"] not in ["None"] and "Cancer" not in target:
+                warnings.append(f"🔴 Cancer {sel_det['Cancer']} outside Cancer market → $200+/u wasted materials")
+            # Neurotoxin only in Military
+            if sel_det["Neurotoxins"] not in ["None"] and "Military" not in target:
+                warnings.append(f"🔴 Neurotoxin {sel_det['Neurotoxins']} outside Military → $190+/u wasted")
+            # Law Narcotic needs GPS + cellular
+            if target == "Law (Narcotic)" and (sel_base["GPS"] == "No GPS" or sel_base["Network"] == "Bluetooth"):
+                warnings.append("🔴 Law-Narcotic deal breaker — needs GPS + cellular")
+            # Military needs GPS + polymer pack
+            if "Military" in target and (sel_base["GPS"] == "No GPS" or "Polymer pack" not in sel_base["Power"]):
+                warnings.append("🔴 Military deal breaker — needs GPS + polymer battery pack")
+            # Fertility avoid bulky battery
+            if target in ["Clinical Fertility", "MD-Estrogen"] and "pack" in sel_base["Power"]:
+                warnings.append("🟠 Fertility: avoid bulky battery packs")
+            # Cardiovascular needs GPS
+            if target == "Clinical Cardiovascular" and sel_base["GPS"] == "No GPS":
+                warnings.append("🟠 Cardiovascular: lack of GPS reduces perceived value")
+            # Platform-market mismatch
+            if target in ["Clinical Fertility", "MD-Estrogen"] and sel_base["Platform"] == "Chest":
+                warnings.append("🟡 Fertility users prefer wrists over chest")
+            # Athlete prefers wrists
+            if "Athlete" in target and sel_base["Platform"] == "Chest":
+                warnings.append("🟡 Athletes prefer wrists > sleeves > stockings > chest")
+
+            if warnings:
+                st.warning("**Flags:**\n\n" + "\n\n".join(warnings))
+            elif target != "(select)":
+                st.success("✅ No cannibalization/fit flags")
+
+            w14b_pd_summary.append({
+                "Product": f"P{i+1}: {p_sel}",
+                "Target": target,
+                "Days": total_days,
+                "Design $": f"${total_cost:,}",
+                "Mat/u": f"${total_mat}",
+                "Price": f"${w14b_pd_price}",
+                "CM/u": f"${w14b_pd_margin:,.0f}",
+                "Break-even": f"{w14b_pd_be:.0f}d" if w14b_pd_be < float("inf") else "N/A",
+                "Warnings": len(warnings) if target != "(select)" else "—",
+            })
+
+    st.markdown("**Product Comparison Summary**")
+    st.dataframe(pd.DataFrame(w14b_pd_summary), use_container_width=True, hide_index=True)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 9: SUPPLY CHAIN TRADE-OFF CALCULATOR
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("9. Supply Chain Trade-Off Calculator")
+    st.caption("Per Gleacher Tips: trade-offs between mail vs container, own DC vs wholesale, new factory vs capex expansion")
+
+    sc_tab1, sc_tab2, sc_tab3 = st.tabs(["Mail vs Container", "Own DC vs Wholesale", "New Factory vs Capex"])
+
+    # ── Tab 1: Mail vs Container breakeven ──────────────────────────────────
+    with sc_tab1:
+        mc_col1, mc_col2 = st.columns([1, 2])
+        with mc_col1:
+            mc_region = st.radio("Shipping distance",
+                                    ["In-region", "Between regions"],
+                                    index=0, key="w14_mc_region")
+            mc_qty = st.slider("Order Quantity (units)", 10, 1500, 100, step=10, key="w14_mc_qty")
+
+            if mc_region == "In-region":
+                mail_total = (mc_qty / 10) * 200 if mc_qty > 0 else 0
+                container_total = 5000  # flat
+                mail_per_u = 20
+                container_per_u = 5000 / mc_qty if mc_qty > 0 else 0
+                mail_days = 1
+                container_days = 7
+                breakeven = 250  # $5000 / ($20 - $5)
+            else:
+                mail_total = (mc_qty / 10) * 400 if mc_qty > 0 else 0
+                container_total = 10000
+                mail_per_u = 40
+                container_per_u = 10000 / mc_qty if mc_qty > 0 else 0
+                mail_days = 3
+                container_days = 21
+                breakeven = 250  # $10,000 / ($40 - $10)
+
+            cheaper = "Container" if container_total < mail_total else "Mail"
+            faster = "Mail"
+            savings = abs(mail_total - container_total)
+
+        with mc_col2:
+            st.markdown("**Results**")
+            bc1, bc2, bc3 = st.columns(3)
+            with bc1:
+                st.metric("Mail Total", f"${mail_total:,.0f}", delta=f"{mail_days} day(s)")
+                st.metric("Mail per unit", f"${mail_per_u:.2f}")
+            with bc2:
+                st.metric("Container Total", f"${container_total:,.0f}", delta=f"{container_days} day(s)")
+                st.metric("Container per unit", f"${container_per_u:.2f}")
+            with bc3:
+                st.metric("Breakeven Qty", f"{breakeven} units")
+                st.metric("Savings (cheaper)", f"${savings:,.0f}", delta=cheaper)
+
+            # Plot: total cost vs quantity for both modes
+            qty_range = list(range(10, 1501, 10))
+            if mc_region == "In-region":
+                mail_costs = [(q/10) * 200 for q in qty_range]
+                container_costs = [5000] * len(qty_range)
+            else:
+                mail_costs = [(q/10) * 400 for q in qty_range]
+                container_costs = [10000] * len(qty_range)
+
+            fig_mc = go.Figure()
+            fig_mc.add_trace(go.Scatter(x=qty_range, y=mail_costs, name="Mail", line=dict(color="#800000", width=2)))
+            fig_mc.add_trace(go.Scatter(x=qty_range, y=container_costs, name="Container", line=dict(color="#1a3c5e", width=2)))
+            fig_mc.add_vline(x=breakeven, line_dash="dash", line_color="gray",
+                              annotation_text=f"Breakeven: {breakeven}")
+            fig_mc.add_vline(x=mc_qty, line_dash="dot", line_color="green",
+                              annotation_text=f"Your qty: {mc_qty}")
+            fig_mc.update_layout(height=300, xaxis_title="Order Quantity (units)",
+                                  yaxis_title="Total Shipping Cost ($)", yaxis_tickformat="$,.0f",
+                                  title=dict(text=f"Mail vs Container ({mc_region.lower()})",
+                                               x=0.5, xanchor="center", y=0.97, yanchor="top"),
+                                  margin=dict(l=0, r=0, t=70, b=0),
+                                  legend=dict(orientation="h", yanchor="top", y=1.07,
+                                                xanchor="center", x=0.5))
+            st.plotly_chart(fig_mc, use_container_width=True)
+
+            st.info(f"""
+**Decision:** At {mc_qty} units {mc_region.lower()}, **{cheaper}** is cheaper by **${savings:,.0f}** total.
+Mail is always faster ({mail_days}d vs {container_days}d). If the speed difference matters for stockout risk,
+the mail premium ({savings:,.0f} more) may be worth it even below the breakeven quantity.
+            """)
+
+    # ── Tab 2: Own DC vs Wholesale ─────────────────────────────────────────
+    with sc_tab2:
+        st.markdown("Compare: **build your own DC in a region** vs **sell through another team's DC** (wholesale).")
+        dc_col1, dc_col2 = st.columns([1, 2])
+        with dc_col1:
+            dc_price = st.number_input("Retail Price ($/u)", value=1200, step=50, key="w14_dc_price")
+            dc_expected_demand = st.number_input("Expected demand (units/day)", value=5, step=1, key="w14_dc_demand")
+            dc_days_left = st.number_input("Days remaining", value=1000, step=50, key="w14_dc_days")
+            dc_materials = st.number_input("Materials + ship ($/u)", value=140, step=10, key="w14_dc_mat")
+            # Build-your-own DC params
+            dc_build_cost = 2600000
+            dc_build_days = 60
+            dc_daily_cost = 2000
+            dc_depreciation = dc_build_cost / 15 / 364
+            # Wholesale: sell to another team at a discount, they retail
+            dc_wholesale_price = st.number_input("Wholesale price to partner ($/u)", value=600, step=25, key="w14_dc_wsp")
+
+        with dc_col2:
+            # Own DC: full retail price minus commission minus handling minus materials minus daily DC opex
+            own_dc_cm_per_unit = dc_price * (1 - w14_comm_frac) - 10 - dc_materials  # handling $10
+            operating_days = max(0, dc_days_left - dc_build_days)
+            own_dc_revenue_total = own_dc_cm_per_unit * dc_expected_demand * operating_days
+            own_dc_opex_total = (dc_daily_cost + dc_depreciation) * operating_days
+            own_dc_net = own_dc_revenue_total - own_dc_opex_total - dc_build_cost
+
+            # Wholesale: partner takes 20% commission + handles everything retail-side
+            # We ship to them, they retail
+            ws_cm_per_unit = dc_wholesale_price - dc_materials - 20  # materials + shipping
+            ws_revenue_total = ws_cm_per_unit * dc_expected_demand * dc_days_left
+            ws_net = ws_revenue_total  # no capex, no daily opex from us
+
+            winner = "Own DC" if own_dc_net > ws_net else "Wholesale"
+            delta = abs(own_dc_net - ws_net)
+
+            d1, d2, d3 = st.columns(3)
+            with d1:
+                st.markdown("**Own DC**")
+                st.metric("CM/unit", f"${own_dc_cm_per_unit:,.0f}")
+                st.metric("Operating days", f"{operating_days:.0f}")
+                st.metric("Gross CM", f"${own_dc_revenue_total:,.0f}")
+                st.metric("− Opex + capex", f"${own_dc_opex_total + dc_build_cost:,.0f}")
+                st.metric("Net", f"${own_dc_net:,.0f}")
+            with d2:
+                st.markdown("**Wholesale**")
+                st.metric("CM/unit", f"${ws_cm_per_unit:,.0f}")
+                st.metric("Operating days", f"{dc_days_left}")
+                st.metric("Gross CM", f"${ws_revenue_total:,.0f}")
+                st.metric("− Opex", "$0 (partner pays)")
+                st.metric("Net", f"${ws_net:,.0f}")
+            with d3:
+                color = "#2d6a2e" if winner == "Own DC" else "#1a3c5e"
+                st.markdown(f"""
+<div style="background:{color};color:white;border-radius:8px;padding:1rem;text-align:center;">
+<span style="font-size:0.85em;opacity:0.8;">Recommendation</span><br>
+<b style="font-size:1.6em;">{winner}</b><br>
+<span style="font-size:0.9em;">${delta:,.0f} advantage</span>
+</div>
+""", unsafe_allow_html=True)
+
+            st.info("""
+**Key factors:**
+- Own DC requires **60-day build** (no revenue during build)
+- Own DC has **$2.6M capex + $2K/day opex**
+- Wholesale preserves capital but caps price at wholesale level
+- **Breakeven** depends on days remaining and demand volume
+
+Per Gleacher Tips: *"Don't be shy about borrowing money and expanding, but make sure investments are positive NPV."*
+            """)
+
+    # ── Tab 3: New Factory vs Capex Expansion ──────────────────────────────
+    with sc_tab3:
+        st.markdown("Compare: **build a new factory** vs **add capital to existing factory**.")
+        fx_col1, fx_col2 = st.columns([1, 2])
+        with fx_col1:
+            fx_current_K = st.number_input("Current factory K ($)", value=100000, step=50000, key="w14_fx_K")
+            fx_add_capex = st.number_input("Additional capex to add ($)", value=400000, step=50000, key="w14_fx_add")
+            fx_new_K = st.number_input("New factory K ($)", value=500000, step=50000, key="w14_fx_newK")
+            fx_daily_l = st.number_input("Daily labor both options ($/day)", value=2500, step=500, key="w14_fx_l")
+            fx_days_left = st.number_input("Days remaining", value=1000, step=50, key="w14_fx_days")
+            fx_cm_per_unit = st.number_input("CM per unit ($)", value=400, step=50, key="w14_fx_cm")
+
+        with fx_col2:
+            # Option A: add capex to existing (30-day lead)
+            A_K = fx_current_K + fx_add_capex
+            A_lambda = 0.009 * (A_K ** 0.10) * ((fx_daily_l * 364) ** 0.85) / 364
+            A_batch_time = 100 / A_lambda if A_lambda > 0 else float("inf")
+            A_lambda_eff = 100 / (A_batch_time + 0.05)
+            A_lead = 30
+            A_operating_days = max(0, fx_days_left - A_lead)
+            A_revenue = A_lambda_eff * A_operating_days * fx_cm_per_unit
+            A_net = A_revenue - fx_add_capex - (fx_daily_l * (A_operating_days + A_lead))
+
+            # Option B: build new factory (90-day build, separate factory at new_K)
+            B_K = fx_new_K
+            B_land = 100000
+            B_lambda = 0.009 * (B_K ** 0.10) * ((fx_daily_l * 364) ** 0.85) / 364
+            B_batch_time = 100 / B_lambda if B_lambda > 0 else float("inf")
+            B_lambda_eff = 100 / (B_batch_time + 0.05)
+            B_lead = 90
+            B_operating_days = max(0, fx_days_left - B_lead)
+            # Plus existing factory keeps running at its current throughput during the 90 days
+            old_lambda = 0.009 * (fx_current_K ** 0.10) * ((fx_daily_l * 364) ** 0.85) / 364
+            old_lambda_eff = 100 / ((100 / old_lambda if old_lambda > 0 else float("inf")) + 0.05)
+            # B throughput during build = old only, after build = old + new
+            B_units_during_build = old_lambda_eff * B_lead
+            B_units_after_build = (old_lambda_eff + B_lambda_eff) * B_operating_days
+            B_total_units = B_units_during_build + B_units_after_build
+            B_revenue = B_total_units * fx_cm_per_unit
+            # Labor for both factories through building + operating
+            B_total_labor = fx_daily_l * fx_days_left + fx_daily_l * B_operating_days  # new factory uses labor only when running
+            B_net = B_revenue - (fx_new_K + B_land) - B_total_labor
+
+            winner = "Add Capex" if A_net > B_net else "New Factory"
+            delta = abs(A_net - B_net)
+
+            f1, f2, f3 = st.columns(3)
+            with f1:
+                st.markdown("**Option A: Add Capex**")
+                st.metric("K after upgrade", f"${A_K:,}")
+                st.metric("Effective λ", f"{A_lambda_eff:.2f}/day")
+                st.metric("Lead time", f"{A_lead} days")
+                st.metric("Operating days", f"{A_operating_days}")
+                st.metric("Net CM (after cost)", f"${A_net:,.0f}")
+            with f2:
+                st.markdown("**Option B: New Factory**")
+                st.metric("New factory K", f"${B_K:,}")
+                st.metric("New λ", f"{B_lambda_eff:.2f}/day")
+                st.metric("Combined λ", f"{old_lambda_eff + B_lambda_eff:.2f}/day")
+                st.metric("Lead time", f"{B_lead} days")
+                st.metric("Net CM (after cost)", f"${B_net:,.0f}")
+            with f3:
+                color = "#2d6a2e" if winner == "Add Capex" else "#1a3c5e"
+                st.markdown(f"""
+<div style="background:{color};color:white;border-radius:8px;padding:1rem;text-align:center;">
+<span style="font-size:0.85em;opacity:0.8;">Recommendation</span><br>
+<b style="font-size:1.5em;">{winner}</b><br>
+<span style="font-size:0.9em;">${delta:,.0f} advantage</span>
+</div>
+""", unsafe_allow_html=True)
+
+            st.info("""
+**Key factors:**
+- **Add Capex** = 30-day lead, existing factory keeps running at current rate during
+- **New Factory** = 90-day build, adds incremental throughput on TOP of existing
+- Cell/Line factories have minimum K requirements ($500K / $3M)
+- Each factory has its own daily labor cost — two factories = 2× labor
+            """)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 10: CASH & TAX DISCIPLINE PLANNER
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("10. Cash & Tax Discipline Planner")
+    st.caption("Per Gleacher Tips: make sure there's enough cash for quarterly taxes + plan for growth in working capital")
+
+    ct_col1, ct_col2 = st.columns([1, 2])
+    with ct_col1:
+        st.markdown("**Quarterly Inputs**")
+        ct_current_cash = st.number_input("Current Cash ($)", value=1579530, step=10000, key="w14_ct_cash")
+        ct_quarter_revenue = st.number_input("This Q Revenue ($)", value=683000, step=10000, key="w14_ct_rev")
+        ct_quarter_opex = st.number_input("This Q Opex ($)", value=680000, step=10000, key="w14_ct_opex",
+                                             help="COGS + selling + DC opex + depreciation")
+        ct_next_q_capex = st.number_input("Planned Capex next Q ($)", value=0, step=50000, key="w14_ct_capex")
+        ct_next_q_div = st.number_input("Planned Dividends next Q ($)", value=0, step=10000, key="w14_ct_div")
+        ct_next_q_ad = st.number_input("Planned Ad Spend next Q ($)", value=0, step=10000, key="w14_ct_ad")
+
+    with ct_col2:
+        # Tax calculation
+        ct_quarter_op_income = ct_quarter_revenue - ct_quarter_opex
+        ct_tax = max(0, ct_quarter_op_income) * 0.35
+
+        # Cash flow projection for next quarter
+        ct_next_q_opex_est = ct_quarter_opex  # assume similar
+        ct_next_q_rev_est = ct_quarter_revenue  # assume similar (conservative)
+        ct_next_q_operating_cash = ct_next_q_rev_est - ct_next_q_opex_est
+        ct_next_q_ending_cash = (ct_current_cash + ct_next_q_operating_cash
+                                    - ct_next_q_capex - ct_next_q_div - ct_next_q_ad - ct_tax)
+
+        # Buffer recommendation
+        recommended_buffer = ct_tax + ct_quarter_opex / 3  # tax + 1 month opex
+
+        st.markdown("**Cash Flow Projection — Next Quarter**")
+        ct_a, ct_b, ct_c = st.columns(3)
+        with ct_a:
+            st.metric("This Q Op. Income", f"${ct_quarter_op_income:,.0f}")
+            st.metric("Tax due (35%)", f"${ct_tax:,.0f}",
+                       delta="Paid end of quarter", delta_color="off")
+        with ct_b:
+            st.metric("Projected Op Cash Flow", f"${ct_next_q_operating_cash:,.0f}")
+            st.metric("Projected Ending Cash", f"${ct_next_q_ending_cash:,.0f}",
+                       delta=f"${ct_next_q_ending_cash - ct_current_cash:,.0f}")
+        with ct_c:
+            st.metric("Recommended Buffer", f"${recommended_buffer:,.0f}",
+                       help="Tax + 1 month opex")
+            buffer_status = "✅ Safe" if ct_next_q_ending_cash > recommended_buffer else "⚠️ Below buffer"
+            if ct_next_q_ending_cash < 0:
+                buffer_status = "🔴 EMERGENCY LOAN (40% APR!)"
+            st.metric("Status", buffer_status)
+
+        # Detailed waterfall for next quarter
+        fig_cash = go.Figure(go.Waterfall(
+            name="Q+1 cash flow",
+            orientation="v",
+            measure=["absolute", "relative", "relative", "relative", "relative", "relative", "total"],
+            x=["Start Cash", "Operating CF", "− Capex", "− Dividends", "− Ad Spend", "− Tax", "End Cash"],
+            y=[ct_current_cash, ct_next_q_operating_cash,
+               -ct_next_q_capex, -ct_next_q_div, -ct_next_q_ad, -ct_tax, 0],
+            connector={"line": {"color": "rgb(63, 63, 63)"}},
+            increasing={"marker": {"color": "#2d6a2e"}},
+            decreasing={"marker": {"color": "#b22222"}},
+            totals={"marker": {"color": "#1a3c5e"}},
+        ))
+        fig_cash.update_layout(height=300, yaxis_title="Cash ($)", yaxis_tickformat="$,.0f",
+                                title=dict(text="Next Quarter Cash Flow Waterfall",
+                                             x=0.5, xanchor="center", y=0.97, yanchor="top"),
+                                margin=dict(l=0, r=0, t=60, b=0))
+        st.plotly_chart(fig_cash, use_container_width=True)
+
+        if ct_next_q_ending_cash < 0:
+            st.error(f"""
+🔴 **CRITICAL: Emergency loan triggered at 40% APR.**
+Gap: ${-ct_next_q_ending_cash:,.0f}. Actions:
+1. Defer capex (${ct_next_q_capex:,}) to a later quarter
+2. Defer dividends (${ct_next_q_div:,})
+3. Cut ad spend (${ct_next_q_ad:,})
+4. Issue bonds now (Excellent rate 10% APR << 40% emergency)
+            """)
+        elif ct_next_q_ending_cash < recommended_buffer:
+            st.warning(f"""
+⚠️ **Cash below recommended buffer.**
+You'll survive this quarter but have no margin for surprises. Consider:
+- Delay non-critical capex
+- Build cash cushion before expansion
+            """)
+        else:
+            st.success(f"✅ Cash position is healthy. Buffer of ${ct_next_q_ending_cash - recommended_buffer:,.0f} above recommended minimum.")
+
+    # Going concern reminder
+    st.info("""
+**Going Concern Note (for Final Project valuation):**
+Per Gleacher Tips: *"The business remains a going concern after the period of active play."*
+Your firm's terminal value (post-day 1460) should be included in valuation. Use a **terminal value**
+= next-year cash flow / (discount rate − growth rate) or a 4-year DCF + terminal multiple.
+    """)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 11: PRODUCTION TECHNOLOGY PICKER (Bench / Line / Cell)
+    # Class 3 slides 34-38 — Cobb-Douglas λ = A·K^α·L^β (per day, inc. setup time)
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("11. Production Technology Picker — Bench vs Line vs Cell")
+    st.caption("Class 3 slides 34-38. Daily throughput λ = A·K^α·L^β. Picks cheapest tech per unit at your K/L point.")
+
+    W14B_TECH = {
+        "Bench":    {"A": 0.009, "alpha": 0.10, "beta": 0.85, "setup": 0.05, "K_min": 1,        "desc": "Skilled worker per bench, full-product build, lowest fixed cost"},
+        "Line":     {"A": 0.010, "alpha": 0.30, "beta": 0.75, "setup": 0.50, "K_min": 500_000,   "desc": "Specialized stations, unskilled labor, volume workhorse"},
+        "Cell":     {"A": 0.020, "alpha": 0.80, "beta": 0.30, "setup": 1.00,  "K_min": 3_000_000, "desc": "Robot-fed automation, tiny labor, huge capital"},
+    }
+
+    pt_col1, pt_col2 = st.columns([1, 2])
+    with pt_col1:
+        st.markdown("**Inputs**")
+        w14b_K = st.number_input("Capital K ($)", value=1_000_000, step=100_000, key="w14b_pt_K",
+                                   help="Cumulative CapEx invested in the factory.")
+        w14b_L_daily = st.number_input("Labor L ($/day)", value=3_000, step=500, key="w14b_pt_L",
+                                          help="Daily labor expenditure. NEVER $1 — ruins factory (Class 3 slide 35).")
+        w14b_batch = st.number_input("Batch size (units)", value=100, step=50, key="w14b_pt_batch",
+                                        help="Setup penalty applies once per batch.")
+        w14b_materials_cost = st.number_input("Materials ($/u)", value=100, step=10, key="w14b_pt_mat")
+
+    with pt_col2:
+        st.markdown("**Throughput & unit cost comparison**")
+
+        tech_rows = []
+        for tech_name, t in W14B_TECH.items():
+            if w14b_K < t["K_min"]:
+                tech_rows.append({
+                    "Technology": tech_name, "Daily λ (u)": "—", "Overhead/u": "—",
+                    "Materials/u": f"${w14b_materials_cost}", "Total cost/u": "—",
+                    "Status": f"❌ Need K ≥ ${t['K_min']:,}",
+                })
+                continue
+            # Cobb-Douglas daily throughput (yearly → daily, labor is daily so scale to annual basis)
+            yearly_L = w14b_L_daily * 364
+            yearly_lambda = t["A"] * (w14b_K ** t["alpha"]) * (yearly_L ** t["beta"])
+            daily_lambda_raw = yearly_lambda / 364
+            # Apply setup penalty: fraction of day lost per batch
+            batches_per_day = daily_lambda_raw / max(1, w14b_batch)
+            setup_time_per_day = batches_per_day * t["setup"]
+            effective_fraction = max(0.1, 1.0 - min(0.9, setup_time_per_day))
+            daily_lambda = daily_lambda_raw * effective_fraction
+
+            # Overhead per unit = (daily K amortized @ 15% APR + daily labor) / daily units
+            daily_K_amort = w14b_K * 0.15 / 364
+            overhead_per_u = (daily_K_amort + w14b_L_daily) / max(1, daily_lambda)
+            total_per_u = overhead_per_u + w14b_materials_cost
+
+            tech_rows.append({
+                "Technology": tech_name,
+                "Daily λ (u)": f"{daily_lambda:,.0f}",
+                "Overhead/u": f"${overhead_per_u:,.2f}",
+                "Materials/u": f"${w14b_materials_cost}",
+                "Total cost/u": f"${total_per_u:,.2f}",
+                "Status": "✅ OK",
+            })
+
+        import pandas as pd
+        df_tech = pd.DataFrame(tech_rows)
+        st.dataframe(df_tech, use_container_width=True, hide_index=True)
+
+        # Recommend cheapest valid tech
+        valid_techs = [r for r in tech_rows if r["Status"] == "✅ OK"]
+        if valid_techs:
+            best = min(valid_techs, key=lambda r: float(r["Total cost/u"].replace("$", "").replace(",", "")))
+            st.success(f"🏆 **Cheapest tech at K=${w14b_K:,}, L=${w14b_L_daily}/d, batch={w14b_batch}u**: "
+                        f"**{best['Technology']}** @ {best['Total cost/u']}/u ({best['Daily λ (u)']} u/day)")
+
+        st.caption("⚠️ Setup time: Bench 0.05d · Line 0.50d · Cell 1.0d per batch. Small batches + Cell = death. "
+                    "Min capital: Bench $1 · Line $500K · Line + land $600K total · Cell $3M. "
+                    "**NEVER set labor to $1 — ruins factory.**")
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 12: DEBT ISSUANCE CALCULATOR (Bonds — Class 3 slides 59-65)
+    # 5-year zero-coupon bonds, daily compounding over 364 days/year
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("12. Debt Issuance Calculator — Excellent / Good / Poor")
+    st.caption("Class 3 slides 59-65. 5-year zero-coupon bonds, **daily compounding over 364 days/year**. "
+                "Need a full quarter of positive EBIT to borrow.")
+
+    db_col1, db_col2 = st.columns([1, 2])
+    with db_col1:
+        st.markdown("**Inputs**")
+        db_ebit = st.number_input("Last full quarter EBIT ($)", value=25_000, step=1_000, key="w14b_db_ebit",
+                                     help="Class 3 example uses $25K. Annualized = 4× this for coverage ratio.")
+        db_cur_int = st.number_input("Current quarterly interest expense ($)", value=0, step=500, key="w14b_db_cur_int",
+                                        help="From outstanding bonds already on the books.")
+        db_par = st.number_input("Par per bond ($)", value=1000, step=100, key="w14b_db_par")
+        db_years = st.number_input("Maturity (years)", value=5, step=1, key="w14b_db_years",
+                                       help="Game default is 5-year zero coupons.")
+
+    with db_col2:
+        st.markdown("**Debt capacity by credit tier**")
+
+        annualized_ebit = 4 * db_ebit
+        tiers = [
+            {"name": "Excellent", "apr": 0.10, "coverage": 20, "color": "#2d6a2e"},
+            {"name": "Good",       "apr": 0.15, "coverage": 7,  "color": "#c38a2e"},
+            {"name": "Poor",       "apr": 0.25, "coverage": 2,  "color": "#b22222"},
+        ]
+
+        cumulative_int = db_cur_int * 4  # annualize
+        debt_rows = []
+        total_pv = 0
+        total_fv = 0
+        total_bonds = 0
+        for t in tiers:
+            # Max total annualized interest expense allowed at this tier = EBIT_annual / coverage
+            max_int_at_tier = annualized_ebit / t["coverage"]
+            # Incremental interest available here = this tier's cap minus cumulative allocation so far
+            incr_int = max(0, max_int_at_tier - cumulative_int)
+            # Daily compounding: EAR = (1 + APR/364)^364 - 1
+            ear = (1 + t["apr"] / 364) ** 364 - 1
+            # PV of debt that would generate incr_int of annualized interest
+            pv_debt = incr_int / ear if ear > 0 else 0
+            # FV = PV × (1 + EAR)^n
+            fv_debt = pv_debt * ((1 + ear) ** db_years)
+            # Number of bonds = FV / par
+            n_bonds = int(fv_debt / db_par) if db_par > 0 else 0
+            # Recompute with integer bonds
+            fv_exact = n_bonds * db_par
+            pv_exact = fv_exact / ((1 + ear) ** db_years) if ear > 0 else 0
+            pv_per_bond = db_par / ((1 + ear) ** db_years) if ear > 0 else 0
+
+            debt_rows.append({
+                "Tier": t["name"],
+                "APR": f"{t['apr']*100:.0f}%",
+                "EAR": f"{ear*100:.3f}%",
+                "Coverage ≥": f"{t['coverage']}×",
+                "Max int/yr": f"${max_int_at_tier:,.0f}",
+                "Incr int/yr": f"${incr_int:,.0f}",
+                "# Bonds": f"{n_bonds:,}",
+                "Face (FV)": f"${fv_exact:,.0f}",
+                "Cash (PV)": f"${pv_exact:,.0f}",
+                "PV/bond": f"${pv_per_bond:,.2f}",
+            })
+            total_pv += pv_exact
+            total_fv += fv_exact
+            total_bonds += n_bonds
+            cumulative_int += incr_int  # next tier is net of what we already used
+
+        import pandas as pd
+        df_debt = pd.DataFrame(debt_rows)
+        st.dataframe(df_debt, use_container_width=True, hide_index=True)
+
+        tot_a, tot_b, tot_c = st.columns(3)
+        with tot_a:
+            st.metric("Total bonds issuable", f"{total_bonds:,}")
+        with tot_b:
+            st.metric("Total face value", f"${total_fv:,.0f}")
+        with tot_c:
+            st.metric("Total cash raised (PV)", f"${total_pv:,.0f}")
+
+        if annualized_ebit <= 0:
+            st.error("❌ EBIT ≤ 0 → cannot borrow. Need a full quarter of positive operating income first (Class 3 slide 60).")
+        else:
+            st.caption(f"✅ At EBIT = ${db_ebit:,}/Q (${annualized_ebit:,}/yr), you can raise **${total_pv:,.0f} cash** "
+                        f"by issuing {total_bonds:,} bonds. Lowest-cost capital is the **Excellent** tranche (10% APR). "
+                        f"Poor tranche (25%) is still cheaper than the 40% emergency loan.")
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 13: GET-TO-$600K PLANNER (Assignment 4 — Real Game Wed)
+    # Class 3 slide 85: start cash $549K, need $600K for Line factory
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("13. Get-to-$600K Planner — Real Game Wednesday (Assignment 4)")
+    st.caption("Class 3 slide 85. Real game starts with **only $549K** cash (not $1.58M). "
+                "Line factory = $100K land + $500K capex = **$600K** minimum. "
+                "No focus groups, no new products, until line is under construction.")
+
+    st.error("⚠️ **Starting state**: $549K cash, 1 Bench pilot factory (Heart View, $700 price, 9 u/day), "
+              "negative EBIT (−$105K last Q). You cannot borrow. You must earn your way to $600K.")
+
+    p_col1, p_col2 = st.columns([1, 2])
+    with p_col1:
+        st.markdown("**Starting state**")
+        p_start_cash = st.number_input("Starting cash ($)", value=549_000, step=1_000, key="w14b_p_cash")
+        p_needed = st.number_input("Target cash ($)", value=600_000, step=10_000, key="w14b_p_target",
+                                       help="$100K land + $500K Line capex = $600K min.")
+        gap = p_needed - p_start_cash
+        st.metric("Cash gap", f"${gap:,}", delta=f"{gap/p_start_cash*100:.1f}% of start", delta_color="off")
+
+        st.markdown("**Heart View unit economics**")
+        p_price = st.number_input("Heart View retail price ($)", value=700, step=10, key="w14b_p_price")
+        p_materials = st.number_input("Materials ($/u)", value=100, step=10, key="w14b_p_mat")
+        p_overhead = st.number_input("Mfg overhead ($/u)", value=278, step=10, key="w14b_p_ovh",
+                                         help="Class 3 slide 53 shows $278.45/u for the pilot bench at baseline K/L.")
+        # Unit contribution
+        p_ship_per_u = W14B_SHIPPING
+        p_handle = W14B_HANDLING
+        p_comm = p_price * w14b_comm_frac
+        p_cm_u = p_price - p_comm - p_handle - p_ship_per_u - p_materials - p_overhead
+
+        st.metric("Commission (20%)", f"${p_comm:,.0f}/u")
+        st.metric("CM per unit", f"${p_cm_u:,.2f}",
+                    delta="positive ✅" if p_cm_u > 0 else "NEGATIVE ❌ — rethink",
+                    delta_color="normal" if p_cm_u > 0 else "inverse")
+
+    with p_col2:
+        st.markdown("**Path to $600K — daily rate scenarios**")
+        p_daily_opex = st.number_input("Daily fixed opex ($)", value=2_500, step=100, key="w14b_p_opex",
+                                            help="Pilot factory daily expenditure. Heart View pilot = $2.5K/day.")
+        p_daily_units = st.number_input("Daily units sold (projection)", value=9, step=1, key="w14b_p_units",
+                                            help="Pilot = 9 u/day throughput. Scale with demand.")
+
+        daily_revenue = p_daily_units * p_price
+        daily_cm = p_daily_units * p_cm_u
+        daily_net = daily_cm - p_daily_opex + p_daily_units * p_overhead  # Add overhead back since we subtracted in CM but it's already in daily opex via factory daily exp
+        # Actually the factory daily $2,500 IS the labor/overhead — so net cash flow = revenue − commission − handling − shipping − materials − daily_opex
+        daily_cash_cm = p_daily_units * (p_price - p_comm - p_handle - p_ship_per_u - p_materials) - p_daily_opex
+
+        if daily_cash_cm > 0:
+            days_to_target = gap / daily_cash_cm
+            months_to_target = days_to_target / 30
+            st.success(f"✅ At **{p_daily_units} u/day** you generate **${daily_cash_cm:,.0f}/day** cash flow. "
+                        f"Reach $600K in **{days_to_target:.0f} days** ({months_to_target:.1f} months).")
+        else:
+            st.error(f"❌ Daily cash flow is **${daily_cash_cm:,.0f}** — burning cash. Raise price, cut daily opex, "
+                       f"or boost throughput. Cannot reach $600K on current plan.")
+
+        # Scenario table
+        st.markdown("**Break-even days under 3 scenarios**")
+        scenarios = [
+            {"name": "Current pace", "units": p_daily_units, "price": p_price},
+            {"name": "+25% units",    "units": int(p_daily_units * 1.25), "price": p_price},
+            {"name": "+25% price + current units", "units": p_daily_units, "price": int(p_price * 1.25)},
+        ]
+        scen_rows = []
+        for s in scenarios:
+            cm_s = s["price"] - (s["price"] * w14b_comm_frac) - p_handle - p_ship_per_u - p_materials
+            net_s = s["units"] * cm_s - p_daily_opex
+            days_s = gap / net_s if net_s > 0 else None
+            scen_rows.append({
+                "Scenario": s["name"],
+                "Units/day": s["units"],
+                "Price": f"${s['price']}",
+                "CM/u": f"${cm_s:,.2f}",
+                "Net cash/day": f"${net_s:,.0f}",
+                "Days to $600K": f"{days_s:.0f}" if days_s else "❌ never",
+            })
+        import pandas as pd
+        df_scen = pd.DataFrame(scen_rows)
+        st.dataframe(df_scen, use_container_width=True, hide_index=True)
+
+        st.info("""
+**Playbook (Class 3 slide 77 — Suggested Steps):**
+1. Run pilot factory hard. Don't touch focus groups or new products yet.
+2. Once cash ≥ $600K, **build new Line factory** (name it!), schedule Bench to close after Line opens.
+3. **Clone shipping agreements** to the new Line factory.
+4. Once Line online and profitable for 1 full quarter → issue bonds (Excellent 10% APR).
+5. Expand: new products, DC in second region, second Line factory.
+        """)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 14: COMPETITIVE INNOVATOR SPLIT SIMULATOR
+    # Class 3 slide 50 — innovators price-shop the REGION, buy max(WTP − Price)
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("14. Competitive Innovator Split — 'Who wins the region's price shoppers?'")
+    st.caption("Class 3 slide 50: innovators compare (WTP − Price) across all teams in a region and buy the best. "
+                "If WTP < Price, no buy. Simulates daily innovator allocation across you vs up to 3 competitors.")
+
+    ci_col1, ci_col2 = st.columns([1, 2])
+    with ci_col1:
+        st.markdown("**Market**")
+        ci_market_size = st.number_input("Initial market size (remaining)", value=34_500, step=1_000, key="w14b_ci_M")
+        ci_mean_wtp = st.number_input("Mean WTP ($)", value=723, step=10, key="w14b_ci_mean")
+        ci_std_wtp = st.number_input("Std dev WTP ($)", value=30, step=5, key="w14b_ci_std",
+                                        help="Slide 53 Practice Game Heart: $30. Tight distribution = fierce price war.")
+        ci_p = st.number_input("Innovator rate p", value=0.0002, step=0.00005, format="%.5f", key="w14b_ci_p")
+        ci_n_teams = st.radio("How many teams (incl. you)?", [2, 3, 4], index=1, horizontal=True, key="w14b_ci_n")
+
+        st.markdown("**Your price & competitors**")
+        ci_your_price = st.number_input("YOUR price ($)", value=700, step=10, key="w14b_ci_you")
+        ci_competitors = []
+        for i in range(ci_n_teams - 1):
+            ci_competitors.append(
+                st.number_input(f"Competitor {i+1} price ($)",
+                                    value=700 - (i+1)*25, step=10, key=f"w14b_ci_c{i}")
+            )
+
+    with ci_col2:
+        st.markdown("**Daily innovator allocation**")
+
+        # Monte-Carlo: sample N innovators, each has a WTP drawn from Normal(mean, std).
+        # Each buys the best (WTP - Price) positive option, ties broken randomly.
+        import random
+        random.seed(42)
+        N_SAMPLES = 5000
+        all_prices = [ci_your_price] + ci_competitors
+        labels = ["You"] + [f"Comp{i+1}" for i in range(len(ci_competitors))]
+        wins = [0] * len(all_prices)
+        no_buys = 0
+
+        # Use erf-based inverse-CDF sampling via Box-Muller (stdlib only)
+        for _ in range(N_SAMPLES):
+            # Box-Muller
+            u1, u2 = random.random(), random.random()
+            z = _math.sqrt(-2 * _math.log(max(1e-12, u1))) * _math.cos(2 * _math.pi * u2)
+            wtp = ci_mean_wtp + ci_std_wtp * z
+            surpluses = [(wtp - p) for p in all_prices]
+            max_surplus = max(surpluses)
+            if max_surplus <= 0:
+                no_buys += 1
+                continue
+            # ties
+            winners = [i for i, s in enumerate(surpluses) if s == max_surplus]
+            w = random.choice(winners)
+            wins[w] += 1
+
+        # Daily innovators arriving at the REGION (from Class 3: p × remaining)
+        daily_innovators = ci_p * ci_market_size
+
+        rows = []
+        for i, lbl in enumerate(labels):
+            share = wins[i] / N_SAMPLES
+            daily_buyers = daily_innovators * share
+            daily_rev = daily_buyers * all_prices[i]
+            rows.append({
+                "Team": lbl,
+                "Price": f"${all_prices[i]}",
+                "Innovator share": f"{share*100:.1f}%",
+                "Daily buyers": f"{daily_buyers:.2f}",
+                "Daily revenue": f"${daily_rev:,.0f}",
+            })
+        nobuy_share = no_buys / N_SAMPLES
+        rows.append({
+            "Team": "(no buy — WTP < all prices)",
+            "Price": "—",
+            "Innovator share": f"{nobuy_share*100:.1f}%",
+            "Daily buyers": "—",
+            "Daily revenue": "—",
+        })
+
+        import pandas as pd
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+        # Price sensitivity: sweep YOUR price ±$100, hold competitors fixed
+        sweep_prices = list(range(max(100, ci_your_price - 100), ci_your_price + 101, 10))
+        sweep_shares = []
+        for sp in sweep_prices:
+            all_p = [sp] + ci_competitors
+            w = 0
+            random.seed(7)
+            for _ in range(2000):
+                u1, u2 = random.random(), random.random()
+                z = _math.sqrt(-2 * _math.log(max(1e-12, u1))) * _math.cos(2 * _math.pi * u2)
+                wtp = ci_mean_wtp + ci_std_wtp * z
+                surp = [(wtp - pp) for pp in all_p]
+                mx = max(surp)
+                if mx <= 0:
+                    continue
+                winners = [i for i, s in enumerate(surp) if s == mx]
+                if random.choice(winners) == 0:
+                    w += 1
+            sweep_shares.append(w / 2000 * 100)
+
+        fig_ci = go.Figure()
+        fig_ci.add_trace(go.Scatter(x=sweep_prices, y=sweep_shares,
+                                       mode='lines+markers', name='Your innovator share',
+                                       line=dict(color='#1a3c5e', width=3)))
+        fig_ci.add_vline(x=ci_your_price, line_dash="dash", line_color="red",
+                           annotation_text=f"Your current: ${ci_your_price}", annotation_position="top")
+        for i, cp in enumerate(ci_competitors):
+            fig_ci.add_vline(x=cp, line_dash="dot", line_color="gray",
+                               annotation_text=f"Comp{i+1}: ${cp}", annotation_position="bottom")
+        fig_ci.update_layout(height=320, xaxis_title="Your Price ($)", yaxis_title="Innovator share (%)",
+                                title=dict(text="Your share vs price (competitors fixed)",
+                                             x=0.5, xanchor="center"),
+                                margin=dict(l=0, r=0, t=50, b=0))
+        st.plotly_chart(fig_ci, use_container_width=True)
+
+        st.info("💡 **Reading the curve**: the cliff tells you the price ceiling. "
+                 "Above it, innovators all flip to a competitor. Below it, you're leaving margin on the table. "
+                 "Sweet spot is just below the cliff — but check the imitator economics (§15) before committing.")
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 15: AD ROI + CAPACITY GATE
+    # Class 3 slide 50 — "$500/day = +1 p" BUT don't advertise without capacity
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("15. Advertising ROI + Capacity Gate")
+    st.caption("Class 3 slide 50: $500/day in advertising adds arrivals = p × remaining × (spend / $500). "
+                "But Kathleen's warning: *'don't advertise if you can't fulfill'* — stockouts kill the imitator flywheel.")
+
+    ad_col1, ad_col2 = st.columns([1, 2])
+    with ad_col1:
+        st.markdown("**Market & unit economics**")
+        ad_M = st.number_input("Market size", value=34_500, step=1_000, key="w14b_ad_M")
+        ad_served = st.number_input("Already served (cumulative)", value=2_837, step=100, key="w14b_ad_served",
+                                        help="From HQ or Bass spreadsheet — units already sold to this market.")
+        ad_p = st.number_input("p (innovator)", value=0.0002, step=0.00005, format="%.5f", key="w14b_ad_p")
+        ad_q = st.number_input("q (imitator)", value=0.0035, step=0.0005, format="%.4f", key="w14b_ad_q")
+        ad_price = st.number_input("Your price ($)", value=700, step=10, key="w14b_ad_price")
+        ad_mean = st.number_input("Mean WTP", value=723, step=10, key="w14b_ad_mean")
+        ad_std = st.number_input("Std WTP", value=30, step=5, key="w14b_ad_std")
+        ad_throughput = st.number_input("Your daily throughput (u/day)", value=9, step=1, key="w14b_ad_cap",
+                                              help="Pilot bench = 9 u/day. Line factory at full capacity can do 30-80+.")
+
+    with ad_col2:
+        st.markdown("**Ad spend scenarios — marginal arrivals, capacity check, ROI**")
+
+        remaining = max(0, ad_M - ad_served)
+        pct_served = min(1.0, ad_served / ad_M) if ad_M > 0 else 0
+        p_buy = 1 - _normal_cdf(float(ad_price), float(ad_mean), float(max(1, ad_std)))
+
+        # Base (no ads) daily arrivals
+        base_innov = ad_p * remaining
+        base_imit = ad_q * remaining * pct_served
+        base_arrivals = base_innov + base_imit
+        base_buys = base_arrivals * p_buy
+
+        ad_scenarios = [0, 500, 1000, 2500, 5000, 10000]
+        rows = []
+        for spend in ad_scenarios:
+            ad_arrivals = (spend / 500) * ad_p * remaining
+            total_arrivals = base_arrivals + ad_arrivals
+            total_buys = total_arrivals * p_buy
+
+            # Capacity check: can you fulfill the DEMAND (buys)?
+            fulfilled = min(total_buys, ad_throughput)
+            stocked_out = max(0, total_buys - ad_throughput)
+            daily_revenue = fulfilled * ad_price
+            marginal_rev_vs_base = (fulfilled - base_buys * (ad_throughput >= base_buys)) * ad_price - spend
+            # Simpler: net revenue = fulfilled × price − ad_spend
+            net_cash = daily_revenue - spend
+            roi_pct = ((daily_revenue - spend) / spend * 100) if spend > 0 else None
+
+            status = "✅ OK" if stocked_out < 0.5 else f"🔴 STOCKOUT ({stocked_out:.1f}u/day lost)"
+
+            rows.append({
+                "Ad $/day": f"${spend}",
+                "Extra arrivals": f"{ad_arrivals:.2f}",
+                "Total demand (u/day)": f"{total_buys:.2f}",
+                "Capacity (u/day)": f"{ad_throughput}",
+                "Fulfilled": f"{fulfilled:.2f}",
+                "Lost to stockout": f"{stocked_out:.2f}",
+                "Daily revenue": f"${daily_revenue:,.0f}",
+                "Net (rev − ad)": f"${net_cash:,.0f}",
+                "ROI on ads": f"{roi_pct:.0f}%" if roi_pct is not None else "—",
+                "Status": status,
+            })
+
+        import pandas as pd
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+        # Capacity line
+        break_spend = None
+        for spend in ad_scenarios:
+            ad_arrivals = (spend / 500) * ad_p * remaining
+            total_buys = (base_arrivals + ad_arrivals) * p_buy
+            if total_buys > ad_throughput:
+                break_spend = spend
+                break
+
+        if break_spend is None:
+            st.success(f"✅ You can advertise up to ${ad_scenarios[-1]}/day without stocking out at {ad_throughput} u/day capacity.")
+        elif break_spend == 0:
+            st.error(f"🔴 You're already at/over capacity with ZERO ads. Current demand ({base_buys:.1f} u/day) > capacity ({ad_throughput} u/day). "
+                       "Fix throughput first — ads will only worsen the stockout.")
+        else:
+            st.warning(f"⚠️ **Ad ceiling ≈ ${break_spend}/day** at {ad_throughput} u/day capacity. "
+                          f"Every dollar above that creates stockouts, which kill the imitator flywheel (compounds for years). "
+                          f"Get the Line factory online before advertising heavier.")
+
+        st.info("""
+**The golden rule (Class 3 slide 50)**: *"We recommend you do not advertise today as you don't really have
+the capacity to keep up with it. Wait until next week when you have a faster factory."*
+
+The damage from advertising without capacity is not just the wasted ad dollars — it's the **lost imitator
+arrivals for the rest of the game**, because imitators only scale with cumulative sales. Stockouts break the
+flywheel permanently.
+        """)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SECTION 16: MARKET SHARE FLYWHEEL VISUALIZER
+    # Imitator arrivals scale with cumulative sales — first-mover compounds
+    # ══════════════════════════════════════════════════════════════════════════
+    st.subheader("16. Market Share Flywheel — Early vs Late Entry")
+    st.caption("Imitator arrivals = q × remaining × (your_cumulative / initial_market). "
+                "Entering earlier captures the compounding share. Simulates YOU at two entry timings, same capacity/price.")
+
+    fw_col1, fw_col2 = st.columns([1, 2])
+    with fw_col1:
+        st.markdown("**Market**")
+        fw_M = st.number_input("Initial market size", value=34_500, step=1_000, key="w14b_fw_M")
+        fw_p = st.number_input("p (innovator)", value=0.0002, step=0.00005, format="%.5f", key="w14b_fw_p")
+        fw_q = st.number_input("q (imitator)", value=0.0035, step=0.0005, format="%.4f", key="w14b_fw_q")
+        fw_price = st.number_input("Price ($)", value=700, step=10, key="w14b_fw_price")
+        fw_mean = st.number_input("Mean WTP", value=723, step=10, key="w14b_fw_mean")
+        fw_std = st.number_input("Std WTP", value=30, step=5, key="w14b_fw_std")
+        fw_cap = st.number_input("Capacity (u/day)", value=30, step=5, key="w14b_fw_cap",
+                                       help="Assume both scenarios have the same capacity. What differs is entry timing.")
+        fw_days = st.number_input("Simulation days", value=1092, step=30, key="w14b_fw_days",
+                                        help="Default = Practice Game horizon (day 1092 = Q12).")
+        fw_early = st.number_input("Early entry day", value=1, step=10, key="w14b_fw_e1")
+        fw_late = st.number_input("Late entry day", value=180, step=30, key="w14b_fw_e2",
+                                       help="Days after the early entrant started. 180 = ~6 months late.")
+        fw_competitor_share = st.slider("Market already taken by competitor at LATE entry (%)", 0, 50, 15, key="w14b_fw_comp",
+                                              help="Late entrant finds some market already captured by the early player.")
+
+    with fw_col2:
+        st.markdown("**Cumulative sales trajectory**")
+
+        def sim_entry(entry_day: int, initial_competitor_share: float = 0.0):
+            """Simulate your cumulative sales with a given entry day."""
+            p_buy = 1 - _normal_cdf(float(fw_price), float(fw_mean), float(max(1, fw_std)))
+            your_cum = 0.0
+            competitor_cum = initial_competitor_share * fw_M
+            trajectory = []
+            for t in range(1, int(fw_days) + 1):
+                total_taken = your_cum + competitor_cum
+                remaining = max(0, fw_M - total_taken)
+                if t < entry_day:
+                    trajectory.append(0)
+                    # Competitor still growing at the same mechanics vs empty market
+                    comp_innov = fw_p * remaining
+                    comp_imit = fw_q * (competitor_cum / fw_M) * remaining if fw_M > 0 else 0
+                    comp_buys = (comp_innov + comp_imit) * p_buy
+                    competitor_cum += min(comp_buys, fw_cap)
+                    continue
+                # You've entered. Both players compete; split innovators 50/50 (same price).
+                innovators = fw_p * remaining
+                your_imit = fw_q * (your_cum / fw_M) * remaining if fw_M > 0 else 0
+                comp_imit = fw_q * (competitor_cum / fw_M) * remaining if fw_M > 0 else 0
+                your_arrivals = innovators * 0.5 + your_imit
+                comp_arrivals = innovators * 0.5 + comp_imit
+                your_buys = min(fw_cap, your_arrivals * p_buy)
+                comp_buys = min(fw_cap, comp_arrivals * p_buy)
+                your_cum += your_buys
+                competitor_cum += comp_buys
+                trajectory.append(your_cum)
+            return trajectory
+
+        early_traj = sim_entry(int(fw_early), initial_competitor_share=0)
+        late_traj = sim_entry(int(fw_late), initial_competitor_share=fw_competitor_share / 100.0)
+
+        fig_fw = go.Figure()
+        fig_fw.add_trace(go.Scatter(x=list(range(1, int(fw_days)+1)), y=early_traj,
+                                       mode='lines', name=f'Early entry (day {int(fw_early)})',
+                                       line=dict(color='#2d6a2e', width=3)))
+        fig_fw.add_trace(go.Scatter(x=list(range(1, int(fw_days)+1)), y=late_traj,
+                                       mode='lines', name=f'Late entry (day {int(fw_late)})',
+                                       line=dict(color='#b22222', width=3)))
+        # Quarter markers
+        for q in [364, 728, 1092, 1456]:
+            if q <= fw_days:
+                fig_fw.add_vline(x=q, line_dash="dot", line_color="gray", opacity=0.3,
+                                   annotation_text=f"Q{q//91 + (1 if q%91 else 0)}",
+                                   annotation_position="top")
+        fig_fw.update_layout(height=400, xaxis_title="Day", yaxis_title="Cumulative units sold (you)",
+                                title=dict(text="Entry timing → flywheel divergence", x=0.5, xanchor="center"),
+                                margin=dict(l=0, r=0, t=50, b=0),
+                                legend=dict(x=0.01, y=0.98))
+        st.plotly_chart(fig_fw, use_container_width=True)
+
+        # Summary metrics
+        final_early = early_traj[-1] if early_traj else 0
+        final_late = late_traj[-1] if late_traj else 0
+        gap_units = final_early - final_late
+        gap_pct = (gap_units / final_late * 100) if final_late > 0 else 0
+        gap_revenue = gap_units * fw_price
+        # Approximate CM: apply commission only, ignore other costs for clarity
+        gap_cm_estimate = gap_units * fw_price * (1 - w14b_comm_frac)
+
+        sum_a, sum_b, sum_c = st.columns(3)
+        with sum_a:
+            st.metric("Early-entry final cum units", f"{final_early:,.0f}")
+        with sum_b:
+            st.metric("Late-entry final cum units", f"{final_late:,.0f}",
+                        delta=f"−{gap_units:,.0f} units ({-gap_pct:.0f}%)",
+                        delta_color="inverse")
+        with sum_c:
+            st.metric("Revenue gap (price × units)", f"${gap_revenue:,.0f}",
+                        delta=f"~${gap_cm_estimate:,.0f} in CM (est.)")
+
+        st.info(f"""
+**The flywheel math**: entering {int(fw_late) - int(fw_early)} days later costs you **{gap_units:,.0f} units**
+over the simulation (≈ **${gap_revenue:,.0f} revenue**, ≈ **${gap_cm_estimate:,.0f} contribution margin**).
+
+Why? Imitators compound on your share-of-served-market. Every day the competitor sells first, their
+imitator multiplier grows while yours stays zero. By the time you enter, the market doesn't just have
+**fewer remaining customers** — it also has **fewer imitators arriving at YOUR store**, because imitators
+scale with YOUR cumulative share, which is still tiny.
+
+This is why the $600K scramble matters. The Line factory doesn't just produce more per day — it gets
+you to scale fast enough that the imitator flywheel starts spinning for YOU before a competitor locks it in.
         """)
 
 
