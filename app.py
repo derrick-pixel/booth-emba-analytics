@@ -3047,505 +3047,333 @@ Given the D3 Exercise uses Normal, **we should assume Normal distribution** goin
     st.markdown("---")
 
     # ══════════════════════════════════════════════════════════════════════════
-    # SECTION 6: COBB-DOUGLAS + LITTLE'S LAW + CONTRIBUTION MARGIN TABLE
+    # SECTION 6: COBB-DOUGLAS + LITTLE'S LAW + CM — LINE vs CELL (15-16 FOCUS)
+    # Integrated from "Gleacher Game Production Model, optimized.xlsx"
+    # CM is POST-TAX per user's workbook: CM/u = (price − MOH − W3 − price·comm)·(1−tax)
+    # where W3 = materials + shipping + handling (per-unit pass-through cost).
     # ══════════════════════════════════════════════════════════════════════════
-    st.subheader("6. Cobb-Douglas + Little's Law + Contribution Margin")
-    st.caption("4 factories side-by-side (Bench, Line, Cell, Custom) with shared K, L, batch inputs")
-
-    # Shared inputs (apply to all 4 factories)
-    st.markdown("**Shared Inputs** (same across all 4 factories)")
-    w14_sh1, w14_sh2, w14_sh3, w14_sh4 = st.columns(4)
-    with w14_sh1:
-        w14_K = st.number_input("Capital K ($)", value=100000, step=10000, key="w14_K")
-    with w14_sh2:
-        w14_l = st.number_input("Daily Labor l ($/day)", value=2500, step=100, key="w14_l")
-    with w14_sh3:
-        w14_batch = st.number_input("Batch Size", value=100, step=10, key="w14_batch")
-    with w14_sh4:
-        w14_dpy = st.number_input("Days/year", value=364, step=1, key="w14_dpy")
-
-    # 4 factory configurations (3 presets + 1 custom)
-    W14_FACTORIES = [
-        {"name": "Bench", "A": 0.009, "alpha": 0.10, "beta": 0.85, "setup": 0.05, "min_K": 0, "color": "#800000"},
-        {"name": "Production Line", "A": 0.010, "alpha": 0.30, "beta": 0.75, "setup": 0.50, "min_K": 500000, "color": "#1a3c5e"},
-        {"name": "Automated Cell", "A": 0.020, "alpha": 0.80, "beta": 0.30, "setup": 1.00, "min_K": 3000000, "color": "#2d6a2e"},
-        {"name": "Custom", "A": 0.009, "alpha": 0.10, "beta": 0.85, "setup": 0.05, "min_K": 0, "color": "#b8860b"},
-    ]
-
-    # Custom factory parameters (editable)
-    st.markdown("**Custom Factory Parameters** (4th column only)")
-    w14_c1, w14_c2, w14_c3, w14_c4 = st.columns(4)
-    with w14_c1:
-        custom_A = st.number_input("Custom A", value=0.009, step=0.001,
-                                     format="%.4f", key="w14_custom_A")
-    with w14_c2:
-        custom_alpha = st.number_input("Custom α", value=0.10, step=0.05,
-                                         format="%.2f", key="w14_custom_alpha")
-    with w14_c3:
-        custom_beta = st.number_input("Custom β", value=0.85, step=0.05,
-                                        format="%.2f", key="w14_custom_beta")
-    with w14_c4:
-        custom_setup = st.number_input("Custom setup (d)", value=0.05, step=0.05,
-                                         format="%.2f", key="w14_custom_setup")
-
-    # Apply custom values to 4th entry
-    W14_FACTORIES[3]["A"] = custom_A
-    W14_FACTORIES[3]["alpha"] = custom_alpha
-    W14_FACTORIES[3]["beta"] = custom_beta
-    W14_FACTORIES[3]["setup"] = custom_setup
-
-    W14_DEP_YRS = 15
-
-    # Calculate for each factory
-    def calc_factory(f, K, l, batch, dpy):
-        if K < f["min_K"]:
-            return None
-        L_yearly = l * dpy
-        Y = f["A"] * (K ** f["alpha"]) * (L_yearly ** f["beta"])
-        lambda_raw = Y / dpy
-        batch_time = batch / lambda_raw if lambda_raw > 0 else float("inf")
-        CT = batch_time + f["setup"]
-        lambda_eff = batch / CT if CT > 0 else 0
-        WIP = lambda_eff * CT
-        daily_dep = K / W14_DEP_YRS / dpy
-        daily_cost = l + daily_dep
-        mfg_oh = daily_cost / lambda_eff if lambda_eff > 0 else 0
-        return {
-            "Y": Y, "lambda_raw": lambda_raw, "batch_time": batch_time,
-            "CT": CT, "lambda_eff": lambda_eff, "WIP": WIP,
-            "mfg_oh": mfg_oh, "daily_cost": daily_cost,
-        }
-
-    w14_fac_results = [calc_factory(f, w14_K, w14_l, w14_batch, w14_dpy) for f in W14_FACTORIES]
-
-    # 4 side-by-side factory columns
-    st.markdown("---")
-    st.markdown("### Factory Comparison (side-by-side)")
-    fac_cols = st.columns(4)
-    for idx, (col, f, r) in enumerate(zip(fac_cols, W14_FACTORIES, w14_fac_results)):
-        with col:
-            st.markdown(
-                f"<div style='background:{f['color']};color:white;padding:0.5rem 0.8rem;"
-                f"border-radius:6px;font-weight:700;text-align:center;'>{f['name']}</div>",
-                unsafe_allow_html=True,
-            )
-            st.caption(f"A={f['A']:.4f} | α={f['alpha']:.2f} | β={f['beta']:.2f} | setup={f['setup']:.2f}d")
-            if r is None:
-                st.error(f"Min K ${f['min_K']:,} not met")
-                continue
-
-            st.metric("Yearly Y", f"{r['Y']:,.0f} u/yr")
-            st.metric("Daily λ raw", f"{r['lambda_raw']:.2f} u/d")
-            st.metric("Daily λ eff", f"{r['lambda_eff']:.2f} u/d")
-            st.metric("Batch Time", f"{r['batch_time']:.3f} d")
-            st.metric("Setup", f"{f['setup']:.2f} d")
-            st.metric("Total CT", f"{r['CT']:.3f} d")
-            st.metric("WIP Inventory", f"{r['WIP']:.1f} units")
-            st.metric("Mfg OH/unit", f"${r['mfg_oh']:.2f}")
-            rts = f["alpha"] + f["beta"]
-            rts_label = "Incr." if rts > 1.02 else ("Decr." if rts < 0.98 else "Const.")
-            st.metric("α+β", f"{rts:.2f}", delta=f"{rts_label} returns", delta_color="off")
-
-    # ══════════════════════════════════════════════════════════════════════════
-    # OPTIMAL BATCH SIZE PROPOSER
-    # λ_eff(B) = λ_raw · B / (B + S)   where S = setup × λ_raw
-    # Mfg OH/u(B) = daily_cost / λ_eff = (daily_cost/λ_raw) · (1 + S/B)
-    # For target efficiency t, optimal B* = S · t / (1−t)
-    # ══════════════════════════════════════════════════════════════════════════
-    st.markdown("---")
-    st.markdown("### 🎯 Optimal Batch Size Proposer")
+    st.subheader("6. Cobb-Douglas + Little's Law + CM — Line vs Cell (Focus)")
     st.caption(
-        "Trade-off: **small batch** → setup dominates → high Mfg OH/u. "
-        "**Large batch** → OH converges to the floor `daily_cost / λ_raw`, but WIP grows linearly. "
-        "The recommendation picks the batch where throughput is close to its ceiling before WIP balloons."
+        "Focus for 15-16 War Room: only **Line** (α=0.3, β=0.75, setup=0.5d) and "
+        "**Cell** (α=0.8, β=0.3, setup=1.0d). Batch grid, charts, and CM/day are all "
+        "**post-tax** per your optimized workbook."
     )
 
-    prop_c1, prop_c2, prop_c3 = st.columns([1, 1, 2])
-    with prop_c1:
-        target_eff = st.slider(
-            "Throughput target (% of λ_raw)",
-            min_value=0.70, max_value=0.995, value=0.95, step=0.01,
-            format="%.2f", key="w14_target_eff",
-            help="0.95 → capture 95% of max throughput with 5% setup drag. "
-                 "0.99 → 99% of max but WIP ~5× larger.",
-        )
-    with prop_c2:
-        expected_demand = st.number_input(
-            "Expected daily sales (0 = ignore)",
-            min_value=0, value=0, step=1, key="w14_expected_demand",
-            help="If >0, we also propose a demand-matched batch — the SMALLEST batch that "
-                 "just keeps up with demand. Avoids overproducing into unsold WIP.",
-        )
-    with prop_c3:
-        st.caption(
-            "**Formula:** B\\* = S · t / (1 − t), where S = setup × λ_raw (units lost per setup), "
-            "t = target efficiency. E.g. t=0.90 → B\\* = 9S. Going 0.95 → 0.99 adds only ~4% throughput "
-            "but 5× the WIP. Pick the highest t you can carry in inventory."
-        )
+    # ── Economics Inputs ────────────────────────────────────────────────────
+    st.markdown("**Economics Inputs** — defaults match your Production Model workbook")
+    ec1, ec2, ec3, ec4 = st.columns(4)
+    with ec1:
+        w14_cm_price = st.number_input("Price ($/u)", value=800, step=25, key="w14_cm_price")
+        w14_cm_handling = st.number_input("Handling ($/u)", value=10, step=1, key="w14_cm_hand")
+    with ec2:
+        w14_cm_materials = st.number_input("Materials ($/u)", value=100, step=5, key="w14_cm_mat")
+        w14_cm_shipping = st.number_input("Shipping ($/u)", value=20, step=5, key="w14_cm_ship")
+    with ec3:
+        w14_comm_pct = st.number_input("Commission %", value=20.0, step=1.0, key="w14_comm_pct",
+                                         help="Paid by retailer; deducted from price in CM calc.")
+        w14_tax_pct = st.number_input("Tax %", value=35.0, step=1.0, key="w14_tax_pct")
+    with ec4:
+        w14_l = st.number_input("Daily Labor L ($/day)", value=500, step=100, key="w14_l",
+                                  help="Default $500/day matches the workbook (not the $2,500 Practice Game default).")
+        w14_dpy = st.number_input("Days/year", value=364, step=1, key="w14_dpy")
 
-    prop_rows = []
-    best_by_oh = None
-    for f, r in zip(W14_FACTORIES, w14_fac_results):
-        if r is None:
-            prop_rows.append({
-                "Factory": f["name"], "λ_raw (u/d)": "—", "S = setup·λ_raw": "—",
-                "B* (target)": "—", "λ_eff @B*": "—",
-                "Mfg OH/u @B*": "—", "Floor (B→∞)": "—", "WIP @B*": "—",
-                "B for demand": "—",
-            })
-            continue
-        lam_raw = r["lambda_raw"]
-        daily_cost = r["daily_cost"]
-        S = f["setup"] * lam_raw
-        B_star = S * target_eff / (1 - target_eff) if target_eff < 1.0 else float("inf")
-        B_star_int = max(1, int(round(B_star)))
-        CT_star = B_star_int / lam_raw + f["setup"]
-        lam_eff_star = B_star_int / CT_star
-        mfg_oh_star = daily_cost / lam_eff_star if lam_eff_star > 0 else float("inf")
-        floor_oh = daily_cost / lam_raw if lam_raw > 0 else float("inf")
-        WIP_star = B_star_int
+    w14_comm_frac = w14_comm_pct / 100  # kept for downstream code (Sec 9 uses this)
+    w14_tax_frac = w14_tax_pct / 100
+    W14_DEP_YRS = 15
+    w14_W3 = w14_cm_materials + w14_cm_shipping + w14_cm_handling
 
-        if expected_demand > 0:
-            if expected_demand >= lam_raw:
-                B_dem_str = "∞ (beyond capacity)"
-            else:
-                B_dem = expected_demand * S / (lam_raw - expected_demand)
-                B_dem_str = f"{max(1, int(round(B_dem)))}"
-        else:
-            B_dem_str = "—"
+    # ── Factory configs: Line + Cell only ───────────────────────────────────
+    W14_FACTORIES = [
+        {"name": "Line", "A": 0.01, "alpha": 0.30, "beta": 0.75,
+         "setup": 0.50, "min_K": 500_000, "default_K": 500_000, "color": "#1a3c5e",
+         "hyp_lo": 200, "hyp_hi": 300},
+        {"name": "Cell", "A": 0.02, "alpha": 0.80, "beta": 0.30,
+         "setup": 1.00, "min_K": 3_000_000, "default_K": 3_000_000, "color": "#2d6a2e",
+         "hyp_lo": 500, "hyp_hi": 1500},
+    ]
 
-        prop_rows.append({
-            "Factory": f["name"],
-            "λ_raw (u/d)": f"{lam_raw:.2f}",
-            "S = setup·λ_raw": f"{S:.1f}",
-            "B* (target)": B_star_int,
-            "λ_eff @B*": f"{lam_eff_star:.2f}",
-            "Mfg OH/u @B*": f"${mfg_oh_star:.2f}",
-            "Floor (B→∞)": f"${floor_oh:.2f}",
-            "WIP @B*": f"{WIP_star}",
-            "B for demand": B_dem_str,
-        })
-        cand = {"factory": f["name"], "B": B_star_int, "lam_eff": lam_eff_star,
-                "oh": mfg_oh_star, "floor": floor_oh, "WIP": WIP_star, "color": f["color"]}
-        if best_by_oh is None or mfg_oh_star < best_by_oh["oh"]:
-            best_by_oh = cand
+    st.markdown("**Factory Configuration** (your hypothesis zones shaded in charts below)")
+    fac_cols = st.columns(2)
+    factory_stats = {}
+    for col, f in zip(fac_cols, W14_FACTORIES):
+        with col:
+            st.markdown(
+                f"<div style='background:{f['color']};color:white;padding:0.45rem 0.8rem;"
+                f"border-radius:6px;font-weight:700;text-align:center;'>"
+                f"{f['name']} Factory · hypothesis: batch {f['hyp_lo']}–{f['hyp_hi']}</div>",
+                unsafe_allow_html=True,
+            )
+            st.caption(
+                f"A={f['A']:.3f} · α={f['alpha']:.2f} · β={f['beta']:.2f} · "
+                f"setup={f['setup']:.2f}d · min K=${f['min_K']:,}"
+            )
+            K = st.number_input(
+                f"Capital K ($) — {f['name']}",
+                value=f["default_K"], step=100_000,
+                min_value=f["min_K"],
+                key=f"w14_K_{f['name']}",
+            )
+            L_yearly = w14_l * w14_dpy
+            Y = f["A"] * (K ** f["alpha"]) * (L_yearly ** f["beta"])
+            lam_raw = Y / w14_dpy if w14_dpy > 0 else 0
+            daily_dep = K / W14_DEP_YRS / w14_dpy if w14_dpy > 0 else 0
+            daily_cost = w14_l + daily_dep
+            floor_moh = daily_cost / lam_raw if lam_raw > 0 else float("inf")
+            S_raw = f["setup"] * lam_raw
 
-    st.markdown("**Recommended batch per factory** (at chosen throughput target):")
-    st.dataframe(pd.DataFrame(prop_rows), use_container_width=True, hide_index=True)
+            factory_stats[f["name"]] = {
+                "K": K, "L_yearly": L_yearly, "Y": Y, "lam_raw": lam_raw,
+                "daily_cost": daily_cost, "daily_dep": daily_dep,
+                "floor_moh": floor_moh, "S": S_raw, **f,
+            }
 
-    b_sweep = list(range(5, 1001, 5))
-    fig_le = go.Figure()
-    fig_oh = go.Figure()
-    for f, r in zip(W14_FACTORIES, w14_fac_results):
-        if r is None:
-            continue
-        lam_raw = r["lambda_raw"]
-        daily_cost = r["daily_cost"]
-        lam_eff_sweep = [lam_raw * b / (b + f["setup"] * lam_raw) for b in b_sweep]
-        oh_sweep = [(daily_cost / le) if le > 0 else None for le in lam_eff_sweep]
-        fig_le.add_trace(go.Scatter(x=b_sweep, y=lam_eff_sweep, name=f["name"],
-                                      line=dict(color=f["color"], width=2)))
-        fig_oh.add_trace(go.Scatter(x=b_sweep, y=oh_sweep, name=f["name"],
-                                      line=dict(color=f["color"], width=2)))
-        if target_eff < 1.0:
-            S = f["setup"] * lam_raw
-            B_star = S * target_eff / (1 - target_eff)
-            fig_le.add_vline(x=B_star, line_dash="dash", line_color=f["color"], opacity=0.35)
-            fig_oh.add_vline(x=B_star, line_dash="dash", line_color=f["color"], opacity=0.35)
+            mc1, mc2 = st.columns(2)
+            with mc1:
+                st.metric("λ_raw (u/day)", f"{lam_raw:.2f}")
+                st.metric("Daily cost", f"${daily_cost:,.0f}")
+            with mc2:
+                st.metric("Floor MOH ($/u)", f"${floor_moh:.2f}")
+                st.metric("S = setup·λ_raw", f"{S_raw:.1f}")
 
-    fig_le.add_vline(x=w14_batch, line_dash="dot", line_color="green",
-                      annotation_text=f"Current: {w14_batch}")
-    fig_le.update_layout(
-        height=320, xaxis_title="Batch Size (units)",
-        yaxis_title="λ_eff (units/day)",
-        title=dict(text="Throughput vs Batch Size (dashed = B* per factory)",
-                     x=0.5, xanchor="center", y=0.97),
+    # ── Helpers ────────────────────────────────────────────────────────────
+    def _cm_post_tax(moh, price, W3, comm_frac, tax_frac):
+        return (price - moh - W3 - price * comm_frac) * (1 - tax_frac)
+
+    def _metrics(fs, batch):
+        lam_raw = fs["lam_raw"]
+        setup = fs["setup"]
+        if lam_raw <= 0:
+            return float("inf"), 0, 0, 0
+        CT = batch / lam_raw + setup
+        lam_eff = batch / CT if CT > 0 else 0
+        moh = fs["daily_cost"] / lam_eff if lam_eff > 0 else float("inf")
+        cm_u = _cm_post_tax(moh, w14_cm_price, w14_W3, w14_comm_frac, w14_tax_frac)
+        cm_day = cm_u * lam_eff
+        return moh, lam_eff, cm_u, cm_day
+
+    # ── Batch analysis grid (replicates Excel with hypothesis highlighting) ─
+    st.markdown("---")
+    st.markdown("### 📊 Batch Analysis Grid")
+    st.caption(
+        f"Each row is one batch size. CM columns are POST-tax. "
+        f"Rows in your hypothesis zones are highlighted (Line {W14_FACTORIES[0]['hyp_lo']}–"
+        f"{W14_FACTORIES[0]['hyp_hi']} • Cell {W14_FACTORIES[1]['hyp_lo']}–"
+        f"{W14_FACTORIES[1]['hyp_hi']})."
+    )
+
+    BATCH_LIST = [100, 150, 200, 250, 300, 400, 500, 750, 1000, 1500, 2000, 3000]
+    grid_rows = []
+    for b in BATCH_LIST:
+        row = {"Batch": b}
+        for f in W14_FACTORIES:
+            fs = factory_stats[f["name"]]
+            moh, lam_eff, cm_u, cm_day = _metrics(fs, b)
+            row[f"{f['name']} MOH/u"] = f"${moh:.2f}"
+            row[f"{f['name']} λ_eff"] = f"{lam_eff:.2f}"
+            row[f"{f['name']} CM/u"] = f"${cm_u:.2f}"
+            row[f"{f['name']} CM/day"] = f"${cm_day:,.0f}"
+        grid_rows.append(row)
+    grid_df = pd.DataFrame(grid_rows)
+
+    def _highlight_hyp(row):
+        b = row["Batch"]
+        styles = [""] * len(row)
+        line_hyp = W14_FACTORIES[0]["hyp_lo"] <= b <= W14_FACTORIES[0]["hyp_hi"]
+        cell_hyp = W14_FACTORIES[1]["hyp_lo"] <= b <= W14_FACTORIES[1]["hyp_hi"]
+        for j, col in enumerate(row.index):
+            if col.startswith("Line") and line_hyp:
+                styles[j] = "background-color: rgba(26,60,94,0.20); font-weight: 600;"
+            elif col.startswith("Cell") and cell_hyp:
+                styles[j] = "background-color: rgba(45,106,46,0.20); font-weight: 600;"
+        return styles
+    st.dataframe(grid_df.style.apply(_highlight_hyp, axis=1),
+                  use_container_width=True, hide_index=True)
+
+    # ── Batch curves: CM/day and MOH/u vs batch ────────────────────────────
+    st.markdown("### 📈 Batch Size Curves")
+    b_sweep = list(range(25, 3001, 25))
+    fig_cm = go.Figure()
+    fig_moh = go.Figure()
+    for f in W14_FACTORIES:
+        fs = factory_stats[f["name"]]
+        cm_days, mohs = [], []
+        for b in b_sweep:
+            moh, _, _, cm_day = _metrics(fs, b)
+            cm_days.append(cm_day)
+            mohs.append(moh if moh != float("inf") else None)
+        fig_cm.add_trace(go.Scatter(x=b_sweep, y=cm_days, name=f["name"],
+                                      line=dict(color=f["color"], width=2.5)))
+        fig_moh.add_trace(go.Scatter(x=b_sweep, y=mohs, name=f["name"],
+                                       line=dict(color=f["color"], width=2.5)))
+        fig_cm.add_vrect(x0=f["hyp_lo"], x1=f["hyp_hi"],
+                           fillcolor=f["color"], opacity=0.12, line_width=0,
+                           annotation_text=f"{f['name']} hyp: {f['hyp_lo']}–{f['hyp_hi']}",
+                           annotation_position="top left")
+        fig_moh.add_vrect(x0=f["hyp_lo"], x1=f["hyp_hi"],
+                            fillcolor=f["color"], opacity=0.12, line_width=0)
+        # Asymptote (floor MOH)
+        fig_moh.add_hline(y=fs["floor_moh"], line_dash="dash", line_color=f["color"],
+                           opacity=0.4,
+                           annotation_text=f"{f['name']} floor: ${fs['floor_moh']:.2f}",
+                           annotation_position="bottom right")
+
+    fig_cm.update_layout(
+        height=380, xaxis_title="Batch Size (units)",
+        yaxis_title="Post-tax CM/day ($)", yaxis_tickformat="$,.0f",
+        title=dict(text="Post-tax CM/day vs Batch Size", x=0.5, xanchor="center", y=0.97),
         margin=dict(l=0, r=0, t=50, b=0),
         legend=dict(orientation="h", yanchor="top", y=1.10, xanchor="center", x=0.5),
     )
-    fig_oh.add_vline(x=w14_batch, line_dash="dot", line_color="green",
-                      annotation_text=f"Current: {w14_batch}")
-    fig_oh.update_layout(
-        height=320, xaxis_title="Batch Size (units)",
+    fig_moh.update_layout(
+        height=380, xaxis_title="Batch Size (units)",
         yaxis_title="Mfg OH per unit ($)", yaxis_tickformat="$,.2f",
-        title=dict(text="Mfg OH/unit vs Batch Size (hyperbolic toward floor)",
+        title=dict(text="MOH/unit vs Batch Size (dashed = floor as B→∞)",
                      x=0.5, xanchor="center", y=0.97),
         margin=dict(l=0, r=0, t=50, b=0),
         legend=dict(orientation="h", yanchor="top", y=1.10, xanchor="center", x=0.5),
     )
     chart_c1, chart_c2 = st.columns(2)
     with chart_c1:
-        st.plotly_chart(fig_le, use_container_width=True)
+        st.plotly_chart(fig_cm, use_container_width=True)
     with chart_c2:
-        st.plotly_chart(fig_oh, use_container_width=True)
+        st.plotly_chart(fig_moh, use_container_width=True)
 
-    if best_by_oh is not None:
-        oh_premium = (best_by_oh["oh"] / best_by_oh["floor"] - 1) * 100 if best_by_oh["floor"] > 0 else 0
+    # ── Optimal batch verdict ──────────────────────────────────────────────
+    st.markdown("### 🎯 Optimal Batch Verdict vs Your Hypothesis")
+    st.caption(
+        "Criterion: capture ≥ 95% of max (asymptotic) CM/day without piling up WIP. "
+        "Beyond the 95% mark each extra 1% of throughput costs multiplicatively more batch size."
+    )
+
+    verdict_rows = []
+    for f in W14_FACTORIES:
+        fs = factory_stats[f["name"]]
+        lam_raw = fs["lam_raw"]
+        S = fs["S"]
+        B_90 = S * 0.90 / 0.10
+        B_95 = S * 0.95 / 0.05
+        B_99 = S * 0.99 / 0.01
+        max_cm_u = _cm_post_tax(fs["floor_moh"], w14_cm_price, w14_W3, w14_comm_frac, w14_tax_frac)
+        max_cm_day = max_cm_u * lam_raw
+        _, _, _, cmlo_day = _metrics(fs, f["hyp_lo"])
+        _, _, _, cmhi_day = _metrics(fs, f["hyp_hi"])
+        cap_lo = cmlo_day / max_cm_day * 100 if max_cm_day > 0 else 0
+        cap_hi = cmhi_day / max_cm_day * 100 if max_cm_day > 0 else 0
+        verdict_rows.append({
+            "Factory": f["name"],
+            "λ_raw (u/d)": f"{lam_raw:.2f}",
+            "S": f"{S:.1f}",
+            "Max CM/day (B→∞)": f"${max_cm_day:,.0f}",
+            "B* @ 90%": f"{B_90:.0f}",
+            "B* @ 95%": f"{B_95:.0f}",
+            "B* @ 99%": f"{B_99:.0f}",
+            "Your hyp": f"{f['hyp_lo']}–{f['hyp_hi']}",
+            "CM/d @ hyp low": f"${cmlo_day:,.0f} ({cap_lo:.0f}%)",
+            "CM/d @ hyp high": f"${cmhi_day:,.0f} ({cap_hi:.0f}%)",
+        })
+    st.dataframe(pd.DataFrame(verdict_rows), use_container_width=True, hide_index=True)
+
+    # Specific hypothesis analysis cards
+    line_fs = factory_stats["Line"]
+    cell_fs = factory_stats["Cell"]
+    max_line_cm_u = _cm_post_tax(line_fs["floor_moh"], w14_cm_price, w14_W3, w14_comm_frac, w14_tax_frac)
+    max_line_cm = max_line_cm_u * line_fs["lam_raw"]
+    max_cell_cm_u = _cm_post_tax(cell_fs["floor_moh"], w14_cm_price, w14_W3, w14_comm_frac, w14_tax_frac)
+    max_cell_cm = max_cell_cm_u * cell_fs["lam_raw"]
+    _, _, _, cm_line_200 = _metrics(line_fs, 200)
+    _, _, _, cm_line_300 = _metrics(line_fs, 300)
+    _, _, _, cm_line_1000 = _metrics(line_fs, 1000)
+    _, _, _, cm_cell_500 = _metrics(cell_fs, 500)
+    _, _, _, cm_cell_1000 = _metrics(cell_fs, 1000)
+    _, _, _, cm_cell_1500 = _metrics(cell_fs, 1500)
+    _, _, _, cm_cell_3000 = _metrics(cell_fs, 3000)
+
+    def _pct(v, maxv):
+        return v / maxv * 100 if maxv > 0 else 0
+    def _marg(a, b):
+        return (b / a - 1) * 100 if a > 0 else 0
+
+    hyp_c1, hyp_c2 = st.columns(2)
+    with hyp_c1:
         st.markdown(f"""
-<div style="background:{best_by_oh['color']};color:white;border-radius:8px;padding:1rem;text-align:center;">
-<span style="opacity:0.85;font-size:0.85em;">Lowest Mfg OH/u at {target_eff:.0%} throughput target</span><br>
-<b style="font-size:1.4em;">{best_by_oh['factory']} · Batch = {best_by_oh['B']}</b><br>
-<span style="font-size:0.9em;">
-λ_eff = {best_by_oh['lam_eff']:.2f} u/day · Mfg OH = <b>${best_by_oh['oh']:.2f}/u</b>
-(only +{oh_premium:.1f}% above the ${best_by_oh['floor']:.2f} floor) · WIP = {best_by_oh['WIP']} units
-</span>
+<div style="background:rgba(26,60,94,0.10);border-left:4px solid #1a3c5e;padding:0.8rem;border-radius:6px;">
+<b style="color:#1a3c5e;font-size:1.05em;">Line · Hypothesis: batch 200–300</b>
+<ul style="margin-top:0.4rem;margin-bottom:0.4rem;">
+<li>Batch 200 → <b>${cm_line_200:,.0f}/day</b> ({_pct(cm_line_200, max_line_cm):.0f}% of max ${max_line_cm:,.0f})</li>
+<li>Batch 300 → <b>${cm_line_300:,.0f}/day</b> ({_pct(cm_line_300, max_line_cm):.0f}% of max)</li>
+<li>Batch 1000 (near-max) → <b>${cm_line_1000:,.0f}/day</b> ({_pct(cm_line_1000, max_line_cm):.0f}% of max)</li>
+</ul>
+<b>Marginal 300 → 1000:</b> +${cm_line_1000 - cm_line_300:,.0f}/d (<b>+{_marg(cm_line_300, cm_line_1000):.1f}%</b>)
+— with WIP rising from 300 → 1000 units.
+<br><b style="color:#2d6a2e;">Verdict:</b> 200–300 is well-placed; captures near-peak economics with 3–5× less WIP.
+Push to 300 if stockout risk is low, drop to 200 if demand is uneven.
 </div>
 """, unsafe_allow_html=True)
-        st.caption(
-            f"💡 To apply: set **Batch Size = {best_by_oh['B']}** in the Shared Inputs at the top of this section. "
-            f"Tune the throughput-target slider above to trade WIP ↔ overhead — 0.90 halves WIP vs 0.95 but only adds ~5% OH."
-        )
 
-    # Pick which factory's Mfg OH feeds the CM table below
+    with hyp_c2:
+        st.markdown(f"""
+<div style="background:rgba(45,106,46,0.10);border-left:4px solid #2d6a2e;padding:0.8rem;border-radius:6px;">
+<b style="color:#2d6a2e;font-size:1.05em;">Cell · Hypothesis: batch 500–1500</b>
+<ul style="margin-top:0.4rem;margin-bottom:0.4rem;">
+<li>Batch 500 → <b>${cm_cell_500:,.0f}/day</b> ({_pct(cm_cell_500, max_cell_cm):.0f}% of max ${max_cell_cm:,.0f})</li>
+<li>Batch 1000 → <b>${cm_cell_1000:,.0f}/day</b> ({_pct(cm_cell_1000, max_cell_cm):.0f}% of max)</li>
+<li>Batch 1500 → <b>${cm_cell_1500:,.0f}/day</b> ({_pct(cm_cell_1500, max_cell_cm):.0f}% of max)</li>
+<li>Batch 3000 (near-max) → <b>${cm_cell_3000:,.0f}/day</b> ({_pct(cm_cell_3000, max_cell_cm):.0f}% of max)</li>
+</ul>
+<b>Marginal 1500 → 3000:</b> +${cm_cell_3000 - cm_cell_1500:,.0f}/d (<b>+{_marg(cm_cell_1500, cm_cell_3000):.1f}%</b>)
+— WIP doubles, throughput barely moves.
+<br><b style="color:#2d6a2e;">Verdict:</b> Sweet spot inside your 500–1500 band.
+Cell's bigger setup (1d vs 0.5d) × much higher λ_raw means S is large — use 1000–1500 to capture 95%+ while avoiding 3000-unit WIP.
+</div>
+""", unsafe_allow_html=True)
+
+    # ── Per-unit CM waterfall at selected factory + batch ──────────────────
     st.markdown("---")
-    oh_pick_col1, oh_pick_col2 = st.columns([1, 3])
-    with oh_pick_col1:
-        cm_factory_choice = st.selectbox(
-            "CM Table uses overhead from:",
-            [f["name"] for f in W14_FACTORIES],
-            index=0, key="w14_cm_factory_pick",
+    st.markdown("### 💰 Contribution Margin Waterfall")
+    st.caption("Per-unit P&L at selected factory/batch, matching the structure of your workbook CM table.")
+
+    cm_pick_c1, cm_pick_c2 = st.columns([1, 3])
+    with cm_pick_c1:
+        cm_factory = st.selectbox("Factory", ["Line", "Cell"], index=0, key="w14_cm_factory")
+        default_cm_batch = 300 if cm_factory == "Line" else 1000
+        cm_batch = st.number_input("Batch size", value=default_cm_batch, step=50,
+                                     min_value=1, key="w14_cm_batch")
+    fs_sel = factory_stats[cm_factory]
+    moh_sel, lam_eff_sel, cm_u_sel, cm_day_sel = _metrics(fs_sel, cm_batch)
+    commission_per_u = w14_cm_price * w14_comm_frac
+    pre_tax_cm = w14_cm_price - moh_sel - w14_cm_materials - w14_cm_shipping - w14_cm_handling - commission_per_u
+    tax_per_u = pre_tax_cm * w14_tax_frac if pre_tax_cm > 0 else 0
+    with cm_pick_c2:
+        st.caption(
+            f"**{cm_factory} @ batch {cm_batch}**: MOH = ${moh_sel:.2f}/u · "
+            f"λ_eff = {lam_eff_sel:.2f} u/day · Pre-tax CM = ${pre_tax_cm:.2f}/u · "
+            f"**Post-tax CM = ${cm_u_sel:.2f}/u → ${cm_day_sel:,.0f}/day**"
         )
-    picked_idx = [f["name"] for f in W14_FACTORIES].index(cm_factory_choice)
-    picked_result = w14_fac_results[picked_idx]
-    if picked_result is None:
-        # Fallback to Bench
-        picked_result = w14_fac_results[0]
-        cm_factory_choice = "Bench"
-    with oh_pick_col2:
-        st.caption(f"**{cm_factory_choice}** Mfg OH/unit = ${picked_result['mfg_oh']:,.2f}. "
-                   f"Effective λ = {picked_result['lambda_eff']:.2f} units/day. "
-                   f"Change selector to see CM with different factory overhead.")
 
-    # Export vars for CM table section below (preserves the original flow)
-    w14_mfg_oh = picked_result["mfg_oh"]
-    w14_lambda_eff = picked_result["lambda_eff"]
-    w14_daily_factory_cost = picked_result["daily_cost"]
-
-    # Contribution Margin Table — now with SELLER vs RETAILER cost allocation
-    st.markdown("### 💰 Contribution Margin — Cost Allocation")
-    st.caption("Per Gleacher Tips: **Retailer pays commission + handling. Wholesaler pays shipping + materials + mfg OH.** "
-               "Use this to model wholesale price negotiation below.")
-
-    w14_cm_c1, w14_cm_c2, w14_cm_c3, w14_cm_c4 = st.columns(4)
-    with w14_cm_c1:
-        w14_cm_price = st.number_input("Retail Price ($)", value=1200, step=25, key="w14_cm_price")
-    with w14_cm_c2:
-        w14_cm_materials = st.number_input("Materials ($/u)", value=100, step=10, key="w14_cm_mat")
-    with w14_cm_c3:
-        w14_cm_shipping = st.number_input("Shipping ($/u)", value=20, step=5, key="w14_cm_ship")
-    with w14_cm_c4:
-        w14_cm_handling = st.number_input("Handling ($/u)", value=10, step=1, key="w14_cm_hand")
-
-    w14_cm_commission = w14_cm_price * w14_comm_frac
-
-    # Cost groupings by who bears them
-    SELLER = "#1a3c5e"   # blue for wholesaler/seller-borne
-    RETAILER = "#b8860b"  # gold for retailer-borne
-    seller_costs = w14_mfg_oh + w14_cm_materials + w14_cm_shipping
-    retailer_costs = w14_cm_handling + w14_cm_commission
-
-    # Integrated (own DC + own factory) CM: bear all costs
-    w14_cm_total_cost = seller_costs + retailer_costs
-    w14_cm_before_tax = w14_cm_price - w14_cm_total_cost
-    w14_cm_day = w14_cm_before_tax * w14_lambda_eff
-
-    cm_color = "#2d6a2e" if w14_cm_before_tax > 0 else "#b22222"
-    pct_rev = lambda v: f"{v/w14_cm_price*100:.1f}%" if w14_cm_price > 0 else "—"
-
-    st.markdown(f"""
-<div style="border:1px solid rgba(128,128,128,0.3); border-radius:8px; padding:1rem;">
-<table style="width:100%; border-collapse:collapse;">
-<tr style="border-bottom:2px solid rgba(128,128,128,0.5);">
-<th style="text-align:left;">Line</th>
-<th style="text-align:center;">Borne by</th>
-<th style="text-align:right;">Per Unit</th>
-<th style="text-align:right;">Per Day (at λ_eff={w14_lambda_eff:.2f})</th>
-<th style="text-align:right;">% Rev</th>
-</tr>
-<tr><td>Revenue</td>
-<td style="text-align:center;"><b style="color:{RETAILER};">Retailer collects</b></td>
-<td style="text-align:right;"><b>${w14_cm_price:,.2f}</b></td>
-<td style="text-align:right;"><b>${w14_cm_price * w14_lambda_eff:,.2f}</b></td>
-<td style="text-align:right;">100.0%</td></tr>
-<tr style="background:rgba(26,60,94,0.08);">
-<td>(−) Manufacturing Overhead</td>
-<td style="text-align:center;"><b style="color:{SELLER};">Wholesaler (Seller)</b></td>
-<td style="text-align:right;color:#b22222;">$({w14_mfg_oh:,.2f})</td>
-<td style="text-align:right;color:#b22222;">$({w14_daily_factory_cost:,.2f})</td>
-<td style="text-align:right;">{pct_rev(w14_mfg_oh)}</td></tr>
-<tr style="background:rgba(26,60,94,0.08);">
-<td>(−) Materials</td>
-<td style="text-align:center;"><b style="color:{SELLER};">Wholesaler (Seller)</b></td>
-<td style="text-align:right;color:#b22222;">$({w14_cm_materials:,.2f})</td>
-<td style="text-align:right;color:#b22222;">$({w14_cm_materials * w14_lambda_eff:,.2f})</td>
-<td style="text-align:right;">{pct_rev(w14_cm_materials)}</td></tr>
-<tr style="background:rgba(26,60,94,0.08);">
-<td>(−) Shipping</td>
-<td style="text-align:center;"><b style="color:{SELLER};">Wholesaler (Seller)</b></td>
-<td style="text-align:right;color:#b22222;">$({w14_cm_shipping:,.2f})</td>
-<td style="text-align:right;color:#b22222;">$({w14_cm_shipping * w14_lambda_eff:,.2f})</td>
-<td style="text-align:right;">{pct_rev(w14_cm_shipping)}</td></tr>
-<tr style="border-top:1px solid rgba(26,60,94,0.5);background:rgba(26,60,94,0.12);">
-<td><b>Subtotal: Wholesaler's COGS</b></td>
-<td style="text-align:center;"><b style="color:{SELLER};">Seller bears</b></td>
-<td style="text-align:right;color:{SELLER};"><b>$({seller_costs:,.2f})</b></td>
-<td style="text-align:right;color:{SELLER};"><b>$({seller_costs * w14_lambda_eff:,.2f})</b></td>
-<td style="text-align:right;">{pct_rev(seller_costs)}</td></tr>
-<tr style="background:rgba(184,134,11,0.08);">
-<td>(−) Handling</td>
-<td style="text-align:center;"><b style="color:{RETAILER};">Retailer</b></td>
-<td style="text-align:right;color:#b22222;">$({w14_cm_handling:,.2f})</td>
-<td style="text-align:right;color:#b22222;">$({w14_cm_handling * w14_lambda_eff:,.2f})</td>
-<td style="text-align:right;">{pct_rev(w14_cm_handling)}</td></tr>
-<tr style="background:rgba(184,134,11,0.08);">
-<td>(−) Commission ({W14_COMMISSION:.0f}%)</td>
-<td style="text-align:center;"><b style="color:{RETAILER};">Retailer</b></td>
-<td style="text-align:right;color:#b22222;">$({w14_cm_commission:,.2f})</td>
-<td style="text-align:right;color:#b22222;">$({w14_cm_commission * w14_lambda_eff:,.2f})</td>
-<td style="text-align:right;">{pct_rev(w14_cm_commission)}</td></tr>
-<tr style="border-top:1px solid rgba(184,134,11,0.5);background:rgba(184,134,11,0.15);border-bottom:2px solid rgba(128,128,128,0.5);">
-<td><b>Subtotal: Retailer's cost of sale</b></td>
-<td style="text-align:center;"><b style="color:{RETAILER};">Retailer bears</b></td>
-<td style="text-align:right;color:{RETAILER};"><b>$({retailer_costs:,.2f})</b></td>
-<td style="text-align:right;color:{RETAILER};"><b>$({retailer_costs * w14_lambda_eff:,.2f})</b></td>
-<td style="text-align:right;">{pct_rev(retailer_costs)}</td></tr>
-<tr style="background:rgba({'45,106,46' if w14_cm_before_tax > 0 else '178,34,34'},0.2);">
-<td><b>= Integrated CM (same party owns DC + factory)</b></td>
-<td></td>
-<td style="text-align:right;color:{cm_color};font-size:1.15em;"><b>${w14_cm_before_tax:,.2f}</b></td>
-<td style="text-align:right;color:{cm_color};font-size:1.15em;"><b>${w14_cm_day:,.2f}</b></td>
-<td style="text-align:right;color:{cm_color};"><b>{pct_rev(w14_cm_before_tax)}</b></td></tr>
-</table>
-</div>
-""", unsafe_allow_html=True)
-
-    # Waterfall chart with seller/retailer color grouping
     fig_wf = go.Figure(go.Waterfall(
         name="Per Unit",
         orientation="v",
-        measure=["absolute", "relative", "relative", "relative", "relative", "relative", "total"],
-        x=["Revenue", "Mfg OH<br>(seller)", "Materials<br>(seller)", "Shipping<br>(seller)",
-           "Handling<br>(retailer)", "Commission<br>(retailer)", "CM"],
-        y=[w14_cm_price, -w14_mfg_oh, -w14_cm_materials, -w14_cm_shipping,
-           -w14_cm_handling, -w14_cm_commission, 0],
+        measure=["absolute", "relative", "relative", "relative", "relative", "relative",
+                 "total", "relative", "total"],
+        x=["Price", "MOH", "Materials", "Shipping", "Handling", "Commission",
+           "Pre-tax CM", "Tax", "Post-tax CM"],
+        y=[w14_cm_price, -moh_sel, -w14_cm_materials, -w14_cm_shipping,
+           -w14_cm_handling, -commission_per_u, 0, -tax_per_u, 0],
         connector={"line": {"color": "rgb(63, 63, 63)"}},
         increasing={"marker": {"color": "#2d6a2e"}},
         decreasing={"marker": {"color": "#b22222"}},
-        totals={"marker": {"color": "#1a3c5e"}},
+        totals={"marker": {"color": fs_sel["color"]}},
     ))
-    fig_wf.update_layout(height=350, yaxis_title="$ per unit", yaxis_tickformat="$,.0f",
-                          title=f"Waterfall: ${w14_cm_price} price → ${w14_cm_before_tax:,.2f} CM (integrated)",
-                          margin=dict(l=0, r=0, t=40, b=0))
+    fig_wf.update_layout(
+        height=380, yaxis_title="$ per unit", yaxis_tickformat="$,.0f",
+        title=dict(
+            text=f"${w14_cm_price} price → ${cm_u_sel:.2f} post-tax CM "
+                 f"({cm_factory} @ batch {cm_batch}, λ_eff={lam_eff_sel:.2f} u/d)",
+            x=0.5, xanchor="center", y=0.97,
+        ),
+        margin=dict(l=0, r=0, t=60, b=0),
+    )
     st.plotly_chart(fig_wf, use_container_width=True)
-
-    # ── Wholesale Price Negotiation Tool ─────────────────────────────────────
-    st.markdown("### 🤝 Wholesale Price Negotiation Tool")
-    st.caption("If you sell to another team (wholesale), split the CM between Seller (you) and Retailer (partner). "
-               "Use the slider to find a win-win wholesale price.")
-
-    wpn_col1, wpn_col2 = st.columns([1, 2])
-    with wpn_col1:
-        # Wholesale price must be:
-        # - >= seller's cost (materials + mfg OH + shipping) for seller to want the deal
-        # - <= retail - retailer's cost (commission + handling) for retailer to make any margin
-        seller_min_ws = seller_costs  # wholesale price = seller_costs → seller makes $0
-        retailer_max_ws = w14_cm_price - retailer_costs  # retailer CM = 0 at this wholesale price
-
-        if retailer_max_ws > seller_min_ws:
-            default_ws = (seller_min_ws + retailer_max_ws) / 2  # ZOPA midpoint
-            ws_slider = st.slider(
-                "Wholesale Price ($)",
-                int(seller_min_ws), int(retailer_max_ws),
-                int(default_ws), step=10, key="w14_ws_slider",
-                help=f"ZOPA: ${seller_min_ws:,.0f} (seller breakeven) to ${retailer_max_ws:,.0f} (retailer breakeven)",
-            )
-            has_zopa = True
-        else:
-            ws_slider = int(seller_min_ws)
-            has_zopa = False
-
-        st.markdown(f"""
-**ZOPA Range (Zone of Possible Agreement):**
-- Seller min (breakeven): **${seller_min_ws:,.2f}**
-- Retailer max (breakeven): **${retailer_max_ws:,.2f}**
-- Width: **${retailer_max_ws - seller_min_ws:,.2f}**
-        """)
-        if not has_zopa:
-            st.error("🔴 **NO ZOPA** — seller's cost > retailer's revenue after commission/handling. Deal impossible at this retail price.")
-
-    with wpn_col2:
-        seller_cm = ws_slider - seller_costs
-        retailer_cm = w14_cm_price - ws_slider - retailer_costs
-        total_cm = seller_cm + retailer_cm
-        seller_share = seller_cm / total_cm * 100 if total_cm > 0 else 0
-        retailer_share = retailer_cm / total_cm * 100 if total_cm > 0 else 0
-
-        # Side-by-side metrics
-        sc_a, sc_b, sc_c = st.columns(3)
-        with sc_a:
-            st.markdown(f"""
-<div style="background:{SELLER};color:white;border-radius:8px;padding:0.8rem;text-align:center;">
-<b>Seller (Wholesaler)</b><br>
-<span style="font-size:0.8em;opacity:0.8;">Receives ${ws_slider:,.0f} wholesale</span><br>
-<b style="font-size:1.5em;">${seller_cm:,.0f}</b><br>
-<span style="font-size:0.8em;">CM/unit ({seller_share:.0f}% of total)</span>
-</div>
-""", unsafe_allow_html=True)
-        with sc_b:
-            st.markdown(f"""
-<div style="background:{RETAILER};color:white;border-radius:8px;padding:0.8rem;text-align:center;">
-<b>Retailer</b><br>
-<span style="font-size:0.8em;opacity:0.8;">Pays ${ws_slider:,.0f}, sells at ${w14_cm_price:,.0f}</span><br>
-<b style="font-size:1.5em;">${retailer_cm:,.0f}</b><br>
-<span style="font-size:0.8em;">CM/unit ({retailer_share:.0f}% of total)</span>
-</div>
-""", unsafe_allow_html=True)
-        with sc_c:
-            status_color = "#2d6a2e" if seller_cm > 0 and retailer_cm > 0 else "#b22222"
-            status_text = "✅ Win-win" if seller_cm > 0 and retailer_cm > 0 else "⚠️ One side loses"
-            st.markdown(f"""
-<div style="background:{status_color};color:white;border-radius:8px;padding:0.8rem;text-align:center;">
-<b>Combined</b><br>
-<span style="font-size:0.8em;opacity:0.8;">Total CM split</span><br>
-<b style="font-size:1.5em;">${total_cm:,.0f}</b><br>
-<span style="font-size:0.8em;">{status_text}</span>
-</div>
-""", unsafe_allow_html=True)
-
-        # Sweep chart: seller CM vs retailer CM across wholesale prices
-        ws_range = list(range(int(seller_min_ws), int(retailer_max_ws) + 1, 10)) if retailer_max_ws > seller_min_ws else [int(seller_min_ws)]
-        seller_cms = [ws - seller_costs for ws in ws_range]
-        retailer_cms = [w14_cm_price - ws - retailer_costs for ws in ws_range]
-
-        fig_ws = go.Figure()
-        fig_ws.add_trace(go.Scatter(x=ws_range, y=seller_cms, name="Seller CM",
-                                      line=dict(color=SELLER, width=2.5),
-                                      fill="tozeroy", fillcolor=f"rgba(26,60,94,0.1)"))
-        fig_ws.add_trace(go.Scatter(x=ws_range, y=retailer_cms, name="Retailer CM",
-                                      line=dict(color=RETAILER, width=2.5),
-                                      fill="tozeroy", fillcolor="rgba(184,134,11,0.1)"))
-        fig_ws.add_vline(x=ws_slider, line_dash="dash", line_color="green",
-                          annotation_text=f"Your WS: ${ws_slider}")
-        fig_ws.add_hline(y=0, line_dash="dot", line_color="gray")
-        fig_ws.update_layout(
-            height=300, xaxis_title="Wholesale Price ($)",
-            yaxis_title="CM per unit ($)", yaxis_tickformat="$,.0f",
-            title=dict(text="CM Split Across Wholesale Prices",
-                         x=0.5, xanchor="center", y=0.97, yanchor="top"),
-            margin=dict(l=0, r=0, t=60, b=0),
-            legend=dict(orientation="h", yanchor="top", y=1.07, xanchor="center", x=0.5),
-        )
-        st.plotly_chart(fig_ws, use_container_width=True)
-
-    st.info(f"""
-**Negotiation Strategy:**
-- **If you are the seller**, push for wholesale price ABOVE midpoint (${(seller_min_ws + retailer_max_ws)/2:,.0f})
-- **If you are the retailer**, push BELOW midpoint
-- **Fair split**: wholesale = midpoint → 50/50 CM split
-- Include WTP info in your shipping agreement comments (per Gleacher Tips) to accelerate negotiation
-- Remember: total CM is FIXED at ${retailer_max_ws - seller_min_ws:,.0f} regardless of wholesale price —
-  the split determines who takes how much
-    """)
 
     st.markdown("---")
 
