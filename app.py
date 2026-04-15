@@ -4051,118 +4051,114 @@ CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_m
     # ── Top controls ────────────────────────────────────────────────────────
     top_c1, top_c2 = st.columns([1, 4])
     with top_c1:
-        w14b_n_prods = st.number_input("# Products", min_value=1, max_value=5,
-                                         value=2, step=1, key="w14b_n_prods_v2")
+        w14b_n_prods = st.number_input("# Products shown side-by-side",
+                                         min_value=1, max_value=5,
+                                         value=4, step=1, key="w14b_n_prods_v2",
+                                         help="Default 4 = Master + 3 variants visible at once.")
     with top_c2:
-        st.caption(f"Region: **{W14B_REGION}** · shipping ${W14B_SHIPPING}/u (mail) · "
+        st.caption(f"Region: **{W14B_REGION}** · ship ${W14B_SHIPPING}/u · "
                    f"commission {W14B_COMMISSION:.0f}% · handling ${W14B_HANDLING}/u. "
-                   f"Tabs below: P1 is the master (full dev); P2+ inherit and only pay for overrides.")
+                   f"**P1 = master** (full dev cost). **P2–P5 = variants** — pick overrides, rest inherits from P1 at $0.")
 
     target_options = ["(none)"] + list(W14B_MARKETS.keys())
-    tab_labels = [f"P{i+1} · {'Master' if i == 0 else 'Variant of P1'}" for i in range(int(w14b_n_prods))]
-    product_tabs = st.tabs(tab_labels)
+    n_prods = int(w14b_n_prods)
+    product_cols = st.columns(n_prods)
 
     p_selections = {}
     w14b_pd_summary = []
 
-    for i, tab in enumerate(product_tabs):
-        with tab:
+    for i, col in enumerate(product_cols):
+        with col:
             is_master = (i == 0)
+            color = "#800000" if is_master else "#1a3c5e"
+            role = "Master" if is_master else f"Variant of P1"
 
-            # ─── Top row: Preset (master only) + Target market ─────────────
+            # Column header
+            st.markdown(
+                f"<div style='background:{color};color:white;padding:0.35rem 0.6rem;"
+                f"border-radius:5px;font-weight:700;text-align:center;font-size:0.9rem;'>"
+                f"P{i+1} · {role}</div>",
+                unsafe_allow_html=True,
+            )
+
+            # ─── Preset (master) / overrides note (variant) ─────────────────
             if is_master:
-                trow_c1, trow_c2, trow_c3 = st.columns([2, 2, 2])
-                with trow_c1:
-                    preset_keys = list(W14B_PRESETS.keys())
-                    preset_name = st.selectbox("🎯 Preset (fills defaults)",
-                                                  preset_keys,
-                                                  index=0, key=f"pd2_preset_{i}")
-                    preset = W14B_PRESETS[preset_name]
+                preset_keys = list(W14B_PRESETS.keys())
+                preset_name = st.selectbox("🎯 Preset", preset_keys,
+                                              index=0, key=f"pd2_preset_{i}")
+                preset = W14B_PRESETS[preset_name]
 
-                # Preset change → reset attribute state
+                # Preset change → reset state
                 last_key = f"pd2_last_preset_{i}"
                 if st.session_state.get(last_key) != preset_name:
-                    for attr in BASE_ATTRS:
-                        st.session_state[f"pd2_base_{attr}_{i}"] = preset.get(attr, list(W14B_BASE[attr].keys())[0])
-                    for attr in DETECTION_ATTRS:
-                        st.session_state[f"pd2_det_{attr}_{i}"] = preset.get(attr, "None")
+                    for a in BASE_ATTRS:
+                        st.session_state[f"pd2_base_{a}_{i}"] = preset.get(a, list(W14B_BASE[a].keys())[0])
+                    for a in DETECTION_ATTRS:
+                        st.session_state[f"pd2_det_{a}_{i}"] = preset.get(a, "None")
                     st.session_state[f"pd2_price_{i}"] = int(preset["price"])
-                    preset_target = preset.get("target")
-                    if preset_target in target_options:
-                        st.session_state[f"pd2_target_{i}"] = preset_target
+                    p_target = preset.get("target")
+                    if p_target in target_options:
+                        st.session_state[f"pd2_target_{i}"] = p_target
                     st.session_state[last_key] = preset_name
-
-                with trow_c2:
-                    target = st.selectbox("🎯 Target Market", target_options,
-                                             index=0, key=f"pd2_target_{i}")
-                with trow_c3:
-                    st.caption("")
-                    st.caption(f"Preset target: **{preset.get('target','—')}**. "
-                               f"Change market to re-check fit for a different audience.")
             else:
-                trow_c1, trow_c2 = st.columns([2, 3])
-                with trow_c1:
-                    target = st.selectbox(f"🎯 Target Market (P{i+1})", target_options,
-                                             index=0, key=f"pd2_target_{i}")
-                with trow_c2:
-                    st.caption(f"*Derived from P1. Pick attributes to override below — "
-                               f"everything else inherits from P1 and costs $0 extra.*")
                 preset = None
-                preset_name = f"Variant of P1"
+                preset_name = "Variant of P1"
 
-            # ─── Build current selections ──────────────────────────────────
+            # Target market
+            target = st.selectbox("🎯 Target Market", target_options,
+                                     index=0, key=f"pd2_target_{i}")
+
+            # Build selections
             if is_master:
                 sel_base = {
-                    attr: st.session_state.get(
-                        f"pd2_base_{attr}_{i}",
-                        preset.get(attr, list(W14B_BASE[attr].keys())[0])
-                    ) for attr in BASE_ATTRS
+                    a: st.session_state.get(f"pd2_base_{a}_{i}",
+                                             preset.get(a, list(W14B_BASE[a].keys())[0]))
+                    for a in BASE_ATTRS
                 }
                 sel_det = {
-                    attr: st.session_state.get(
-                        f"pd2_det_{attr}_{i}",
-                        preset.get(attr, "None")
-                    ) for attr in DETECTION_ATTRS
+                    a: st.session_state.get(f"pd2_det_{a}_{i}",
+                                             preset.get(a, "None"))
+                    for a in DETECTION_ATTRS
                 }
             else:
                 p1 = p_selections["P1"]
                 sel_base = dict(p1["sel_base"])
                 sel_det = dict(p1["sel_det"])
-
-                st.markdown("**✏️ Overrides from P1** (pick attributes to change)")
                 override_attrs = st.multiselect(
-                    "Attributes to override",
-                    ALL_ATTRS,
-                    default=[],
+                    "Override attrs",
+                    ALL_ATTRS, default=[],
                     key=f"pd2_override_{i}",
-                    label_visibility="collapsed",
-                    help="Anything not listed here inherits from P1 with no extra dev cost.",
+                    help="Everything not picked inherits from P1 at $0.",
                 )
-                if override_attrs:
-                    ov_cols = st.columns(min(3, len(override_attrs)))
-                    for j, attr in enumerate(override_attrs):
-                        col = ov_cols[j % len(ov_cols)]
-                        with col:
-                            opts = W14B_BASE[attr] if attr in BASE_ATTRS else W14B_DETECTION[attr]
-                            feat_list = list(opts.keys())
-                            p1_val = p1["sel_base"].get(attr) if attr in BASE_ATTRS else p1["sel_det"].get(attr)
-                            non_p1 = [f for f in feat_list if f != p1_val]
-                            default_feat = non_p1[0] if non_p1 else feat_list[0]
-                            default_idx = feat_list.index(default_feat)
-                            chosen = st.selectbox(
-                                f"{attr} *(P1: {p1_val})*",
-                                feat_list, index=default_idx,
-                                format_func=lambda f, a=attr, o=opts: _fmt_feat(a, f, o),
-                                key=f"pd2_ov_{attr}_{i}",
-                            )
-                            if attr in BASE_ATTRS:
-                                sel_base[attr] = chosen
-                            else:
-                                sel_det[attr] = chosen
-                else:
-                    st.caption("*No overrides — P2 is identical to P1 (zero incremental dev cost).*")
+                for attr in override_attrs:
+                    opts = W14B_BASE[attr] if attr in BASE_ATTRS else W14B_DETECTION[attr]
+                    feat_list = list(opts.keys())
+                    p1_val = p1["sel_base"].get(attr) if attr in BASE_ATTRS else p1["sel_det"].get(attr)
+                    non_p1 = [f for f in feat_list if f != p1_val]
+                    default_feat = non_p1[0] if non_p1 else feat_list[0]
+                    default_idx = feat_list.index(default_feat)
+                    chosen = st.selectbox(
+                        f"{attr} (P1: {p1_val})",
+                        feat_list, index=default_idx,
+                        format_func=lambda f, a=attr, o=opts: f"{f} · {o[f][0]}d · ${o[f][1]/1000:.0f}K",
+                        key=f"pd2_ov_{attr}_{i}",
+                    )
+                    if attr in BASE_ATTRS:
+                        sel_base[attr] = chosen
+                    else:
+                        sel_det[attr] = chosen
 
-            # ─── Economics ─────────────────────────────────────────────────
+            # Price + sales (compact)
+            p_row1, p_row2 = st.columns(2)
+            with p_row1:
+                default_price = int(preset["price"]) if is_master else int(p_selections["P1"]["price"])
+                price = st.number_input("Price $", value=default_price, step=25,
+                                           key=f"pd2_price_{i}")
+            with p_row2:
+                sales_per_day = st.number_input("Sales/day", value=5, step=1,
+                                                   min_value=0, key=f"pd2_sales_{i}")
+
+            # ─── Economics computation ─────────────────────────────────────
             if is_master:
                 base_days = max(W14B_BASE[a][sel_base[a]][0] for a in BASE_ATTRS)
                 base_cost = sum(W14B_BASE[a][sel_base[a]][1] for a in BASE_ATTRS)
@@ -4188,22 +4184,10 @@ CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_m
                         incr_cost += c
                 incr_days = max(incr_days_cands) if incr_days_cands else 0
                 total_days = p1["total_days"] + incr_days
-                total_cost = incr_cost  # variant's own-account dev $
+                total_cost = incr_cost
 
             total_mat = (sum(W14B_BASE[a][sel_base[a]][2] for a in BASE_ATTRS) +
                           sum(W14B_DETECTION[a][sel_det[a]][2] for a in DETECTION_ATTRS))
-
-            # Price + sales row
-            ps_c1, ps_c2, ps_c3 = st.columns([1, 1, 3])
-            with ps_c1:
-                default_price = int(preset["price"]) if is_master else int(p_selections["P1"]["price"])
-                price = st.number_input("Price ($/u)", value=default_price, step=25, key=f"pd2_price_{i}")
-            with ps_c2:
-                sales_per_day = st.number_input("Expected sales/day", value=5, step=1,
-                                                   min_value=0, key=f"pd2_sales_{i}")
-            with ps_c3:
-                st.caption("")
-                st.caption("Break-even uses only the *incremental* dev cost for variants.")
 
             med_wtp, wtp_explain = _w14b_infer_median_wtp(target, sel_base, sel_det)
             cm_per_u = price * (1 - w14b_comm_frac) - W14B_HANDLING - total_mat - W14B_SHIPPING
@@ -4214,118 +4198,102 @@ CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_m
             else:
                 be_days = float("inf")
 
-            # ─── Summary card (3 columns) ─────────────────────────────────
-            st.markdown("---")
-            sc1, sc2, sc3 = st.columns(3)
-            with sc1:
-                st.markdown("##### 💻 Development")
-                if is_master:
-                    st.metric("Dev days", f"{total_days}d")
-                    st.metric("Dev cost", f"${total_cost:,}")
+            # ─── Compact summary card (HTML, single block) ──────────────────
+            dev_txt = (f"<b>{total_days}d</b> · ${total_cost/1000:.0f}K" if is_master
+                        else f"<b>+{incr_days}d</b> · +${incr_cost/1000:.0f}K")
+            wtp_txt = f"${med_wtp:,.0f}" if med_wtp is not None and med_wtp > 0 else ("$0 ❌" if med_wtp == 0 else "—")
+            if med_wtp and med_wtp > 0:
+                ratio = price / med_wtp
+                if ratio > 1.1:
+                    ratio_color = "#b22222"
+                    ratio_emoji = "❌"
+                elif ratio > 0.95:
+                    ratio_color = "#daa520"
+                    ratio_emoji = "⚠"
+                elif ratio < 0.5:
+                    ratio_color = "#1a3c5e"
+                    ratio_emoji = "↑"
                 else:
-                    st.metric("Incremental days", f"+{incr_days}d",
-                               help=f"P1 takes {p_selections['P1']['total_days']}d · then +{incr_days}d for this variant = {total_days}d total")
-                    st.metric("Incremental cost", f"+${incr_cost:,}")
-                st.metric("Materials/u", f"${total_mat}")
+                    ratio_color = "#2d6a2e"
+                    ratio_emoji = "✓"
+                ratio_str = f"{ratio:.0%} {ratio_emoji}"
+            else:
+                ratio_color = "#777"
+                ratio_str = "—"
+            if be_days == 0:
+                be_str = "immediate"
+            elif be_days == float("inf"):
+                be_str = "N/A"
+            else:
+                be_str = f"{be_days:.0f}d"
+            cm_color = "#2d6a2e" if cm_per_u > 0 else "#b22222"
 
-            with sc2:
-                st.markdown("##### 💵 Economics")
-                cm_color = "normal" if cm_per_u > 0 else "inverse"
-                st.metric("CM per unit", f"${cm_per_u:,.0f}")
-                if be_days == 0:
-                    st.success("Break-even: immediate (no dev cost)")
-                elif be_days == float("inf"):
-                    if cm_per_u <= 0:
-                        st.error("Negative CM/u — unviable")
-                    else:
-                        st.caption("Break-even: N/A")
-                else:
-                    st.metric("Break-even", f"{be_days:.0f}d", help=f"{be_days/30:.1f} months")
-                st.caption(f"CM/day at {sales_per_day}/d: **${cm_per_u * sales_per_day:,.0f}**")
+            bg_rgba = "178,34,34,0.06" if is_master else "26,60,94,0.06"
+            st.markdown(f"""
+<div style="background:rgba({bg_rgba});border-left:3px solid {color};
+    border-radius:5px;padding:0.55rem 0.7rem;font-size:0.82rem;line-height:1.75;margin-top:0.3rem;">
+<div style="display:flex;justify-content:space-between;"><span>Dev</span><span>{dev_txt}</span></div>
+<div style="display:flex;justify-content:space-between;"><span>Materials/u</span><b>${total_mat}</b></div>
+<div style="display:flex;justify-content:space-between;color:{cm_color};"><span>CM/u</span><b>${cm_per_u:,.0f}</b></div>
+<div style="display:flex;justify-content:space-between;"><span>CM/day @ {sales_per_day}</span><b>${cm_per_u * sales_per_day:,.0f}</b></div>
+<div style="display:flex;justify-content:space-between;"><span>Med WTP</span><b>{wtp_txt}</b></div>
+<div style="display:flex;justify-content:space-between;color:{ratio_color};"><span>Price/WTP</span><b>{ratio_str}</b></div>
+<div style="display:flex;justify-content:space-between;"><span>Break-even</span><b>{be_str}</b></div>
+</div>
+""", unsafe_allow_html=True)
 
-            with sc3:
-                st.markdown("##### 🎯 WTP Check")
-                if med_wtp is None:
-                    st.info("Pick a target market to infer WTP.")
-                elif med_wtp == 0:
-                    st.error(f"Cannot serve this market")
-                    st.caption(wtp_explain)
-                else:
-                    st.metric("Median WTP", f"${med_wtp:,.0f}")
-                    ratio = price / med_wtp if med_wtp > 0 else 0
-                    pct_str = f"{ratio:.0%}"
-                    if ratio > 1.1:
-                        st.error(f"Price/WTP: {pct_str} — too expensive")
-                    elif ratio > 0.95:
-                        st.warning(f"Price/WTP: {pct_str} — thin demand")
-                    elif ratio < 0.5:
-                        st.info(f"Price/WTP: {pct_str} — room to raise price")
-                    else:
-                        st.success(f"Price/WTP: {pct_str} — sweet zone")
-
-            # ─── Fit warnings (auto-expand when present) ─────────────────
+            # ─── Fit warnings (inline, compact) ──────────────────────────────
             warnings = _fit_warnings(target, sel_base, sel_det)
             if warnings:
-                with st.expander(f"⚠ Fit & cannibalization ({len(warnings)} flag{'s' if len(warnings)!=1 else ''})",
-                                  expanded=True):
+                with st.expander(f"⚠ {len(warnings)} flag{'s' if len(warnings)!=1 else ''}", expanded=False):
                     for w in warnings:
-                        st.warning(w)
+                        st.caption(w)
             elif target != "(none)":
-                st.success("✓ No fit or cannibalization flags")
+                st.caption("✓ No fit flags")
 
-            # ─── Attribute editors (master only, in expanders) ──────────────
+            # ─── Master-only: detection + base expanders (vertical) ─────────
             if is_master:
                 core_attrs = MARKET_CORE_ATTRS.get(target, DETECTION_ATTRS)
                 show_all_default = (target == "(none)" or target not in MARKET_CORE_ATTRS)
 
-                with st.expander("🔬 Detection attributes", expanded=True):
+                with st.expander("🔬 Detection", expanded=True):
                     show_all = st.checkbox(
-                        "Show all 9 detection attributes",
+                        "Show all 9",
                         value=show_all_default,
                         key=f"pd2_showall_{i}",
-                        help=("Focused view shows only the attrs that matter for your chosen market."
-                              if target != "(none)" else "Pick a market above to enable focused view."),
                     )
                     attrs_to_show = DETECTION_ATTRS if show_all else core_attrs
                     if not show_all and target in MARKET_CORE_ATTRS:
-                        st.caption(f"Showing only **{target}**-relevant attributes. Toggle to see all 9.")
-                    n_cols = 3 if len(attrs_to_show) >= 3 else max(1, len(attrs_to_show))
-                    det_cols = st.columns(n_cols)
-                    for j, attr in enumerate(attrs_to_show):
-                        col = det_cols[j % n_cols]
-                        with col:
-                            opts = W14B_DETECTION[attr]
-                            feat_list = list(opts.keys())
-                            current = sel_det[attr]
-                            idx = feat_list.index(current) if current in feat_list else 0
-                            sel_det[attr] = st.selectbox(
-                                attr, feat_list, index=idx,
-                                format_func=lambda f, a=attr, o=opts: _fmt_feat(a, f, o),
-                                key=f"pd2_det_{attr}_{i}",
-                            )
+                        st.caption(f"Focused on **{target}**.")
+                    for attr in attrs_to_show:
+                        opts = W14B_DETECTION[attr]
+                        feat_list = list(opts.keys())
+                        current = sel_det[attr]
+                        idx = feat_list.index(current) if current in feat_list else 0
+                        sel_det[attr] = st.selectbox(
+                            attr, feat_list, index=idx,
+                            format_func=lambda f, o=opts: f"{f} · {o[f][0]}d · ${o[f][1]/1000:.0f}K",
+                            key=f"pd2_det_{attr}_{i}",
+                        )
                     if not show_all:
                         hidden = [a for a in DETECTION_ATTRS if a not in attrs_to_show]
-                        if hidden:
-                            non_none = [f"{a}: {sel_det[a]}" for a in hidden if sel_det[a] != "None"]
-                            if non_none:
-                                st.caption("*Hidden attrs (not None):* " + " · ".join(non_none))
+                        non_none = [f"{a}: {sel_det[a]}" for a in hidden if sel_det[a] != "None"]
+                        if non_none:
+                            st.caption("Hidden: " + " · ".join(non_none))
 
-                with st.expander("🔧 Base features (Platform · GPS · Network · Power · Finish)", expanded=False):
-                    base_cols = st.columns(3)
-                    for j, attr in enumerate(BASE_ATTRS):
-                        col = base_cols[j % 3]
-                        with col:
-                            opts = W14B_BASE[attr]
-                            feat_list = list(opts.keys())
-                            current = sel_base[attr]
-                            idx = feat_list.index(current) if current in feat_list else 0
-                            sel_base[attr] = st.selectbox(
-                                attr, feat_list, index=idx,
-                                format_func=lambda f, a=attr, o=opts: _fmt_feat(a, f, o),
-                                key=f"pd2_base_{attr}_{i}",
-                            )
+                with st.expander("🔧 Base features", expanded=False):
+                    for attr in BASE_ATTRS:
+                        opts = W14B_BASE[attr]
+                        feat_list = list(opts.keys())
+                        current = sel_base[attr]
+                        idx = feat_list.index(current) if current in feat_list else 0
+                        sel_base[attr] = st.selectbox(
+                            attr, feat_list, index=idx,
+                            format_func=lambda f, o=opts: f"{f} · {o[f][0]}d · ${o[f][1]/1000:.0f}K",
+                            key=f"pd2_base_{attr}_{i}",
+                        )
 
-            # Store for downstream tabs + summary
+            # Persist for variants + summary
             p_selections[f"P{i+1}"] = {
                 "target": target,
                 "preset_name": preset_name,
@@ -4365,6 +4333,7 @@ CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_m
     st.dataframe(pd.DataFrame(w14b_pd_summary), use_container_width=True, hide_index=True)
 
     st.markdown("---")
+
 
 
     # ══════════════════════════════════════════════════════════════════════════
