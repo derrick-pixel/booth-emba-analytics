@@ -4074,101 +4074,211 @@ CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_m
         return f"{feat} · {d}d · ${c/1000:.0f}K · ${m}/u"
 
     def _w14b_infer_median_wtp(target, sel_base, sel_det):
-        """Median WTP from target market + feature set. Returns (med_or_None, explanation)."""
+        """Median WTP from target market + feature set.
+        Scoring: start at range LOW when core gate is met, add bonus for each
+        aligned feature per PDF, clamp at range HIGH. Returns (med, explanation).
+        """
         if target == "(none)" or target not in W14B_MARKETS:
             return None, "Select a target market to infer WTP."
         m = W14B_MARKETS[target]
         mtype = m.get("type", "normal")
+        bas, det = sel_base, sel_det
 
+        # ── Athlete (additive) ─────────────────────────────────────────────
         if mtype in ("athlete", "athlete_fad"):
-            hb = W14B_ATHLETE_WTP["Heartbeat"].get(sel_det.get("Heartbeat", "None"), 0)
-            bv = W14B_ATHLETE_WTP["Blood vessel"].get(sel_det.get("Blood vessel", "None"), 0)
-            dg = W14B_ATHLETE_WTP["Dissolved gasses"].get(sel_det.get("Dissolved gasses", "None"), 0)
-            mo = W14B_ATHLETE_WTP["Motion"].get(sel_det.get("Motion", "None"), 0)
-            pl = W14B_ATHLETE_WTP["Platform"].get(sel_base.get("Platform", "Wrists"), 0)
+            hb = W14B_ATHLETE_WTP["Heartbeat"].get(det.get("Heartbeat", "None"), 0)
+            bv = W14B_ATHLETE_WTP["Blood vessel"].get(det.get("Blood vessel", "None"), 0)
+            dg = W14B_ATHLETE_WTP["Dissolved gasses"].get(det.get("Dissolved gasses", "None"), 0)
+            mo = W14B_ATHLETE_WTP["Motion"].get(det.get("Motion", "None"), 0)
+            pl = W14B_ATHLETE_WTP["Platform"].get(bas.get("Platform", "Wrists"), 0)
             med = hb + bv + dg + mo + pl
-            explain = f"Additive: HB ${hb} + BV ${bv} + DG ${dg} + Motion ${mo} + Platform ${pl}"
-            return med, explain
-
-        if "wtp_tiers" in m:
-            bv = sel_det.get("Blood vessel", "None")
-            dg = sel_det.get("Dissolved gasses", "None")
-            gps = sel_base.get("GPS", "No GPS")
-            if gps != "GPS":
-                tier_idx = 0
-            elif bv == "Full profile" and dg == "Full C,N,O":
-                tier_idx = 2
-            elif bv in ("Systolic & diastolic", "Full profile") and dg in ("O2, N2, CO2", "Full C,N,O"):
-                tier_idx = 1
-            else:
-                tier_idx = 0
-            tier = m["wtp_tiers"][tier_idx]
-            med = (tier[1] + tier[2]) / 2
-            explain = f"Tier {tier_idx+1}: {tier[0]} (${tier[1]}–${tier[2]})"
-            if gps == "No GPS":
+            parts = []
+            if hb: parts.append(f"HB ${hb}")
+            if bv: parts.append(f"BV ${bv}")
+            if dg: parts.append(f"DG ${dg}")
+            if mo: parts.append(f"Motion ${mo}")
+            if pl: parts.append(f"Plat ${pl}")
+            if "pack" in bas.get("Power", ""):
+                med *= 0.4
+                parts.append("⚠ bulky pack ×0.4")
+            if mtype == "athlete_fad" and bas.get("Finish") not in ("Metallic", "Geometric", "Camouflage"):
                 med *= 0.5
-                explain += " | No GPS → ×0.5"
-            return med, explain
+                parts.append("⚠ basic finish ×0.5 (fad)")
+            return round(med), " + ".join(parts) if parts else "No features selected"
 
-        low, high = m.get("wtp_low", 0), m.get("wtp_high", 0)
-        med = (low + high) / 2
-        explain = f"Range ${low}–${high} · median ${med:.0f}"
+        # ── Scoring helper: start at low, add bonus fractions of band ─────
+        def _score(low, high, bonuses, base_note=""):
+            band = high - low
+            med = low
+            active = []
+            if base_note:
+                active.append(f"base ${low} ({base_note})")
+            else:
+                active.append(f"base ${low}")
+            for name, frac, ok in bonuses:
+                if ok:
+                    inc = band * frac
+                    med += inc
+                    active.append(f"+${int(inc)} {name}")
+            med = max(low, min(high, round(med)))
+            return med, " · ".join(active) + f" = **${med}**"
 
-        # Core-feature gates
-        det = sel_det
-        bas = sel_base
-        gate_msgs = []
-        if target == "Law (Narcotic)" and det.get("Toxicology", "None") != "Narcotic":
-            return 0, "❌ Law (Narcotic) requires Narcotic toxicology detector"
-        if target.startswith("Military Botulinum") and det.get("Neurotoxins", "None") != "Botulinum":
-            return 0, "❌ Requires Botulinum neurotoxin detector"
-        if target.startswith("Military Anatoxin") and det.get("Neurotoxins", "None") != "Anatoxin-a":
-            return 0, "❌ Requires Anatoxin-a neurotoxin detector"
-        if target == "MD Heart (Temporal)" and det.get("Heartbeat", "None") != "Temporal":
-            return 0, "❌ MD Heart (Temporal) requires Temporal heartbeat"
-        if target == "MD Heart (Pulse only)" and det.get("Heartbeat", "None") not in ("Pulse only", "Temporal"):
-            return 0, "❌ MD Heart (Pulse only) requires Pulse heartbeat"
-        if target == "Clinical Fertility (LH)" and det.get("Hormone", "None") not in ("LH", "LH and FSH"):
-            return 0, "❌ Fertility (LH) requires LH hormone"
-        if target == "Clinical Fertility (LH/FSH)" and det.get("Hormone", "None") != "LH and FSH":
-            return 0, "❌ Fertility (LH/FSH) requires LH+FSH combo"
-        if target == "MD Fertility (Estrogen)" and det.get("Hormone", "None") != "Estrogen":
-            return 0, "❌ MD Fertility (Estrogen) requires Estrogen hormone"
-        if target == "MD Dissolved Gasses" and det.get("Dissolved gasses", "None") not in ("O2, N2, CO2", "Full C,N,O"):
-            return 0, "❌ Requires full dissolved-gas panel"
-        if target == "MD Metabolic (Bilirubin)" and det.get("Metabolic", "None") != "Bilirubin":
-            return 0, "❌ Requires Bilirubin metabolic detector"
+        # ── Clinical Cardiovascular (tiered + bonuses) ─────────────────────
+        if target == "Clinical Cardiovascular":
+            bv = det.get("Blood vessel", "None"); dg = det.get("Dissolved gasses", "None")
+            gps = bas.get("GPS", "No GPS")
+            if gps != "GPS":
+                return 50, "❌ Dealbreaker: lack of GPS crushes WTP (safety)"
+            if bv == "Full profile" and dg == "Full C,N,O":
+                low, high = 350, 600; tier_note = "Tier 3: Full BP + Full DG + GPS"
+            elif bv in ("Systolic & diastolic", "Full profile") and dg in ("O2, N2, CO2", "Full C,N,O"):
+                low, high = 85, 380; tier_note = "Tier 2: Sys&Dia + O2/N2/CO2 + GPS"
+            elif bv in ("Systolic only", "Systolic & diastolic", "Full profile") and dg in ("O2 only", "O2, N2, CO2", "Full C,N,O"):
+                low, high = 40, 290; tier_note = "Tier 1: Sys + O2 + GPS"
+            else:
+                return 0, "❌ Cardio needs at least Systolic BP + O2 dissolved gasses"
+            return _score(low, high, [
+                ("Temporal heartbeat", 0.25, det.get("Heartbeat") == "Temporal"),
+                ("Pulse heartbeat", 0.12, det.get("Heartbeat") == "Pulse only"),
+                ("Polymer battery (comfort)", 0.15, bas.get("Power") in ("Polymer", "Polymer pack")),
+                ("Cellular network", 0.08, bas.get("Network") in ("2.4 GHz", "5 GHz")),
+                ("Premium finish", 0.05, bas.get("Finish") in ("Metallic", "Geometric")),
+            ], base_note=tier_note)
+
+        # ── Clinical Fertility (LH / LH+FSH) ───────────────────────────────
+        if target.startswith("Clinical Fertility"):
+            hormone = det.get("Hormone", "None")
+            req_lhfsh = "LH/FSH" in target
+            gate_ok = (hormone == "LH and FSH") if req_lhfsh else (hormone in ("LH", "LH and FSH"))
+            if not gate_ok:
+                return 0, f"❌ Needs {'LH and FSH' if req_lhfsh else 'LH'} hormone detection"
+            if "pack" in bas.get("Power", ""):
+                return 50, "❌ Dealbreaker: bulky battery pack (fertility discomfort)"
+            low, high = m["wtp_low"], m["wtp_high"]
+            return _score(low, high, [
+                ("Wrist platform (user pref)", 0.25, bas.get("Platform") == "Wrists"),
+                ("Chest penalty", -0.30, bas.get("Platform") == "Chest"),
+                ("GPS convenience", 0.15, bas.get("GPS") == "GPS"),
+                ("Premium finish", 0.10, bas.get("Finish") in ("Metallic", "Geometric")),
+            ])
+
+        # ── Law (Narcotic) ─────────────────────────────────────────────────
+        if target == "Law (Narcotic)":
+            if det.get("Toxicology", "None") != "Narcotic":
+                return 0, "❌ Needs Narcotic toxicology detector"
+            if bas.get("GPS") != "GPS":
+                return 200, "❌ Dealbreaker: no GPS"
+            if bas.get("Network") == "Bluetooth":
+                return 300, "❌ Dealbreaker: Bluetooth insufficient — needs cellular"
+            low, high = m["wtp_low"], m["wtp_high"]
+            return _score(low, high, [
+                ("5 GHz (best bandwidth)", 0.20, bas.get("Network") == "5 GHz"),
+                ("Polymer pack (weeks of battery)", 0.35, bas.get("Power") == "Polymer pack"),
+                ("Polymer battery", 0.10, bas.get("Power") == "Polymer"),
+                ("Stockings concealment", 0.15, bas.get("Platform") == "Stockings"),
+                ("Dark/utilitarian finish", 0.05, bas.get("Finish") in ("Black", "Original")),
+            ])
+
+        # ── MD Cancer (Base/Breast/Bladder&Kidney + others in data) ────────
         if target.startswith("MD Cancer"):
             cancer_feat = det.get("Cancer", "None")
             need = target.split("(")[1].rstrip(")").strip() if "(" in target else ""
-            if cancer_feat == "None":
-                return 0, "❌ Cancer market requires Cancer detector"
-            if need and need != "Base Panel" and cancer_feat.lower() not in need.lower() and need.lower() not in cancer_feat.lower():
-                if not any(tok in need.lower() for tok in cancer_feat.lower().split()):
-                    return 0, f"❌ Market expects Cancer {need}, your product has {cancer_feat}"
+            if need == "Base Panel":
+                gate_ok = cancer_feat == "Base"
+            else:
+                gate_ok = (cancer_feat.lower() == need.lower()
+                            or need.lower() in cancer_feat.lower()
+                            or cancer_feat.lower() in need.lower())
+            if not gate_ok:
+                if cancer_feat == "None":
+                    return 0, f"❌ Needs Cancer {need} detector (currently None)"
+                return 0, f"❌ Market wants Cancer {need}, product has {cancer_feat}"
+            low, high = m["wtp_low"], m["wtp_high"]
+            return _score(low, high, [
+                ("GPS tracking", 0.25, bas.get("GPS") == "GPS"),
+                ("Polymer battery", 0.15, bas.get("Power") in ("Polymer", "Polymer pack")),
+                ("Cellular network", 0.10, bas.get("Network") in ("2.4 GHz", "5 GHz")),
+                ("Premium finish", 0.05, bas.get("Finish") in ("Metallic", "Geometric")),
+            ])
 
-        # Dealbreaker modifiers
-        db = m.get("dealbreaker", "None") or "None"
-        mods = []
-        if ("GPS" in db) and bas.get("GPS", "No GPS") == "No GPS":
-            med *= 0.5
-            mods.append("No GPS ×0.5")
-        if ("cellular" in db or "Network" in db) and bas.get("Network", "Bluetooth") == "Bluetooth":
-            med *= 0.5
-            mods.append("No cellular ×0.5")
-        if "polymer battery pack" in db and bas.get("Power", "") != "Polymer pack":
-            med *= 0.5
-            mods.append("No polymer pack ×0.5")
-        if "Bulky battery packs" in db and "pack" in bas.get("Power", ""):
-            med *= 0.7
-            mods.append("Bulky pack ×0.7")
-        if target in ("Clinical Fertility (LH)", "Clinical Fertility (LH/FSH)", "MD Fertility (Estrogen)"):
-            if bas.get("Platform") == "Chest":
-                med *= 0.85
-                mods.append("Chest on fertility ×0.85")
-        if mods:
-            explain += " | " + ", ".join(mods)
-        return med, explain
+        # ── MD Dissolved Gasses ────────────────────────────────────────────
+        if target == "MD Dissolved Gasses":
+            gate_ok = det.get("Dissolved gasses") == "Full C,N,O"
+            if not gate_ok:
+                return 0, "❌ Needs Full C,N,O dissolved gasses"
+            low, high = m["wtp_low"], m["wtp_high"]
+            return _score(low, high, [
+                ("GPS tracking", 0.25, bas.get("GPS") == "GPS"),
+                ("Polymer battery", 0.15, bas.get("Power") in ("Polymer", "Polymer pack")),
+                ("Cellular network", 0.10, bas.get("Network") in ("2.4 GHz", "5 GHz")),
+                ("Premium finish", 0.05, bas.get("Finish") in ("Metallic", "Geometric")),
+            ])
+
+        # ── MD Fertility (Estrogen) ────────────────────────────────────────
+        if target == "MD Fertility (Estrogen)":
+            if det.get("Hormone") != "Estrogen":
+                return 0, "❌ Needs Estrogen hormone detection"
+            low, high = m["wtp_low"], m["wtp_high"]
+            return _score(low, high, [
+                ("Wrist platform (user pref)", 0.25, bas.get("Platform") == "Wrists"),
+                ("Chest penalty", -0.20, bas.get("Platform") == "Chest"),
+                ("GPS tracking", 0.15, bas.get("GPS") == "GPS"),
+                ("Polymer battery", 0.10, bas.get("Power") in ("Polymer", "Polymer pack")),
+                ("Premium finish", 0.05, bas.get("Finish") in ("Metallic", "Geometric")),
+            ])
+
+        # ── MD Heart (Pulse / Temporal) ────────────────────────────────────
+        if target.startswith("MD Heart"):
+            hb = det.get("Heartbeat", "None")
+            if target == "MD Heart (Temporal)":
+                if hb != "Temporal":
+                    return 0, "❌ Needs Temporal heartbeat"
+            else:
+                if hb not in ("Pulse only", "Temporal"):
+                    return 0, "❌ Needs Pulse (or Temporal) heartbeat"
+            if bas.get("GPS") != "GPS":
+                return 100, "❌ Dealbreaker: lack of GPS (safety)"
+            low, high = m["wtp_low"], m["wtp_high"]
+            return _score(low, high, [
+                ("Polymer battery", 0.25, bas.get("Power") in ("Polymer", "Polymer pack")),
+                ("Blood pressure tracking", 0.15, det.get("Blood vessel") != "None"),
+                ("Premium finish", 0.05, bas.get("Finish") in ("Metallic", "Geometric")),
+            ])
+
+        # ── MD Metabolic (Bilirubin) ───────────────────────────────────────
+        if target == "MD Metabolic (Bilirubin)":
+            if det.get("Metabolic") != "Bilirubin":
+                return 0, "❌ Needs Bilirubin metabolic detector"
+            low, high = m["wtp_low"], m["wtp_high"]
+            return _score(low, high, [
+                ("GPS tracking", 0.20, bas.get("GPS") == "GPS"),
+                ("Polymer battery", 0.15, bas.get("Power") in ("Polymer", "Polymer pack")),
+                ("Cellular network", 0.10, bas.get("Network") in ("2.4 GHz", "5 GHz")),
+                ("Premium finish", 0.05, bas.get("Finish") in ("Metallic", "Geometric")),
+            ])
+
+        # ── Military (Botulinum / Anatoxin-a) ──────────────────────────────
+        if target.startswith("Military"):
+            need_n = {"Military Botulinum (Serenity-only)": "Botulinum",
+                      "Military Anatoxin-a (Serenity-only)": "Anatoxin-a"}.get(target, "")
+            if det.get("Neurotoxins") != need_n:
+                return 0, f"❌ Needs {need_n} neurotoxin detector"
+            if bas.get("GPS") != "GPS":
+                return 200, "❌ Dealbreaker: no GPS (battlefield tracking)"
+            if bas.get("Power") != "Polymer pack":
+                return 300, "❌ Dealbreaker: no polymer battery pack (long missions)"
+            low, high = m["wtp_low"], m["wtp_high"]
+            return _score(low, high, [
+                ("Camouflage finish", 0.25, bas.get("Finish") == "Camouflage"),
+                ("Sleeves platform", 0.15, bas.get("Platform") == "Sleeves"),
+                ("Pulse/BP tracking", 0.10, det.get("Heartbeat") != "None" or det.get("Blood vessel") != "None"),
+                ("5 GHz (minor)", 0.05, bas.get("Network") == "5 GHz"),
+            ])
+
+        # ── Fallback: midpoint ─────────────────────────────────────────────
+        low, high = m.get("wtp_low", 0), m.get("wtp_high", 0)
+        med = (low + high) // 2
+        return med, f"Range ${low}–${high} · midpoint ${med}"
 
     def _fit_warnings(target, sel_base, sel_det):
         ws = []
@@ -4259,12 +4369,13 @@ CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_m
             target = st.selectbox("🎯 Target Market", target_options,
                                      index=0, key=f"pd2_target_{i}")
 
-            # Market-optimal auto-configuration (master only):
-            # When the target market changes, rewrite attributes to the bundle
-            # that maximizes WTP in that market. User can still override below.
+            # Market-optimal auto-configuration:
+            # When the target market changes, rewrite attributes (master) or
+            # overrides (variant) to the bundle that maximizes WTP in that market.
+            # Price defaults to inferred median WTP. User can still edit.
+            last_tgt_key = f"pd2_last_target_{i}"
+            prev_target = st.session_state.get(last_tgt_key)
             if is_master:
-                last_tgt_key = f"pd2_last_target_{i}"
-                prev_target = st.session_state.get(last_tgt_key)
                 if target != prev_target and target in MARKET_OPTIMAL_FEATURES:
                     opt = MARKET_OPTIMAL_FEATURES[target]
                     for a in BASE_ATTRS:
@@ -4273,17 +4384,47 @@ CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_m
                     for a in DETECTION_ATTRS:
                         if a in opt:
                             st.session_state[f"pd2_det_{a}_{i}"] = opt[a]
-                    # Default price to 90% of median WTP (good starting pricing)
+                    # Default price to median WTP (rounded to $25)
                     _sel_b_est = {a: opt.get(a, list(W14B_BASE[a].keys())[0]) for a in BASE_ATTRS}
                     _sel_d_est = {a: opt.get(a, "None") for a in DETECTION_ATTRS}
                     _med, _ = _w14b_infer_median_wtp(target, _sel_b_est, _sel_d_est)
                     if _med and _med > 0:
-                        st.session_state[f"pd2_price_{i}"] = int(round(_med * 0.90 / 25) * 25)
+                        st.session_state[f"pd2_price_{i}"] = int(round(_med / 25) * 25)
                     st.session_state[last_tgt_key] = target
-                    st.info(f"✨ Features auto-tuned for best WTP in **{target}**. "
+                    st.info(f"✨ Features auto-tuned for **{target}**. Price = median WTP ~${_med}. "
                              f"Adjust in the Detection / Base expanders below.")
                 elif target != prev_target:
-                    # Target changed to (none) or unmapped — just record it
+                    st.session_state[last_tgt_key] = target
+            else:
+                # Variant: auto-populate override multiselect with diffs vs P1
+                if target != prev_target and target in MARKET_OPTIMAL_FEATURES:
+                    opt = MARKET_OPTIMAL_FEATURES[target]
+                    p1 = p_selections.get("P1", {})
+                    p1_base = p1.get("sel_base", {})
+                    p1_det = p1.get("sel_det", {})
+                    diff_attrs = []
+                    for a in BASE_ATTRS:
+                        if a in opt and opt[a] != p1_base.get(a):
+                            diff_attrs.append(a)
+                            st.session_state[f"pd2_ov_{a}_{i}"] = opt[a]
+                    for a in DETECTION_ATTRS:
+                        if a in opt and opt[a] != p1_det.get(a):
+                            diff_attrs.append(a)
+                            st.session_state[f"pd2_ov_{a}_{i}"] = opt[a]
+                    st.session_state[f"pd2_override_{i}"] = diff_attrs
+                    # Price = median WTP for this variant's feature set
+                    _b = dict(p1_base); _b.update({a: opt[a] for a in BASE_ATTRS if a in opt})
+                    _d = dict(p1_det);  _d.update({a: opt[a] for a in DETECTION_ATTRS if a in opt})
+                    _med, _ = _w14b_infer_median_wtp(target, _b, _d)
+                    if _med and _med > 0:
+                        st.session_state[f"pd2_price_{i}"] = int(round(_med / 25) * 25)
+                    st.session_state[last_tgt_key] = target
+                    if diff_attrs:
+                        st.info(f"✨ Auto-selected {len(diff_attrs)} override{'s' if len(diff_attrs)!=1 else ''} for **{target}** "
+                                 f"(median WTP ~${_med}). Trim or edit below.")
+                    else:
+                        st.info(f"✨ **{target}** matches P1's features — no overrides needed. Median WTP ~${_med}.")
+                elif target != prev_target:
                     st.session_state[last_tgt_key] = target
 
             # Build selections (defensive: validate against current opts to
