@@ -4495,30 +4495,31 @@ CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_m
                                                    min_value=0, key=f"pd2_sales_{i}")
 
             # ─── Economics computation ─────────────────────────────────────
+            # Development days are SEQUENTIAL (sum, not max) — each attribute
+            # is developed one after another.
             if is_master:
-                base_days = max(W14B_BASE[a][sel_base[a]][0] for a in BASE_ATTRS)
+                base_days = sum(W14B_BASE[a][sel_base[a]][0] for a in BASE_ATTRS)
                 base_cost = sum(W14B_BASE[a][sel_base[a]][1] for a in BASE_ATTRS)
-                det_days = max(W14B_DETECTION[a][sel_det[a]][0] for a in DETECTION_ATTRS)
+                det_days = sum(W14B_DETECTION[a][sel_det[a]][0] for a in DETECTION_ATTRS)
                 det_cost = sum(W14B_DETECTION[a][sel_det[a]][1] for a in DETECTION_ATTRS)
-                total_days = max(base_days, det_days)
+                total_days = base_days + det_days
                 total_cost = base_cost + det_cost
                 incr_days = total_days
                 incr_cost = total_cost
             else:
                 p1 = p_selections["P1"]
-                incr_days_cands = []
+                incr_days = 0
                 incr_cost = 0
                 for attr in BASE_ATTRS:
                     if sel_base[attr] != p1["sel_base"][attr]:
                         d, c, _ = W14B_BASE[attr][sel_base[attr]]
-                        incr_days_cands.append(d)
+                        incr_days += d
                         incr_cost += c
                 for attr in DETECTION_ATTRS:
                     if sel_det[attr] != p1["sel_det"][attr]:
                         d, c, _ = W14B_DETECTION[attr][sel_det[attr]]
-                        incr_days_cands.append(d)
+                        incr_days += d
                         incr_cost += c
-                incr_days = max(incr_days_cands) if incr_days_cands else 0
                 total_days = p1["total_days"] + incr_days
                 total_cost = incr_cost
 
