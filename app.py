@@ -3869,6 +3869,157 @@ CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_m
         "Athlete (Fad)": ["Heartbeat", "Blood vessel", "Dissolved gasses", "Motion"],
     }
 
+    # Market-optimal feature bundle — the "best WTP for reasonable dev cost"
+    # recommendation per market. Honors dealbreakers, picks cheapest option
+    # at the max-WTP tier. User can override anything after seeing these.
+    MARKET_OPTIMAL_FEATURES = {
+        # Cardio tier 3 ($350-600) = Full BP + Full DG + GPS. Wrists = wearable.
+        "Clinical Cardiovascular": {
+            "Platform": "Wrists", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer", "Finish": "Original",
+            "Heartbeat": "None", "Blood vessel": "Full profile",
+            "Dissolved gasses": "Full C,N,O", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "None", "Motion": "None",
+        },
+        # Fertility: B2C, no GPS/cellular needed, wrists preferred, avoid bulky pack
+        "Clinical Fertility (LH)": {
+            "Platform": "Wrists", "GPS": "No GPS", "Network": "Bluetooth",
+            "Power": "Polymer", "Finish": "Original",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "LH", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "None", "Motion": "None",
+        },
+        "Clinical Fertility (LH/FSH)": {
+            "Platform": "Wrists", "GPS": "No GPS", "Network": "Bluetooth",
+            "Power": "Polymer", "Finish": "Original",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "LH and FSH", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "None", "Motion": "None",
+        },
+        # Law: GPS + cellular dealbreakers. Polymer pack for long monitoring.
+        # Stockings hides from offender. Black = utilitarian.
+        "Law (Narcotic)": {
+            "Platform": "Stockings", "GPS": "GPS", "Network": "5 GHz",
+            "Power": "Polymer pack", "Finish": "Black",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "Narcotic",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "None", "Motion": "None",
+        },
+        # Cancer: clinical chest placement, GPS nice-to-have, 2.4 GHz standard
+        "MD Cancer (Base Panel)": {
+            "Platform": "Chest", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer", "Finish": "Original",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "Base", "Neurotoxins": "None", "Motion": "None",
+        },
+        "MD Cancer (Breast)": {
+            "Platform": "Chest", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer", "Finish": "Original",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "Breast", "Neurotoxins": "None", "Motion": "None",
+        },
+        "MD Cancer (Bladder & Kidney)": {
+            "Platform": "Chest", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer", "Finish": "Original",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "Bladder & Kidney", "Neurotoxins": "None", "Motion": "None",
+        },
+        "MD Dissolved Gasses": {
+            "Platform": "Chest", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer", "Finish": "Original",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "Full C,N,O", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "None", "Motion": "None",
+        },
+        # MD Fertility: slight wrist preference
+        "MD Fertility (Estrogen)": {
+            "Platform": "Wrists", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer", "Finish": "Original",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "Estrogen", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "None", "Motion": "None",
+        },
+        # MD Heart: GPS is safety dealbreaker
+        "MD Heart (Pulse only)": {
+            "Platform": "Chest", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer", "Finish": "Original",
+            "Heartbeat": "Pulse only", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "None", "Motion": "None",
+        },
+        "MD Heart (Temporal)": {
+            "Platform": "Chest", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer", "Finish": "Original",
+            "Heartbeat": "Temporal", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "None", "Motion": "None",
+        },
+        "MD Metabolic (Bilirubin)": {
+            "Platform": "Chest", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer", "Finish": "Original",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "Bilirubin",
+            "Cancer": "None", "Neurotoxins": "None", "Motion": "None",
+        },
+        # Military: GPS + polymer pack are hard dealbreakers. Camouflage matters.
+        # Sleeves = wearable under uniform.
+        "Military Botulinum (Serenity-only)": {
+            "Platform": "Sleeves", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer pack", "Finish": "Camouflage",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "Botulinum", "Motion": "None",
+        },
+        "Military Anatoxin-a (Serenity-only)": {
+            "Platform": "Sleeves", "GPS": "GPS", "Network": "2.4 GHz",
+            "Power": "Polymer pack", "Finish": "Camouflage",
+            "Heartbeat": "None", "Blood vessel": "None",
+            "Dissolved gasses": "None", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "Anatoxin-a", "Motion": "None",
+        },
+        # Athlete: additive WTP. Maximize each feature at lowest materials cost:
+        # HB=Pulse only $150 (= Pulse+temporal but cheaper), BV=Systolic&diastolic $35
+        # (same WTP as Full profile but cheaper), DG=O2/N2/CO2 $27 (same WTP as Full
+        # C,N,O but cheaper), Motion=Steps+balance+gait $57 (max), Platform=Wrists $37.
+        # No GPS saves materials; Bluetooth cheapest network; Polymer (no pack, DB).
+        "Athlete (General)": {
+            "Platform": "Wrists", "GPS": "No GPS", "Network": "Bluetooth",
+            "Power": "Polymer", "Finish": "Original",
+            "Heartbeat": "Pulse only", "Blood vessel": "Systolic & diastolic",
+            "Dissolved gasses": "O2, N2, CO2", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "None",
+            "Motion": "Steps + balance + gait",
+        },
+        "Athlete (Fad)": {
+            # Fad pays premium for fashionable finish+platform combination
+            "Platform": "Wrists", "GPS": "No GPS", "Network": "Bluetooth",
+            "Power": "Polymer", "Finish": "Metallic",
+            "Heartbeat": "Pulse only", "Blood vessel": "Systolic & diastolic",
+            "Dissolved gasses": "O2, N2, CO2", "Toxicology": "None",
+            "Hormone": "None", "Metabolic": "None",
+            "Cancer": "None", "Neurotoxins": "None",
+            "Motion": "Steps + balance + gait",
+        },
+    }
+
     W14B_PRESETS = {
         "Heart View (flagship)": {
             "Platform": "Chest", "GPS": "GPS", "Network": "2.4 GHz",
@@ -4107,6 +4258,33 @@ CM/arr: <b style="color:{cm_c};">${ms_cm_arr:,.0f}</b> | Peak: {peak_q * p_buy_m
             # Target market
             target = st.selectbox("🎯 Target Market", target_options,
                                      index=0, key=f"pd2_target_{i}")
+
+            # Market-optimal auto-configuration (master only):
+            # When the target market changes, rewrite attributes to the bundle
+            # that maximizes WTP in that market. User can still override below.
+            if is_master:
+                last_tgt_key = f"pd2_last_target_{i}"
+                prev_target = st.session_state.get(last_tgt_key)
+                if target != prev_target and target in MARKET_OPTIMAL_FEATURES:
+                    opt = MARKET_OPTIMAL_FEATURES[target]
+                    for a in BASE_ATTRS:
+                        if a in opt:
+                            st.session_state[f"pd2_base_{a}_{i}"] = opt[a]
+                    for a in DETECTION_ATTRS:
+                        if a in opt:
+                            st.session_state[f"pd2_det_{a}_{i}"] = opt[a]
+                    # Default price to 90% of median WTP (good starting pricing)
+                    _sel_b_est = {a: opt.get(a, list(W14B_BASE[a].keys())[0]) for a in BASE_ATTRS}
+                    _sel_d_est = {a: opt.get(a, "None") for a in DETECTION_ATTRS}
+                    _med, _ = _w14b_infer_median_wtp(target, _sel_b_est, _sel_d_est)
+                    if _med and _med > 0:
+                        st.session_state[f"pd2_price_{i}"] = int(round(_med * 0.90 / 25) * 25)
+                    st.session_state[last_tgt_key] = target
+                    st.info(f"✨ Features auto-tuned for best WTP in **{target}**. "
+                             f"Adjust in the Detection / Base expanders below.")
+                elif target != prev_target:
+                    # Target changed to (none) or unmapped — just record it
+                    st.session_state[last_tgt_key] = target
 
             # Build selections (defensive: validate against current opts to
             # survive stale session state across deploys or preset changes)
