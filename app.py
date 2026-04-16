@@ -5890,6 +5890,13 @@ elif page == "📊 15-16 P&L / BS Dashboard":
     TEAMS = ["B612", "Dune", "Globex", "Gotham", "Panem", "Vulcan", "Westeros", "Zion"]
     US = "Panem"
 
+    # Game-consistent team colors (matching Market Grid Analysis)
+    team_colors = {
+        "B612": "#4CAF50", "Dune": "#2E7D32", "Globex": "#7B1FA2",
+        "Gotham": "#E65100", "Panem": "#C62828", "Vulcan": "#9E9D24",
+        "Westeros": "#00897B", "Zion": "#546E7A",
+    }
+
     # ═══════════════════════════════════════════════════════════════════════
     # 1. SCOREBOARD (Day 1,001)
     # ═══════════════════════════════════════════════════════════════════════
@@ -6220,17 +6227,7 @@ elif page == "📊 15-16 P&L / BS Dashboard":
 
     # Revenue trend chart — Panem vs key competitors
     fig_rev_q = go.Figure()
-    # Game-consistent team colors (matching Market Grid Analysis)
-    team_colors = {
-        "B612": "#4CAF50",       # green
-        "Dune": "#2E7D32",       # dark green
-        "Globex": "#7B1FA2",     # purple
-        "Gotham": "#E65100",     # orange
-        "Panem": "#C62828",      # red
-        "Vulcan": "#9E9D24",     # olive
-        "Westeros": "#00897B",   # teal
-        "Zion": "#546E7A",       # gray
-    }
+    # (team_colors defined at top of page)
     for t in TEAMS:
         width = 3 if t == US else 1.5
         dash = None if t == US else "dot"
