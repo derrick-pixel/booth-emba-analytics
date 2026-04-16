@@ -5968,10 +5968,11 @@ elif page == "📊 15-16 P&L / BS Dashboard":
     fig_q.add_trace(go.Bar(x=qs, y=[Q_DATA[q]["gp"] for q in qs], name="Gross Profit", marker_color="#2d6a2e"))
     fig_q.add_trace(go.Bar(x=qs, y=[Q_DATA[q]["oi"] for q in qs], name="Op. Income", marker_color="#b22222"))
     fig_q.add_trace(go.Bar(x=qs, y=[Q_DATA[q]["ni"] for q in qs], name="Net Income", marker_color="#b8860b"))
-    fig_q.update_layout(height=350, barmode="group", yaxis_tickformat="$,.0f",
-                          title=dict(text="Year 1 Quarterly P&L Trend (all teams identical)", x=0.5, xanchor="center", y=0.97),
-                          margin=dict(l=0, r=0, t=50, b=0),
-                          legend=dict(orientation="h", yanchor="top", y=1.10, xanchor="center", x=0.5))
+    fig_q.update_layout(height=400, barmode="group", yaxis_tickformat="$,.0f",
+                          font=dict(size=13), title_font_size=16,
+                          title=dict(text="Year 1 Quarterly P&L (all teams identical)", x=0.5, xanchor="center"),
+                          margin=dict(l=0, r=0, t=80, b=0),
+                          legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5, font=dict(size=12)))
     st.plotly_chart(fig_q, use_container_width=True)
 
     st.info("**Year 1 story:** Every team burns cash from day 1 — the Bench factory + DC fixed costs exceed "
@@ -6069,16 +6070,17 @@ elif page == "📊 15-16 P&L / BS Dashboard":
     # Visual: Net Income comparison
     y2_ni_vals = {t: BS_Y2[t]["RE"] - BS_Y1["Retained Earnings"] for t in TEAMS}
     fig_ni = go.Figure()
-    colors = ["#800000" if t == US else "#1a3c5e" for t in TEAMS]
+    ni_colors = [team_colors[t] for t in TEAMS]
     fig_ni.add_trace(go.Bar(
         x=TEAMS, y=[y2_ni_vals[t] for t in TEAMS],
-        marker_color=colors,
+        marker_color=ni_colors,
         text=[f"${y2_ni_vals[t]:,.0f}" for t in TEAMS],
         textposition="outside",
     ))
-    fig_ni.update_layout(height=350, yaxis_tickformat="$,.0f",
-                          title=dict(text="Year 2 Net Income by Team (Panem = maroon)", x=0.5, xanchor="center", y=0.97),
-                          margin=dict(l=0, r=0, t=50, b=0))
+    fig_ni.update_layout(height=400, yaxis_tickformat="$,.0f",
+                          font=dict(size=13), title_font_size=16,
+                          title=dict(text="Year 2 Net Income by Team", x=0.5, xanchor="center"),
+                          margin=dict(l=0, r=0, t=60, b=0))
     st.plotly_chart(fig_ni, use_container_width=True)
 
     # Bonds + Cash chart
@@ -6087,10 +6089,11 @@ elif page == "📊 15-16 P&L / BS Dashboard":
                                 name="Bonds Outstanding", marker_color="#b22222"))
     fig_debt.add_trace(go.Bar(x=TEAMS, y=[BS_Y2[t]["Cash"] for t in TEAMS],
                                 name="Cash Position", marker_color="#2d6a2e"))
-    fig_debt.update_layout(height=350, barmode="group", yaxis_tickformat="$,.0f",
-                             title=dict(text="Bonds vs Cash (Year 2 End)", x=0.5, xanchor="center", y=0.97),
-                             margin=dict(l=0, r=0, t=50, b=0),
-                             legend=dict(orientation="h", yanchor="top", y=1.10, xanchor="center", x=0.5))
+    fig_debt.update_layout(height=400, barmode="group", yaxis_tickformat="$,.0f",
+                             font=dict(size=13), title_font_size=16,
+                             title=dict(text="Bonds vs Cash (Year 2 End)", x=0.5, xanchor="center"),
+                             margin=dict(l=0, r=0, t=80, b=0),
+                             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5, font=dict(size=12)))
     st.plotly_chart(fig_debt, use_container_width=True)
 
     # ═══════════════════════════════════════════════════════════════════════
@@ -6217,9 +6220,17 @@ elif page == "📊 15-16 P&L / BS Dashboard":
 
     # Revenue trend chart — Panem vs key competitors
     fig_rev_q = go.Figure()
-    team_colors = {"Panem":"#800000","Dune":"#1a3c5e","Westeros":"#b8860b",
-                    "Zion":"#2d6a2e","Globex":"#6a5acd","B612":"#888",
-                    "Gotham":"#cd853f","Vulcan":"#4682b4"}
+    # Game-consistent team colors (matching Market Grid Analysis)
+    team_colors = {
+        "B612": "#4CAF50",       # green
+        "Dune": "#2E7D32",       # dark green
+        "Globex": "#7B1FA2",     # purple
+        "Gotham": "#E65100",     # orange
+        "Panem": "#C62828",      # red
+        "Vulcan": "#9E9D24",     # olive
+        "Westeros": "#00897B",   # teal
+        "Zion": "#546E7A",       # gray
+    }
     for t in TEAMS:
         width = 3 if t == US else 1.5
         dash = None if t == US else "dot"
@@ -6228,10 +6239,11 @@ elif page == "📊 15-16 P&L / BS Dashboard":
             name=t, line=dict(color=team_colors.get(t, "#888"), width=width, dash=dash),
         ))
     fig_rev_q.update_layout(
-        height=400, yaxis_tickformat="$,.0f", yaxis_title="Revenue ($)",
-        title=dict(text="Quarterly Revenue — All Teams (Panem = bold maroon)", x=0.5, xanchor="center", y=0.97),
-        margin=dict(l=0, r=0, t=50, b=0),
-        legend=dict(orientation="h", yanchor="top", y=1.12, xanchor="center", x=0.5),
+        height=450, yaxis_tickformat="$,.0f", yaxis_title="Revenue ($)",
+        font=dict(size=13), title_font_size=16,
+        title=dict(text="Quarterly Revenue — All Teams (Q1-Q11)", x=0.5, xanchor="center"),
+        margin=dict(l=0, r=0, t=80, b=0),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5, font=dict(size=11)),
     )
     st.plotly_chart(fig_rev_q, use_container_width=True)
 
@@ -6246,10 +6258,11 @@ elif page == "📊 15-16 P&L / BS Dashboard":
         ))
     fig_ni_q.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
     fig_ni_q.update_layout(
-        height=400, yaxis_tickformat="$,.0f", yaxis_title="Net Income ($)",
-        title=dict(text="Quarterly Net Income — All Teams", x=0.5, xanchor="center", y=0.97),
-        margin=dict(l=0, r=0, t=50, b=0),
-        legend=dict(orientation="h", yanchor="top", y=1.12, xanchor="center", x=0.5),
+        height=450, yaxis_tickformat="$,.0f", yaxis_title="Net Income ($)",
+        font=dict(size=13), title_font_size=16,
+        title=dict(text="Quarterly Net Income — All Teams (Q1-Q11)", x=0.5, xanchor="center"),
+        margin=dict(l=0, r=0, t=80, b=0),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5, font=dict(size=11)),
     )
     st.plotly_chart(fig_ni_q, use_container_width=True)
 
@@ -6263,16 +6276,17 @@ elif page == "📊 15-16 P&L / BS Dashboard":
         cum_rev[t] = cum
     sorted_teams = sorted(cum_rev.keys(), key=lambda x: cum_rev[x], reverse=True)
     fig_cum = go.Figure()
-    colors_cum = ["#800000" if t == US else "#1a3c5e" for t in sorted_teams]
+    cum_colors = [team_colors[t] for t in sorted_teams]
     fig_cum.add_trace(go.Bar(
         x=sorted_teams, y=[cum_rev[t] for t in sorted_teams],
-        marker_color=colors_cum,
+        marker_color=cum_colors,
         text=[f"${cum_rev[t]/1e6:.1f}M" for t in sorted_teams],
         textposition="outside",
     ))
-    fig_cum.update_layout(height=350, yaxis_tickformat="$,.0f",
-                            title=dict(text="Cumulative Revenue Q1-Q11 (Panem = maroon)", x=0.5, xanchor="center", y=0.97),
-                            margin=dict(l=0, r=0, t=50, b=0))
+    fig_cum.update_layout(height=400, yaxis_tickformat="$,.0f",
+                            font=dict(size=13), title_font_size=16,
+                            title=dict(text="Cumulative Revenue Q1-Q11", x=0.5, xanchor="center"),
+                            margin=dict(l=0, r=0, t=60, b=0))
     st.plotly_chart(fig_cum, use_container_width=True)
 
     st.markdown("---")
