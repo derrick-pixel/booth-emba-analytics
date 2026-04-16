@@ -6074,20 +6074,47 @@ elif page == "📊 15-16 P&L / BS Dashboard":
         })
     st.dataframe(pd.DataFrame(ratio_rows), use_container_width=True, hide_index=True)
 
-    # Visual: Net Income comparison
+    # Visual: Net Income comparison — Y1, Y2, Y3 (Q9-Q11) side by side
+    Y1_NI = -362192  # same for all teams
     y2_ni_vals = {t: BS_Y2[t]["RE"] - BS_Y1["Retained Earnings"] for t in TEAMS}
+
+    # Y3 partial (Q9 + Q10 + Q11) — computed from quarterly data defined later,
+    # but we inline the sums here for chart ordering.
+    y3_ni_vals = {
+        "B612": 446342 + 304958 + 405691,
+        "Dune": 466280 + 614390 + 2191363,
+        "Globex": 320018 + 389796 + 593505,
+        "Gotham": 280547 + 432589 + 240793,
+        "Panem": 583117 + 609577 + 891330,
+        "Vulcan": 419479 + 485796 + 390377,
+        "Westeros": 439506 + 553769 + 1404629,
+        "Zion": -51289 + 583567 + 932846,
+    }
+
     fig_ni = go.Figure()
-    ni_colors = [team_colors[t] for t in TEAMS]
     fig_ni.add_trace(go.Bar(
-        x=TEAMS, y=[y2_ni_vals[t] for t in TEAMS],
-        marker_color=ni_colors,
-        text=[f"${y2_ni_vals[t]:,.0f}" for t in TEAMS],
-        textposition="outside",
+        name="Year 1", x=TEAMS, y=[Y1_NI for _ in TEAMS],
+        marker_color="rgba(120,120,120,0.5)",
+        text=[f"${Y1_NI/1000:.0f}K" for _ in TEAMS], textposition="outside",
     ))
-    fig_ni.update_layout(height=400, yaxis_tickformat="$,.0f",
-                          font=dict(size=13), title_font_size=16,
-                          title=dict(text="Year 2 Net Income by Team", x=0.5, xanchor="center"),
-                          margin=dict(l=0, r=0, t=60, b=0))
+    fig_ni.add_trace(go.Bar(
+        name="Year 2", x=TEAMS, y=[y2_ni_vals[t] for t in TEAMS],
+        marker_color=[team_colors[t] for t in TEAMS], marker_line_width=0,
+        text=[f"${y2_ni_vals[t]/1000:.0f}K" for t in TEAMS], textposition="outside",
+    ))
+    fig_ni.add_trace(go.Bar(
+        name="Year 3 (Q9-Q11)", x=TEAMS, y=[y3_ni_vals[t] for t in TEAMS],
+        marker_color=[team_colors[t] for t in TEAMS],
+        marker_pattern_shape="/", marker_line_width=0,
+        text=[f"${y3_ni_vals[t]/1000:.0f}K" for t in TEAMS], textposition="outside",
+    ))
+    fig_ni.update_layout(
+        height=450, barmode="group", yaxis_tickformat="$,.0f",
+        font=dict(size=13), title_font_size=16,
+        title=dict(text="Net Income by Team — Year 1 / Year 2 / Year 3 (Q9-Q11)", x=0.5, xanchor="center"),
+        margin=dict(l=0, r=0, t=80, b=0),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5, font=dict(size=12)),
+    )
     st.plotly_chart(fig_ni, use_container_width=True)
 
     # Bonds + Cash chart
