@@ -5874,399 +5874,409 @@ you to scale fast enough that the imitator flywheel starts spinning for YOU befo
 # analysis, and visual trend charts. Framework from Booth ISM FS Analysis slides.
 # ══════════════════════════════════════════════════════════════════════════════
 
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE: 15-16 P&L / BS COMPETITIVE DASHBOARD
+# Pre-populated from practice game findings (15 April 2026 snapshots)
+# ══════════════════════════════════════════════════════════════════════════════
+
 elif page == "📊 15-16 P&L / BS Dashboard":
     st.markdown('<p class="big-header">P&L / Balance Sheet Dashboard</p>', unsafe_allow_html=True)
-    st.markdown('<p class="sub-header">15-16 War Room — Financial Statement Analysis per ISM Assignment 5 Framework</p>',
+    st.markdown('<p class="sub-header">15-16 War Room — Competitive Intelligence from Practice Game (Day 1,001 snapshot)</p>',
                 unsafe_allow_html=True)
-    st.caption("Enter your team's P&L and BS by year. Ratios auto-compute per the Booth ISM ROA/Risk/Growth framework. "
-               "Add competitor data in the expander to compare side-by-side.")
+    st.caption("All data extracted from 15 April 2026 War Room findings: BS Year 1 & 2, quarterly P&L Q1-Q4, "
+               "Scoreboard, and Market Grid. 8 teams: B612, Dune, Globex, Gotham, **Panem (us)**, Vulcan, Westeros, Zion.")
 
-    # ── Assumptions ─────────────────────────────────────────────────────────
-    asum_c1, asum_c2, asum_c3 = st.columns(3)
-    with asum_c1:
-        fs_tax_rate = st.number_input("Income Tax Rate", value=0.35, step=0.01,
-                                        format="%.2f", key="fs_tax")
-    with asum_c2:
-        fs_days_per_year = st.number_input("Days per Year", value=364, step=1, key="fs_dpy")
-    with asum_c3:
-        fs_n_years = st.number_input("Number of Years", min_value=1, max_value=5,
-                                       value=3, step=1, key="fs_n_years")
+    TEAMS = ["B612", "Dune", "Globex", "Gotham", "Panem", "Vulcan", "Westeros", "Zion"]
+    US = "Panem"
 
-    year_labels = [f"Year {y}" for y in range(1, int(fs_n_years) + 1)]
-    year0_label = "Year 0 (start)"
+    # ═══════════════════════════════════════════════════════════════════════
+    # 1. SCOREBOARD (Day 1,001)
+    # ═══════════════════════════════════════════════════════════════════════
+    st.markdown("### 1. Scoreboard (Day 1,001)")
+    SCOREBOARD = {
+        "B612":     {"return": -1991568,  "re": 1077033,  "cash": -17757},
+        "Dune":     {"return": -8052287,  "re": 3494832,  "cash": 1940159},
+        "Globex":   {"return": -5182446,  "re": 874240,   "cash": 865982},
+        "Gotham":   {"return": -4848102,  "re": 662271,   "cash": 414307},
+        "Panem":    {"return": -4773724,  "re": 2048105,  "cash": -301391},
+        "Vulcan":   {"return": -6091080,  "re": 1185686,  "cash": 1275994},
+        "Westeros": {"return": -8734814,  "re": 2259056,  "cash": -722172},
+        "Zion":     {"return": -6384969,  "re": 1301730,  "cash": 487769},
+    }
+    sb_rows = []
+    for t in sorted(SCOREBOARD.keys(), key=lambda x: SCOREBOARD[x]["return"], reverse=True):
+        s = SCOREBOARD[t]
+        sb_rows.append({
+            "Team": f"**{t}**" if t == US else t,
+            "Return to Investors": f"${s['return']:,.0f}",
+            "Retained Earnings": f"${s['re']:,.0f}",
+            "Cash Position": f"${s['cash']:,.0f}",
+        })
+    st.dataframe(pd.DataFrame(sb_rows), use_container_width=True, hide_index=True)
+    st.caption("Sorted by Return to Investors (least negative = best). "
+               "B612 leads with smallest loss. Panem ranked 3rd. Westeros worst.")
 
-    # ── Income Statement ────────────────────────────────────────────────────
+    # ═══════════════════════════════════════════════════════════════════════
+    # 2. YEAR 1 P&L (all teams identical — Q1-Q4 totals)
+    # ═══════════════════════════════════════════════════════════════════════
     st.markdown("---")
-    st.markdown("### Income Statement")
-    st.caption("Enter revenues as **positive** values, expenses as **negative** values.")
+    st.markdown("### 2. Year 1 Income Statement (All Teams Identical)")
+    st.caption("Q1-Q4 summed. Every team ran the same Bench factory with Heart Monitor product — no differentiation yet.")
 
-    IS_ITEMS = [
-        ("Net Revenue", "is_rev", 0),
-        ("Cost of Goods Sold", "is_cogs", 0),
-        ("Advertising Expense", "is_adv", 0),
-        ("Selling Expense (commissions + handling)", "is_sell", 0),
-        ("DC Operating Expense", "is_dc_opex", 0),
-        ("R&D Expense", "is_rd", 0),
-        ("DC Depreciation Expense", "is_dc_dep", 0),
-        ("Idle Factory Expense", "is_idle", 0),
-        ("Interest Revenue", "is_int_rev", 0),
-        ("Interest Expense", "is_int_exp", 0),
-    ]
+    Y1_PL = {
+        "Net Revenue": 1985900,
+        "COGS": -1215525,
+        "Gross Profit": 770375,
+        "Advertising": 0,
+        "Selling Expense": -425550,
+        "DC Operating": -728000,
+        "Total Selling Expense": -1153550,
+        "R&D Expense": 0,
+        "DC Depreciation": -166668,
+        "Idle Factory": -30301,
+        "Other Operating Expense": -196969,
+        "Operating Income (EBIT)": -580143,
+        "Interest Revenue": 22927,
+        "Interest Expense": 0,
+        "Net Interest": 22927,
+        "NIBT": -557216,
+        "Income Tax": 195024,
+        "Net Income": -362192,
+    }
+    y1_rows = []
+    for label, val in Y1_PL.items():
+        color = "#2d6a2e" if val >= 0 else "#b22222"
+        bold = label in ("Gross Profit", "Operating Income (EBIT)", "NIBT", "Net Income")
+        y1_rows.append({
+            "Line Item": f"**{label}**" if bold else label,
+            "Year 1 (Annual)": f"${val:,.0f}",
+            "% of Revenue": f"{val/Y1_PL['Net Revenue']*100:.1f}%" if Y1_PL['Net Revenue'] else "—",
+        })
+    st.dataframe(pd.DataFrame(y1_rows), use_container_width=True, hide_index=True)
 
-    is_data = {}
-    is_cols = st.columns([2] + [1] * int(fs_n_years))
-    with is_cols[0]:
-        st.markdown("**Line Item**")
-    for j, yl in enumerate(year_labels):
-        with is_cols[j + 1]:
-            st.markdown(f"**{yl}**")
+    # Year 1 quarterly trend
+    Q_DATA = {
+        "Q1": {"rev": 303800, "gp": 117851, "oi": -170916, "ni": -105950},
+        "Q2": {"rev": 456400, "gp": 177048, "oi": -158788, "ni": -99332},
+        "Q3": {"rev": 543200, "gp": 210719, "oi": -145279, "ni": -91294},
+        "Q4": {"rev": 682500, "gp": 264757, "oi": -105160, "ni": -65615},
+    }
+    fig_q = go.Figure()
+    qs = list(Q_DATA.keys())
+    fig_q.add_trace(go.Bar(x=qs, y=[Q_DATA[q]["rev"] for q in qs], name="Revenue", marker_color="#1a3c5e"))
+    fig_q.add_trace(go.Bar(x=qs, y=[Q_DATA[q]["gp"] for q in qs], name="Gross Profit", marker_color="#2d6a2e"))
+    fig_q.add_trace(go.Bar(x=qs, y=[Q_DATA[q]["oi"] for q in qs], name="Op. Income", marker_color="#b22222"))
+    fig_q.add_trace(go.Bar(x=qs, y=[Q_DATA[q]["ni"] for q in qs], name="Net Income", marker_color="#b8860b"))
+    fig_q.update_layout(height=350, barmode="group", yaxis_tickformat="$,.0f",
+                          title=dict(text="Year 1 Quarterly P&L Trend (all teams identical)", x=0.5, xanchor="center", y=0.97),
+                          margin=dict(l=0, r=0, t=50, b=0),
+                          legend=dict(orientation="h", yanchor="top", y=1.10, xanchor="center", x=0.5))
+    st.plotly_chart(fig_q, use_container_width=True)
 
-    for item_name, key_prefix, default in IS_ITEMS:
-        row_cols = st.columns([2] + [1] * int(fs_n_years))
-        with row_cols[0]:
-            st.markdown(f"<span style='font-size:0.85rem;'>{item_name}</span>", unsafe_allow_html=True)
-        vals = []
-        for j in range(int(fs_n_years)):
-            with row_cols[j + 1]:
-                v = st.number_input(f"{item_name} Y{j+1}", value=default, step=1000,
-                                      label_visibility="collapsed",
-                                      key=f"fs_{key_prefix}_{j}")
-                vals.append(v)
-        is_data[key_prefix] = vals
+    st.info("**Year 1 story:** Every team burns cash from day 1 — the Bench factory + DC fixed costs exceed "
+            "Heart Monitor revenue. EBIT improves each quarter as Bass adoption grows: Q1 loss $(171K) → Q4 loss $(105K). "
+            "Revenue doubles from Q1 ($304K) to Q4 ($683K). The race to profitability is a race to build the Line factory.")
 
-    # Computed P&L lines
-    def _safe_div(a, b):
-        return a / b if b and b != 0 else 0
-
-    gross_profit = [is_data["is_rev"][j] + is_data["is_cogs"][j] for j in range(int(fs_n_years))]
-    total_selling = [is_data["is_adv"][j] + is_data["is_sell"][j] + is_data["is_dc_opex"][j]
-                      for j in range(int(fs_n_years))]
-    other_opex = [is_data["is_rd"][j] + is_data["is_dc_dep"][j] + is_data["is_idle"][j]
-                   for j in range(int(fs_n_years))]
-    operating_income = [gross_profit[j] + total_selling[j] + other_opex[j]
-                         for j in range(int(fs_n_years))]
-    net_interest = [is_data["is_int_rev"][j] + is_data["is_int_exp"][j]
-                     for j in range(int(fs_n_years))]
-    nibt = [operating_income[j] + net_interest[j] for j in range(int(fs_n_years))]
-    tax_expense = [-abs(nibt[j]) * fs_tax_rate if nibt[j] > 0 else 0 for j in range(int(fs_n_years))]
-    net_income = [nibt[j] + tax_expense[j] for j in range(int(fs_n_years))]
-
-    # Display computed lines
-    computed_lines = [
-        ("**Gross Profit**", gross_profit),
-        ("**Total Selling Expense**", total_selling),
-        ("**Other Operating Expense**", other_opex),
-        ("**Operating Income (EBIT)**", operating_income),
-        ("**Net Interest**", net_interest),
-        ("**Net Income Before Tax**", nibt),
-        ("Tax Expense (auto)", tax_expense),
-        ("**Net Income**", net_income),
-    ]
-    for label, vals in computed_lines:
-        row_cols = st.columns([2] + [1] * int(fs_n_years))
-        with row_cols[0]:
-            st.markdown(f"<span style='font-size:0.85rem;'>{label}</span>", unsafe_allow_html=True)
-        for j in range(int(fs_n_years)):
-            with row_cols[j + 1]:
-                color = "#2d6a2e" if vals[j] >= 0 else "#b22222"
-                st.markdown(f"<span style='font-size:0.85rem;color:{color};'>${vals[j]:,.0f}</span>",
-                             unsafe_allow_html=True)
-
-    # ── Balance Sheet ───────────────────────────────────────────────────────
+    # ═══════════════════════════════════════════════════════════════════════
+    # 3. BALANCE SHEET COMPARISON (Year 1 end vs Year 2 end)
+    # ═══════════════════════════════════════════════════════════════════════
     st.markdown("---")
-    st.markdown("### Balance Sheet")
-    st.caption("Enter values for Year 0 (starting) through Year N. Assets positive, liabilities positive.")
+    st.markdown("### 3. Balance Sheet Comparison — Year 2 End (per team)")
+    st.caption("Year 1 end is identical for all teams. Year 2 is where strategies diverge — "
+               "who invested in what factory/DC, who borrowed bonds, and who is cash-positive.")
 
-    BS_ITEMS = [
-        ("Cash", "bs_cash", 549000),
-        ("Accounts Receivable", "bs_ar", 0),
-        ("Inventory", "bs_inv", 0),
-        ("Tax Benefit", "bs_tax_ben", 0),
-        ("Land", "bs_land", 0),
-        ("Factories (gross)", "bs_fac_gross", 0),
-        ("DCs (gross)", "bs_dc_gross", 0),
-        ("Accumulated Depreciation", "bs_accum_dep", 0),
-        ("Accounts Payable", "bs_ap", 0),
-        ("Short-term Debt", "bs_st_debt", 0),
-        ("Taxes Payable", "bs_tax_pay", 0),
-        ("Dividends Payable", "bs_div_pay", 0),
-        ("Long-term Debt", "bs_lt_debt", 0),
-        ("Common Stock", "bs_stock", 0),
-        ("Retained Earnings", "bs_re", 0),
+    # BS Year 1 End (same for all)
+    BS_Y1 = {
+        "Cash": 549077, "AR": 240100, "WIP Inventory": 33157, "FG Inventory": 112683,
+        "Tax Benefit": 195024, "Total Current Assets": 1130041,
+        "Land": 200000, "Factory PPE": 100000, "Factory Accum Dep": -6667,
+        "DC PPE": 2500000, "DC Accum Dep": -166667, "Net PPE": 2426666,
+        "Total Assets": 3756708,
+        "AP": 0, "Raw Materials Payable": 20000, "Taxes Payable": 0,
+        "Other Payables": 98900, "Total CL": 118900,
+        "Bonds": 0,
+        "Contributed Capital": 4000000, "Retained Earnings": -362192,
+        "Total Equity": 3637808, "Total L+E": 3756708,
+    }
+
+    # BS Year 2 End (per team)
+    BS_Y2 = {
+        "B612":     {"Cash":739330,"AR":568480,"WIP":11405,"FG":201014,"TaxBen":43051,"TCA":1563280,"Land":300000,"FacPPE":600000,"FacDep":-30415,"DCPPE":2500000,"DCDep":-333333,"TotalAssets":4599532,"AP":0,"RawMat":80000,"EmLoan":0,"TaxPay":0,"OtherPay":132300,"TCL":212300,"Bonds":467189,"ContCap":4000000,"RE":-79957,"TotalEquity":3920043},
+        "Dune":     {"Cash":1122484,"AR":855410,"WIP":16153,"FG":118293,"TaxBen":0,"TCA":2112340,"Land":400000,"FacPPE":1100000,"FacDep":-35391,"DCPPE":2500000,"DCDep":-333333,"TotalAssets":5743616,"AP":0,"RawMat":170000,"EmLoan":0,"TaxPay":0,"OtherPay":222964,"TCL":392964,"Bonds":1127853,"ContCap":4000000,"RE":222798,"TotalEquity":4222798},
+        "Globex":   {"Cash":753624,"AR":371240,"WIP":0,"FG":395092,"TaxBen":123347,"TCA":1643303,"Land":300000,"FacPPE":600000,"FacDep":-31063,"DCPPE":2500000,"DCDep":-333333,"TotalAssets":4678907,"AP":710,"RawMat":0,"EmLoan":0,"TaxPay":0,"OtherPay":72210,"TCL":72920,"Bonds":835066,"ContCap":4000000,"RE":-229079,"TotalEquity":3770921},
+        "Gotham":   {"Cash":330695,"AR":394516,"WIP":10172,"FG":150578,"TaxBen":157045,"TCA":1043005,"Land":400000,"FacPPE":800000,"FacDep":-35239,"DCPPE":5000000,"DCDep":-342696,"TotalAssets":6865069,"AP":0,"RawMat":100000,"EmLoan":0,"TaxPay":0,"OtherPay":158127,"TCL":258127,"Bonds":2898602,"ContCap":4000000,"RE":-291659,"TotalEquity":3708341},
+        "Panem":    {"Cash":0,"AR":726650,"WIP":122124,"FG":363822,"TaxBen":19339,"TCA":1231935,"Land":500000,"FacPPE":1100000,"FacDep":-35929,"DCPPE":5000000,"DCDep":-345578,"TotalAssets":7450427,"AP":0,"RawMat":168250,"EmLoan":18631,"TaxPay":0,"OtherPay":236777,"TCL":423659,"Bonds":3062688,"ContCap":4000000,"RE":-35920,"TotalEquity":3964080},
+        "Vulcan":   {"Cash":303529,"AR":931825,"WIP":14470,"FG":200912,"TaxBen":59210,"TCA":1509946,"Land":300000,"FacPPE":600000,"FacDep":-36108,"DCPPE":2500000,"DCDep":-333333,"TotalAssets":4540505,"AP":0,"RawMat":119000,"EmLoan":0,"TaxPay":0,"OtherPay":186730,"TCL":305730,"Bonds":344741,"ContCap":4000000,"RE":-109966,"TotalEquity":3890034},
+        "Westeros": {"Cash":841942,"AR":734300,"WIP":17311,"FG":64397,"TaxBen":74762,"TCA":1732712,"Land":400000,"FacPPE":900000,"FacDep":-36022,"DCPPE":5000000,"DCDep":-344173,"TotalAssets":7652517,"AP":0,"RawMat":120000,"EmLoan":0,"TaxPay":0,"OtherPay":260973,"TCL":380973,"Bonds":3410393,"ContCap":4000000,"RE":-138849,"TotalEquity":3861151},
+        "Zion":     {"Cash":529410,"AR":633265,"WIP":12576,"FG":44083,"TaxBen":87979,"TCA":1307313,"Land":300000,"FacPPE":602000,"FacDep":-35311,"DCPPE":2500000,"DCDep":-333333,"TotalAssets":4340669,"AP":0,"RawMat":90000,"EmLoan":0,"TaxPay":0,"OtherPay":153355,"TCL":243355,"Bonds":260708,"ContCap":4000000,"RE":-163394,"TotalEquity":3836606},
+    }
+
+    # Display as comparison table
+    bs_compare_rows = []
+    items = [
+        ("Cash", "Cash"), ("Accounts Receivable", "AR"), ("WIP Inventory", "WIP"),
+        ("FG Inventory", "FG"), ("Tax Benefit", "TaxBen"),
+        ("Total Current Assets", "TCA"), ("Land", "Land"),
+        ("Factory PPE (gross)", "FacPPE"), ("Factory Accum Dep", "FacDep"),
+        ("DC PPE (gross)", "DCPPE"), ("DC Accum Dep", "DCDep"),
+        ("Total Assets", "TotalAssets"),
+        ("Total Current Liabilities", "TCL"), ("Bonds", "Bonds"),
+        ("Retained Earnings", "RE"), ("Total Equity", "TotalEquity"),
     ]
+    for label, key in items:
+        row = {"Item": label}
+        for t in TEAMS:
+            v = BS_Y2[t][key]
+            row[t] = f"${v:,.0f}"
+        bs_compare_rows.append(row)
+    st.dataframe(pd.DataFrame(bs_compare_rows), use_container_width=True, hide_index=True)
 
-    bs_n_periods = int(fs_n_years) + 1  # Year 0 through Year N
-    bs_period_labels = [year0_label] + year_labels
-
-    bs_data = {}
-    bs_hdr = st.columns([2] + [1] * bs_n_periods)
-    with bs_hdr[0]:
-        st.markdown("**Line Item**")
-    for j, pl in enumerate(bs_period_labels):
-        with bs_hdr[j + 1]:
-            st.markdown(f"**{pl}**")
-
-    for item_name, key_prefix, default in BS_ITEMS:
-        row_cols = st.columns([2] + [1] * bs_n_periods)
-        with row_cols[0]:
-            st.markdown(f"<span style='font-size:0.85rem;'>{item_name}</span>", unsafe_allow_html=True)
-        vals = []
-        for j in range(bs_n_periods):
-            with row_cols[j + 1]:
-                def_val = default if j == 0 and key_prefix == "bs_cash" else 0
-                v = st.number_input(f"{item_name} P{j}", value=def_val, step=1000,
-                                      label_visibility="collapsed",
-                                      key=f"fs_{key_prefix}_{j}")
-                vals.append(v)
-        bs_data[key_prefix] = vals
-
-    # Computed BS aggregates
-    total_ca = [bs_data["bs_cash"][j] + bs_data["bs_ar"][j] + bs_data["bs_inv"][j] + bs_data["bs_tax_ben"][j]
-                 for j in range(bs_n_periods)]
-    net_ppe = [bs_data["bs_land"][j] + bs_data["bs_fac_gross"][j] + bs_data["bs_dc_gross"][j]
-                + bs_data["bs_accum_dep"][j]  # accum dep is negative
-                for j in range(bs_n_periods)]
-    total_assets = [total_ca[j] + net_ppe[j] for j in range(bs_n_periods)]
-    total_cl = [bs_data["bs_ap"][j] + bs_data["bs_st_debt"][j] + bs_data["bs_tax_pay"][j]
-                 + bs_data["bs_div_pay"][j] for j in range(bs_n_periods)]
-    total_debt = [bs_data["bs_st_debt"][j] + bs_data["bs_lt_debt"][j] for j in range(bs_n_periods)]
-    total_liab = [total_cl[j] + bs_data["bs_lt_debt"][j] for j in range(bs_n_periods)]
-    total_equity = [bs_data["bs_stock"][j] + bs_data["bs_re"][j] for j in range(bs_n_periods)]
-    total_le = [total_liab[j] + total_equity[j] for j in range(bs_n_periods)]
-
-    bs_computed = [
-        ("**Total Current Assets**", total_ca),
-        ("**Net PPE**", net_ppe),
-        ("**Total Assets**", total_assets),
-        ("**Total Current Liabilities**", total_cl),
-        ("**Total Liabilities**", total_liab),
-        ("**Total Equity**", total_equity),
-        ("**Total L+E**", total_le),
-    ]
-    for label, vals in bs_computed:
-        row_cols = st.columns([2] + [1] * bs_n_periods)
-        with row_cols[0]:
-            st.markdown(f"<span style='font-size:0.85rem;'>{label}</span>", unsafe_allow_html=True)
-        for j in range(bs_n_periods):
-            with row_cols[j + 1]:
-                st.markdown(f"<span style='font-size:0.85rem;'>${vals[j]:,.0f}</span>",
-                             unsafe_allow_html=True)
-
-    # BS balance check
-    for j in range(bs_n_periods):
-        diff = total_assets[j] - total_le[j]
-        if abs(diff) > 1:
-            st.warning(f"⚠ **{bs_period_labels[j]}**: Assets (${total_assets[j]:,.0f}) ≠ L+E (${total_le[j]:,.0f}). "
-                        f"Difference: ${diff:,.0f}")
-
-    # ── Ratio Analysis ──────────────────────────────────────────────────────
+    # ═══════════════════════════════════════════════════════════════════════
+    # 4. KEY RATIOS — YEAR 2 (all 8 teams)
+    # ═══════════════════════════════════════════════════════════════════════
     st.markdown("---")
-    st.markdown("### Ratio Analysis")
-    st.caption("Auto-computed from the Booth ISM framework: Profitability (ROA tree), Risk (Liquidity + Solvency), "
-               "Efficiency (Turnover), Growth. Average assets uses Year (N-1) and Year N.")
+    st.markdown("### 4. Key Financial Ratios — Year 2")
+    st.caption("Derived from BS Year 1→Year 2 change. Year 2 Net Income = RE(Y2 end) − RE(Y1 end).")
 
-    ratio_tabs = st.tabs(["Profitability (ROA)", "Risk & Liquidity", "Efficiency & Turnover", "Common-Size P&L", "Trends"])
+    ratio_rows = []
+    for t in TEAMS:
+        y2 = BS_Y2[t]
+        y2_ni = y2["RE"] - BS_Y1["Retained Earnings"]
+        avg_assets = (BS_Y1["Total Assets"] + y2["TotalAssets"]) / 2
+        roa = y2_ni / avg_assets if avg_assets else 0
+        de = (y2["Bonds"] + y2.get("EmLoan", 0)) / y2["TotalEquity"] if y2["TotalEquity"] else 0
+        cr = y2["TCA"] / y2["TCL"] if y2["TCL"] else float("inf")
+        cr_str = f"{cr:.2f}x" if cr < float("inf") else "No CL"
+        capex = y2["Land"] + y2["FacPPE"] - BS_Y1["Land"] - BS_Y1["Factory PPE"]
+        dc_capex = y2["DCPPE"] - BS_Y1["DC PPE"]
+        total_invest = capex + dc_capex
+        bold = t == US
+        ratio_rows.append({
+            "Team": f"**{t}**" if bold else t,
+            "Y2 Net Income": f"${y2_ni:,.0f}",
+            "Y2 End Assets": f"${y2['TotalAssets']:,.0f}",
+            "ROA (NI/Avg A)": f"{roa:.1%}",
+            "Current Ratio": cr_str,
+            "Debt/Equity": f"{de:.2f}x",
+            "Bonds Outstanding": f"${y2['Bonds']:,.0f}",
+            "Factory + Land Capex": f"${capex:,.0f}",
+            "DC Capex": f"${dc_capex:,.0f}",
+            "Cash (Y2 end)": f"${y2['Cash']:,.0f}",
+        })
+    st.dataframe(pd.DataFrame(ratio_rows), use_container_width=True, hide_index=True)
 
-    # ── Tab 1: Profitability / ROA ──────────────────────────────────────────
-    with ratio_tabs[0]:
-        st.markdown("**ROA = Profit Margin × Total Asset Turnover**")
-        prof_rows = []
-        for j in range(int(fs_n_years)):
-            rev = is_data["is_rev"][j]
-            oi = operating_income[j]
-            ni = net_income[j]
-            avg_assets = (total_assets[j] + total_assets[j + 1]) / 2 if total_assets[j] + total_assets[j + 1] > 0 else 1
-            roa = _safe_div(oi, avg_assets)
-            pm = _safe_div(oi, rev)
-            tat = _safe_div(rev, avg_assets)
-            gm = _safe_div(gross_profit[j], rev)
-            npm = _safe_div(ni, rev)
-            prof_rows.append({
-                "Year": year_labels[j],
-                "Revenue": f"${rev:,.0f}",
-                "Gross Margin": f"{gm:.1%}",
-                "Op. Income (EBIT)": f"${oi:,.0f}",
-                "Profit Margin (OI/Rev)": f"{pm:.1%}",
-                "Avg Assets": f"${avg_assets:,.0f}",
-                "Asset Turnover (Rev/Avg A)": f"{tat:.2f}x",
-                "ROA (OI/Avg A)": f"{roa:.1%}",
-                "Net Profit Margin": f"{npm:.1%}",
-            })
-        st.dataframe(pd.DataFrame(prof_rows), use_container_width=True, hide_index=True)
+    # Visual: Net Income comparison
+    y2_ni_vals = {t: BS_Y2[t]["RE"] - BS_Y1["Retained Earnings"] for t in TEAMS}
+    fig_ni = go.Figure()
+    colors = ["#800000" if t == US else "#1a3c5e" for t in TEAMS]
+    fig_ni.add_trace(go.Bar(
+        x=TEAMS, y=[y2_ni_vals[t] for t in TEAMS],
+        marker_color=colors,
+        text=[f"${y2_ni_vals[t]:,.0f}" for t in TEAMS],
+        textposition="outside",
+    ))
+    fig_ni.update_layout(height=350, yaxis_tickformat="$,.0f",
+                          title=dict(text="Year 2 Net Income by Team (Panem = maroon)", x=0.5, xanchor="center", y=0.97),
+                          margin=dict(l=0, r=0, t=50, b=0))
+    st.plotly_chart(fig_ni, use_container_width=True)
 
-        # ROA context
-        st.info("**Interpretation:** If ROA > asset cost of capital → creating value. "
-                "Excellent bond rating needs EBIT/interest ≥ 20×. Good = ≥ 7×.")
+    # Bonds + Cash chart
+    fig_debt = go.Figure()
+    fig_debt.add_trace(go.Bar(x=TEAMS, y=[BS_Y2[t]["Bonds"] for t in TEAMS],
+                                name="Bonds Outstanding", marker_color="#b22222"))
+    fig_debt.add_trace(go.Bar(x=TEAMS, y=[BS_Y2[t]["Cash"] for t in TEAMS],
+                                name="Cash Position", marker_color="#2d6a2e"))
+    fig_debt.update_layout(height=350, barmode="group", yaxis_tickformat="$,.0f",
+                             title=dict(text="Bonds vs Cash (Year 2 End)", x=0.5, xanchor="center", y=0.97),
+                             margin=dict(l=0, r=0, t=50, b=0),
+                             legend=dict(orientation="h", yanchor="top", y=1.10, xanchor="center", x=0.5))
+    st.plotly_chart(fig_debt, use_container_width=True)
 
-    # ── Tab 2: Risk & Liquidity ─────────────────────────────────────────────
-    with ratio_tabs[1]:
-        risk_rows = []
-        for j in range(int(fs_n_years)):
-            cr = _safe_div(total_ca[j + 1], total_cl[j + 1]) if total_cl[j + 1] else 0
-            de = _safe_div(total_debt[j + 1], total_equity[j + 1]) if total_equity[j + 1] else 0
-            da = _safe_div(total_debt[j + 1], total_assets[j + 1]) if total_assets[j + 1] else 0
-            interest_exp = abs(is_data["is_int_exp"][j]) if is_data["is_int_exp"][j] else 0
-            icr = _safe_div(operating_income[j], interest_exp) if interest_exp > 0 else float("inf")
-            icr_str = f"{icr:.1f}x" if icr < float("inf") else "No debt"
-            rating = ("Excellent (≤10%)" if icr >= 20 else
-                       "Good (≤15%)" if icr >= 7 else
-                       "Poor (≤25%)" if icr >= 2 else
-                       "Emergency (40%)")
-            risk_rows.append({
-                "Year": year_labels[j],
-                "Current Ratio": f"{cr:.2f}x",
-                "Debt / Equity": f"{de:.2f}x",
-                "Debt / Assets": f"{da:.1%}",
-                "Interest Coverage (EBIT/Int)": icr_str,
-                "Implied Bond Rating": rating,
-            })
-        st.dataframe(pd.DataFrame(risk_rows), use_container_width=True, hide_index=True)
-
-        st.info("**Bond rating tiers:** Excellent ≥20× (10% APR), Good ≥7× (15% APR), Poor ≥2× (25%), "
-                "Emergency = 40% APR. Per ISM War Strategy: target Excellent or Good by Day 91 (Q1 EBIT locks).")
-
-    # ── Tab 3: Efficiency / Turnover ────────────────────────────────────────
-    with ratio_tabs[2]:
-        eff_rows = []
-        for j in range(int(fs_n_years)):
-            rev = is_data["is_rev"][j]
-            cogs = abs(is_data["is_cogs"][j])
-            avg_ar = (bs_data["bs_ar"][j] + bs_data["bs_ar"][j + 1]) / 2
-            avg_inv = (bs_data["bs_inv"][j] + bs_data["bs_inv"][j + 1]) / 2
-            avg_ppe = (net_ppe[j] + net_ppe[j + 1]) / 2
-            ar_turn = _safe_div(rev, avg_ar)
-            dso = _safe_div(fs_days_per_year, ar_turn) if ar_turn > 0 else 0
-            inv_turn = _safe_div(cogs, avg_inv)
-            dio = _safe_div(fs_days_per_year, inv_turn) if inv_turn > 0 else 0
-            ppe_turn = _safe_div(rev, avg_ppe)
-            eff_rows.append({
-                "Year": year_labels[j],
-                "AR Turnover": f"{ar_turn:.1f}x",
-                "DSO (days)": f"{dso:.0f}",
-                "Inventory Turnover": f"{inv_turn:.1f}x",
-                "DIO (days)": f"{dio:.0f}",
-                "PPE Turnover": f"{ppe_turn:.2f}x",
-            })
-        st.dataframe(pd.DataFrame(eff_rows), use_container_width=True, hide_index=True)
-
-        st.caption("**DSO** = Days Sales Outstanding (lower = faster collection). "
-                   "**DIO** = Days Inventory Outstanding (lower = less capital tied up). "
-                   "Per strategy: DOH target 15–30 days, mail shipping throughout Year 1.")
-
-    # ── Tab 4: Common-Size P&L ──────────────────────────────────────────────
-    with ratio_tabs[3]:
-        cs_rows = []
-        items_for_cs = [
-            ("Net Revenue", [is_data["is_rev"][j] for j in range(int(fs_n_years))]),
-            ("COGS", [is_data["is_cogs"][j] for j in range(int(fs_n_years))]),
-            ("Gross Profit", gross_profit),
-            ("Advertising", [is_data["is_adv"][j] for j in range(int(fs_n_years))]),
-            ("Selling Expense", [is_data["is_sell"][j] for j in range(int(fs_n_years))]),
-            ("DC Operating", [is_data["is_dc_opex"][j] for j in range(int(fs_n_years))]),
-            ("R&D", [is_data["is_rd"][j] for j in range(int(fs_n_years))]),
-            ("DC Depreciation", [is_data["is_dc_dep"][j] for j in range(int(fs_n_years))]),
-            ("Idle Factory", [is_data["is_idle"][j] for j in range(int(fs_n_years))]),
-            ("Operating Income", operating_income),
-            ("Net Interest", net_interest),
-            ("Net Income", net_income),
-        ]
-        for label, vals in items_for_cs:
-            row = {"Line": label}
-            for j in range(int(fs_n_years)):
-                rev = is_data["is_rev"][j]
-                pct = _safe_div(vals[j], rev)
-                row[year_labels[j]] = f"{pct:.1%}" if rev else "n/a"
-            cs_rows.append(row)
-        st.dataframe(pd.DataFrame(cs_rows), use_container_width=True, hide_index=True)
-
-        st.caption("All lines as % of Net Revenue. Useful for spotting cost structure shifts across years.")
-
-    # ── Tab 5: Trend Charts ─────────────────────────────────────────────────
-    with ratio_tabs[4]:
-        if int(fs_n_years) >= 2:
-            # Revenue + Operating Income + Net Income trend
-            fig_trend = go.Figure()
-            fig_trend.add_trace(go.Bar(x=year_labels, y=is_data["is_rev"],
-                                         name="Revenue", marker_color="#1a3c5e"))
-            fig_trend.add_trace(go.Bar(x=year_labels, y=operating_income,
-                                         name="Op. Income", marker_color="#2d6a2e"))
-            fig_trend.add_trace(go.Bar(x=year_labels, y=net_income,
-                                         name="Net Income", marker_color="#b8860b"))
-            fig_trend.update_layout(
-                height=350, yaxis_tickformat="$,.0f", barmode="group",
-                title=dict(text="Revenue / Operating Income / Net Income by Year",
-                             x=0.5, xanchor="center", y=0.97),
-                margin=dict(l=0, r=0, t=50, b=0),
-                legend=dict(orientation="h", yanchor="top", y=1.10, xanchor="center", x=0.5),
-            )
-            st.plotly_chart(fig_trend, use_container_width=True)
-
-            # ROA + PM + TAT trend
-            roa_vals, pm_vals, tat_vals, cr_vals = [], [], [], []
-            for j in range(int(fs_n_years)):
-                rev = is_data["is_rev"][j]
-                oi = operating_income[j]
-                avg_a = (total_assets[j] + total_assets[j + 1]) / 2 if total_assets[j] + total_assets[j + 1] else 1
-                roa_vals.append(_safe_div(oi, avg_a))
-                pm_vals.append(_safe_div(oi, rev))
-                tat_vals.append(_safe_div(rev, avg_a))
-                cr_vals.append(_safe_div(total_ca[j + 1], total_cl[j + 1]) if total_cl[j + 1] else 0)
-
-            fig_ratios = go.Figure()
-            fig_ratios.add_trace(go.Scatter(x=year_labels, y=[r * 100 for r in roa_vals],
-                                              name="ROA %", line=dict(color="#800000", width=2.5)))
-            fig_ratios.add_trace(go.Scatter(x=year_labels, y=[r * 100 for r in pm_vals],
-                                              name="Profit Margin %", line=dict(color="#1a3c5e", width=2.5)))
-            fig_ratios.update_layout(
-                height=320, yaxis_title="%", yaxis_ticksuffix="%",
-                title=dict(text="ROA and Profit Margin Trend", x=0.5, xanchor="center", y=0.97),
-                margin=dict(l=0, r=0, t=50, b=0),
-                legend=dict(orientation="h", yanchor="top", y=1.10, xanchor="center", x=0.5),
-            )
-            st.plotly_chart(fig_ratios, use_container_width=True)
-
-            # Asset composition stacked bar
-            fig_bs = go.Figure()
-            fig_bs.add_trace(go.Bar(x=bs_period_labels, y=total_ca, name="Current Assets",
-                                      marker_color="#1a3c5e"))
-            fig_bs.add_trace(go.Bar(x=bs_period_labels, y=net_ppe, name="Net PPE",
-                                      marker_color="#b8860b"))
-            fig_bs.update_layout(
-                height=320, barmode="stack", yaxis_tickformat="$,.0f",
-                title=dict(text="Asset Composition by Period", x=0.5, xanchor="center", y=0.97),
-                margin=dict(l=0, r=0, t=50, b=0),
-                legend=dict(orientation="h", yanchor="top", y=1.10, xanchor="center", x=0.5),
-            )
-            st.plotly_chart(fig_bs, use_container_width=True)
-        else:
-            st.info("Add at least 2 years of data to see trend charts.")
-
-    # ── Quick Reference from War Strategy ───────────────────────────────────
+    # ═══════════════════════════════════════════════════════════════════════
+    # 5. MARKET SHARE GRID (Day 1,001)
+    # ═══════════════════════════════════════════════════════════════════════
     st.markdown("---")
-    with st.expander("📋 Quick Reference — Key Numbers (from ISM War Strategy)", expanded=False):
+    st.markdown("### 5. Market Share Grid (Day 1,001 — % of segment)")
+    st.caption("From Market Grid report. Shows which teams are in which markets and their share. "
+               "NaN = not competing in that segment. Panem column highlighted.")
+
+    MKT_DATA = {
+        "MD - Heart":           {"B612":0.4531,"Dune":0.3780,"Globex":0.3101,"Gotham":0.3942,"Panem":0.4224,"Vulcan":0.4106,"Westeros":0.5203,"Zion":0.4506},
+        "MD - Breast":          {"Panem":0.0065},
+        "MD - Bladder & Kidney":{"Dune":0.0119,"Gotham":0.0291,"Globex":0.1349,"Panem":0.0097},
+        "MD - Lymphoma":        {"B612":0.0005,"Dune":0.0566},
+        "MD - Blood & Bone":    {"Panem":0.0003},
+        "MD - Estrogen":        {"Vulcan":0.0948},
+        "MD - Thyroxine":       {"B612":0.0011,"Dune":0.0333,"Gotham":0.1537,"Globex":0.0020,"Vulcan":0.0226,"Zion":0.0290},
+        "MD - Bilirubin":       {"Dune":0.4414,"Gotham":0.0592,"Vulcan":0.0193,"Westeros":0.0649},
+        "MD - Proteins":        {"Dune":0.2039,"Gotham":0.1440,"Globex":0.0122,"Panem":0.0327,"Vulcan":0.0127,"Zion":0.0748},
+        "MD - Uric Acid":       {"B612":0.0015,"Gotham":0.1200,"Vulcan":0.0200,"Westeros":0.1249,"Zion":0.0139},
+        "Law - Ethanol":        {"Gotham":0.0121,"Zion":0.0440},
+        "Law - Narcotic":       {"B612":0.0200,"Dune":0.0310,"Gotham":0.0741,"Globex":0.0490,"Panem":0.0158,"Vulcan":0.2281,"Westeros":0.1292,"Zion":0.0544},
+        "Military - Botulinum": {"Zion":0.0421},
+        "Military - Sarin":     {"Zion":0.0145},
+    }
+    mkt_rows = []
+    all_teams_order = TEAMS
+    for mkt, shares in MKT_DATA.items():
+        row = {"Market": mkt}
+        for t in all_teams_order:
+            if t in shares:
+                row[t] = f"{shares[t]:.1%}"
+            else:
+                row[t] = "—"
+        mkt_rows.append(row)
+    st.dataframe(pd.DataFrame(mkt_rows), use_container_width=True, hide_index=True)
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # 6. COMPETITIVE INTELLIGENCE INSIGHTS
+    # ═══════════════════════════════════════════════════════════════════════
+    st.markdown("---")
+    st.markdown("### 6. Competitive Intelligence")
+
+    ci_c1, ci_c2 = st.columns(2)
+    with ci_c1:
         st.markdown("""
-| Item | Value |
-|------|-------|
-| Starting cash | $549K |
-| Line factory total | $600K ($100K land + $500K capex) |
-| DC total | $2.6M + $2K/day + fulfillment |
-| Sales commission (retailer) | 20% |
-| Handling (retailer) | $10/unit |
-| Mail same-region | $200/shipment (10 units) |
-| Mail inter-region | $400/shipment |
-| Container same-region | $5K / 1,000 units / 7d |
-| Container inter-region | $10K / 21d |
-| Bond rating: Excellent | EBIT/Interest ≥ 20× → ≤10% APR |
-| Bond rating: Good | EBIT/Interest ≥ 7× → ≤15% APR |
-| Bond rating: Poor | EBIT/Interest ≥ 2× → ≤25% APR |
-| Emergency loan | 40% APR — avoid |
-| Tax rate | 35% |
-| Depreciation | 15-year straight-line |
-| 364-day compounding | EAR = (1 + APR/364)^364 − 1 |
-| WC float | Materials 30d, others 15d ≈ $100–150K free float |
-| No dividends Year 1 | 6.5% after-tax < bond APR — retire debt first |
+**Investment patterns (Year 2 Capex):**
+- **Gotham, Panem, Westeros** built 2nd DC ($2.5M each) — heavy debt, big bets
+- **Dune** invested heavily in factory ($1M+ capex) but kept 1 DC
+- **B612, Globex, Vulcan, Zion** kept lean — 1 DC, modest factory upgrades
+- **Panem** and **Westeros** have emergency loan / negative cash — watch liquidity
+
+**Who's profitable in Year 2:**
+- **Dune** leads NI at ~$585K — highest revenue machine
+- **Panem** 2nd at ~$326K — strong recovery from Y1 losses
+- **B612** 3rd at ~$282K — lean strategy paying off
+- **Globex, Gotham** barely positive — heavy costs eating margin
+""")
+    with ci_c2:
+        st.markdown("""
+**Market positioning (who's where):**
+- **MD Heart**: everyone competes — most crowded, Westeros leads (52%)
+- **Bilirubin**: Dune dominates (44%), big moat
+- **Proteins**: Dune (20%) + Gotham (14%) lead; Panem entering (3%)
+- **Uric Acid**: Gotham (12%) + Westeros (12%) lead
+- **Law Narcotic**: Vulcan dominates (23%), Westeros 2nd (13%)
+- **Military**: Only Zion in Botulinum (4%) + Sarin (1%) — Serenity-only play
+- **Cancer markets**: Mostly untapped — Globex leads B&K (13%), Dune Lymphoma (6%)
+- **Panem** is in Heart + B&K + Breast + Blood&Bone + Proteins + Narcotic — broad but thin
+
+**Key threats:**
+- Dune's Bilirubin moat + Proteins lead = high-WTP markets locked
+- Vulcan's Narcotic dominance (23%) — hard to dislodge
+- Zion is the ONLY military player — first-mover in Serenity
 """)
 
+    st.info("""
+**Panem strategic takeaways:**
+1. **Cash crisis**: $0 cash + emergency loan — Chris needs to manage WC aggressively
+2. **2nd DC investment paying off**: $5M DC PPE = Gotham/Westeros/Panem bet on volume
+3. **Market diversification**: 6 segments entered, but thin share — need to concentrate
+4. **Year 2 NI $326K vs Year 1 NI -$362K**: turnaround achieved, now compound
+5. **Bond load $3.1M**: retire aggressively once cash flow stabilizes (per war strategy: ≥7× coverage)
+""")
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # 7. QUARTERLY P&L — Q5-Q11 (Year 2 + Year 3 — teams diverge)
+    # ═══════════════════════════════════════════════════════════════════════
+    st.markdown("---")
+    st.markdown("### 7. Quarterly P&L — Revenue & Net Income Tracker (Q1-Q11)")
+    st.caption("Q1-Q4 = Year 1 (all teams identical). Q5-Q8 = Year 2. Q9-Q11 = Year 3 (partial). "
+               "Data from game screenshots at 15 Apr 2026 21:50.")
+
+    QS_REV = {
+        "Q1":  {"B612":303800,"Dune":303800,"Globex":303800,"Gotham":303800,"Panem":303800,"Vulcan":303800,"Westeros":303800,"Zion":303800},
+        "Q2":  {"B612":456400,"Dune":456400,"Globex":456400,"Gotham":456400,"Panem":456400,"Vulcan":456400,"Westeros":456400,"Zion":456400},
+        "Q3":  {"B612":543200,"Dune":543200,"Globex":543200,"Gotham":543200,"Panem":543200,"Vulcan":543200,"Westeros":543200,"Zion":543200},
+        "Q4":  {"B612":682500,"Dune":682500,"Globex":682500,"Gotham":682500,"Panem":682500,"Vulcan":682500,"Westeros":682500,"Zion":682500},
+        "Q5":  {"B612":557700,"Dune":490700,"Globex":860520,"Gotham":465400,"Panem":254534,"Vulcan":572632,"Westeros":586400,"Zion":712950},
+        "Q6":  {"B612":454210,"Dune":721642,"Globex":516760,"Gotham":578765,"Panem":1011840,"Vulcan":841692,"Westeros":744770,"Zion":455690},
+        "Q7":  {"B612":1157040,"Dune":1616820,"Globex":1441350,"Gotham":1012758,"Panem":2989818,"Vulcan":1196202,"Westeros":2112140,"Zion":795900},
+        "Q8":  {"B612":1922940,"Dune":2753825,"Globex":1678780,"Gotham":1201540,"Panem":2250812,"Vulcan":1683250,"Westeros":2366700,"Zion":1680710},
+        "Q9":  {"B612":1924450,"Dune":4251970,"Globex":2547200,"Gotham":2715577,"Panem":4237180,"Vulcan":2718920,"Westeros":4037000,"Zion":2703000},
+        "Q10": {"B612":2151275,"Dune":4894122,"Globex":3907810,"Gotham":3405599,"Panem":4936775,"Vulcan":4313130,"Westeros":5216000,"Zion":4606355},
+        "Q11": {"B612":3301635,"Dune":10013067,"Globex":5597460,"Gotham":3662966,"Panem":5359363,"Vulcan":5892120,"Westeros":9050848,"Zion":6930325},
+    }
+
+    QS_NI = {
+        "Q1":  {t:-105950 for t in TEAMS},
+        "Q2":  {t:-99332 for t in TEAMS},
+        "Q3":  {t:-91294 for t in TEAMS},
+        "Q4":  {t:-65615 for t in TEAMS},
+        "Q5":  {"B612":-69814,"Dune":-156981,"Globex":-49285,"Gotham":-77656,"Panem":-113804,"Vulcan":-71404,"Westeros":-95807,"Zion":-66427},
+        "Q6":  {"B612":-76938,"Dune":8147,"Globex":-66910,"Gotham":2691,"Panem":77182,"Vulcan":49883,"Westeros":-24828,"Zion":-8374},
+        "Q7":  {"B612":148742,"Dune":232543,"Globex":285041,"Gotham":195854,"Panem":204772,"Vulcan":62955,"Westeros":327946,"Zion":39315},
+        "Q8":  {"B612":280245,"Dune":501281,"Globex":-35733,"Gotham":-50357,"Panem":158123,"Vulcan":210781,"Westeros":16032,"Zion":234484},
+        "Q9":  {"B612":446342,"Dune":466280,"Globex":320018,"Gotham":280547,"Panem":583117,"Vulcan":419479,"Westeros":439506,"Zion":-51289},
+        "Q10": {"B612":304958,"Dune":614390,"Globex":389796,"Gotham":432589,"Panem":609577,"Vulcan":485796,"Westeros":553769,"Zion":583567},
+        "Q11": {"B612":405691,"Dune":2191363,"Globex":593505,"Gotham":240793,"Panem":891330,"Vulcan":390377,"Westeros":1404629,"Zion":932846},
+    }
+
+    qs_all = list(QS_REV.keys())
+
+    # Revenue trend chart — Panem vs key competitors
+    fig_rev_q = go.Figure()
+    team_colors = {"Panem":"#800000","Dune":"#1a3c5e","Westeros":"#b8860b",
+                    "Zion":"#2d6a2e","Globex":"#6a5acd","B612":"#888",
+                    "Gotham":"#cd853f","Vulcan":"#4682b4"}
+    for t in TEAMS:
+        width = 3 if t == US else 1.5
+        dash = None if t == US else "dot"
+        fig_rev_q.add_trace(go.Scatter(
+            x=qs_all, y=[QS_REV[q][t] for q in qs_all],
+            name=t, line=dict(color=team_colors.get(t, "#888"), width=width, dash=dash),
+        ))
+    fig_rev_q.update_layout(
+        height=400, yaxis_tickformat="$,.0f", yaxis_title="Revenue ($)",
+        title=dict(text="Quarterly Revenue — All Teams (Panem = bold maroon)", x=0.5, xanchor="center", y=0.97),
+        margin=dict(l=0, r=0, t=50, b=0),
+        legend=dict(orientation="h", yanchor="top", y=1.12, xanchor="center", x=0.5),
+    )
+    st.plotly_chart(fig_rev_q, use_container_width=True)
+
+    # Net Income trend chart
+    fig_ni_q = go.Figure()
+    for t in TEAMS:
+        width = 3 if t == US else 1.5
+        dash = None if t == US else "dot"
+        fig_ni_q.add_trace(go.Scatter(
+            x=qs_all, y=[QS_NI[q][t] for q in qs_all],
+            name=t, line=dict(color=team_colors.get(t, "#888"), width=width, dash=dash),
+        ))
+    fig_ni_q.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
+    fig_ni_q.update_layout(
+        height=400, yaxis_tickformat="$,.0f", yaxis_title="Net Income ($)",
+        title=dict(text="Quarterly Net Income — All Teams", x=0.5, xanchor="center", y=0.97),
+        margin=dict(l=0, r=0, t=50, b=0),
+        legend=dict(orientation="h", yanchor="top", y=1.12, xanchor="center", x=0.5),
+    )
+    st.plotly_chart(fig_ni_q, use_container_width=True)
+
+    # Cumulative Revenue
+    st.markdown("**Cumulative Revenue (Q1-Q11)**")
+    cum_rev = {}
+    for t in TEAMS:
+        cum = 0
+        for q in qs_all:
+            cum += QS_REV[q][t]
+        cum_rev[t] = cum
+    sorted_teams = sorted(cum_rev.keys(), key=lambda x: cum_rev[x], reverse=True)
+    fig_cum = go.Figure()
+    colors_cum = ["#800000" if t == US else "#1a3c5e" for t in sorted_teams]
+    fig_cum.add_trace(go.Bar(
+        x=sorted_teams, y=[cum_rev[t] for t in sorted_teams],
+        marker_color=colors_cum,
+        text=[f"${cum_rev[t]/1e6:.1f}M" for t in sorted_teams],
+        textposition="outside",
+    ))
+    fig_cum.update_layout(height=350, yaxis_tickformat="$,.0f",
+                            title=dict(text="Cumulative Revenue Q1-Q11 (Panem = maroon)", x=0.5, xanchor="center", y=0.97),
+                            margin=dict(l=0, r=0, t=50, b=0))
+    st.plotly_chart(fig_cum, use_container_width=True)
+
+    st.markdown("---")
+    st.caption("Data source: 15 April 2026 War Room findings folder — BS Year 1 & 2, P&L Q1-Q11, Scoreboard Day 1001, Market Grid.")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
