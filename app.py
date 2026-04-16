@@ -205,6 +205,7 @@ with st.sidebar:
         "Navigate",
         [
             "🎯 15-16 War Room",
+            "📊 15-16 P&L / BS Dashboard",
             "🚀 14 Trial War Room",
             "🏭 13 Trial War Room",
             "⚔️ 12 Trial War Room",
@@ -5865,6 +5866,407 @@ scale with YOUR cumulative share, which is still tiny.
 This is why the $600K scramble matters. The Line factory doesn't just produce more per day — it gets
 you to scale fast enough that the imitator flywheel starts spinning for YOU before a competitor locks it in.
         """)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE: 15-16 P&L / BALANCE SHEET DASHBOARD
+# Interactive financial statement inputs with auto-computed ratios, common-size
+# analysis, and visual trend charts. Framework from Booth ISM FS Analysis slides.
+# ══════════════════════════════════════════════════════════════════════════════
+
+elif page == "📊 15-16 P&L / BS Dashboard":
+    st.markdown('<p class="big-header">P&L / Balance Sheet Dashboard</p>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-header">15-16 War Room — Financial Statement Analysis per ISM Assignment 5 Framework</p>',
+                unsafe_allow_html=True)
+    st.caption("Enter your team's P&L and BS by year. Ratios auto-compute per the Booth ISM ROA/Risk/Growth framework. "
+               "Add competitor data in the expander to compare side-by-side.")
+
+    # ── Assumptions ─────────────────────────────────────────────────────────
+    asum_c1, asum_c2, asum_c3 = st.columns(3)
+    with asum_c1:
+        fs_tax_rate = st.number_input("Income Tax Rate", value=0.35, step=0.01,
+                                        format="%.2f", key="fs_tax")
+    with asum_c2:
+        fs_days_per_year = st.number_input("Days per Year", value=364, step=1, key="fs_dpy")
+    with asum_c3:
+        fs_n_years = st.number_input("Number of Years", min_value=1, max_value=5,
+                                       value=3, step=1, key="fs_n_years")
+
+    year_labels = [f"Year {y}" for y in range(1, int(fs_n_years) + 1)]
+    year0_label = "Year 0 (start)"
+
+    # ── Income Statement ────────────────────────────────────────────────────
+    st.markdown("---")
+    st.markdown("### Income Statement")
+    st.caption("Enter revenues as **positive** values, expenses as **negative** values.")
+
+    IS_ITEMS = [
+        ("Net Revenue", "is_rev", 0),
+        ("Cost of Goods Sold", "is_cogs", 0),
+        ("Advertising Expense", "is_adv", 0),
+        ("Selling Expense (commissions + handling)", "is_sell", 0),
+        ("DC Operating Expense", "is_dc_opex", 0),
+        ("R&D Expense", "is_rd", 0),
+        ("DC Depreciation Expense", "is_dc_dep", 0),
+        ("Idle Factory Expense", "is_idle", 0),
+        ("Interest Revenue", "is_int_rev", 0),
+        ("Interest Expense", "is_int_exp", 0),
+    ]
+
+    is_data = {}
+    is_cols = st.columns([2] + [1] * int(fs_n_years))
+    with is_cols[0]:
+        st.markdown("**Line Item**")
+    for j, yl in enumerate(year_labels):
+        with is_cols[j + 1]:
+            st.markdown(f"**{yl}**")
+
+    for item_name, key_prefix, default in IS_ITEMS:
+        row_cols = st.columns([2] + [1] * int(fs_n_years))
+        with row_cols[0]:
+            st.markdown(f"<span style='font-size:0.85rem;'>{item_name}</span>", unsafe_allow_html=True)
+        vals = []
+        for j in range(int(fs_n_years)):
+            with row_cols[j + 1]:
+                v = st.number_input(f"{item_name} Y{j+1}", value=default, step=1000,
+                                      label_visibility="collapsed",
+                                      key=f"fs_{key_prefix}_{j}")
+                vals.append(v)
+        is_data[key_prefix] = vals
+
+    # Computed P&L lines
+    def _safe_div(a, b):
+        return a / b if b and b != 0 else 0
+
+    gross_profit = [is_data["is_rev"][j] + is_data["is_cogs"][j] for j in range(int(fs_n_years))]
+    total_selling = [is_data["is_adv"][j] + is_data["is_sell"][j] + is_data["is_dc_opex"][j]
+                      for j in range(int(fs_n_years))]
+    other_opex = [is_data["is_rd"][j] + is_data["is_dc_dep"][j] + is_data["is_idle"][j]
+                   for j in range(int(fs_n_years))]
+    operating_income = [gross_profit[j] + total_selling[j] + other_opex[j]
+                         for j in range(int(fs_n_years))]
+    net_interest = [is_data["is_int_rev"][j] + is_data["is_int_exp"][j]
+                     for j in range(int(fs_n_years))]
+    nibt = [operating_income[j] + net_interest[j] for j in range(int(fs_n_years))]
+    tax_expense = [-abs(nibt[j]) * fs_tax_rate if nibt[j] > 0 else 0 for j in range(int(fs_n_years))]
+    net_income = [nibt[j] + tax_expense[j] for j in range(int(fs_n_years))]
+
+    # Display computed lines
+    computed_lines = [
+        ("**Gross Profit**", gross_profit),
+        ("**Total Selling Expense**", total_selling),
+        ("**Other Operating Expense**", other_opex),
+        ("**Operating Income (EBIT)**", operating_income),
+        ("**Net Interest**", net_interest),
+        ("**Net Income Before Tax**", nibt),
+        ("Tax Expense (auto)", tax_expense),
+        ("**Net Income**", net_income),
+    ]
+    for label, vals in computed_lines:
+        row_cols = st.columns([2] + [1] * int(fs_n_years))
+        with row_cols[0]:
+            st.markdown(f"<span style='font-size:0.85rem;'>{label}</span>", unsafe_allow_html=True)
+        for j in range(int(fs_n_years)):
+            with row_cols[j + 1]:
+                color = "#2d6a2e" if vals[j] >= 0 else "#b22222"
+                st.markdown(f"<span style='font-size:0.85rem;color:{color};'>${vals[j]:,.0f}</span>",
+                             unsafe_allow_html=True)
+
+    # ── Balance Sheet ───────────────────────────────────────────────────────
+    st.markdown("---")
+    st.markdown("### Balance Sheet")
+    st.caption("Enter values for Year 0 (starting) through Year N. Assets positive, liabilities positive.")
+
+    BS_ITEMS = [
+        ("Cash", "bs_cash", 549000),
+        ("Accounts Receivable", "bs_ar", 0),
+        ("Inventory", "bs_inv", 0),
+        ("Tax Benefit", "bs_tax_ben", 0),
+        ("Land", "bs_land", 0),
+        ("Factories (gross)", "bs_fac_gross", 0),
+        ("DCs (gross)", "bs_dc_gross", 0),
+        ("Accumulated Depreciation", "bs_accum_dep", 0),
+        ("Accounts Payable", "bs_ap", 0),
+        ("Short-term Debt", "bs_st_debt", 0),
+        ("Taxes Payable", "bs_tax_pay", 0),
+        ("Dividends Payable", "bs_div_pay", 0),
+        ("Long-term Debt", "bs_lt_debt", 0),
+        ("Common Stock", "bs_stock", 0),
+        ("Retained Earnings", "bs_re", 0),
+    ]
+
+    bs_n_periods = int(fs_n_years) + 1  # Year 0 through Year N
+    bs_period_labels = [year0_label] + year_labels
+
+    bs_data = {}
+    bs_hdr = st.columns([2] + [1] * bs_n_periods)
+    with bs_hdr[0]:
+        st.markdown("**Line Item**")
+    for j, pl in enumerate(bs_period_labels):
+        with bs_hdr[j + 1]:
+            st.markdown(f"**{pl}**")
+
+    for item_name, key_prefix, default in BS_ITEMS:
+        row_cols = st.columns([2] + [1] * bs_n_periods)
+        with row_cols[0]:
+            st.markdown(f"<span style='font-size:0.85rem;'>{item_name}</span>", unsafe_allow_html=True)
+        vals = []
+        for j in range(bs_n_periods):
+            with row_cols[j + 1]:
+                def_val = default if j == 0 and key_prefix == "bs_cash" else 0
+                v = st.number_input(f"{item_name} P{j}", value=def_val, step=1000,
+                                      label_visibility="collapsed",
+                                      key=f"fs_{key_prefix}_{j}")
+                vals.append(v)
+        bs_data[key_prefix] = vals
+
+    # Computed BS aggregates
+    total_ca = [bs_data["bs_cash"][j] + bs_data["bs_ar"][j] + bs_data["bs_inv"][j] + bs_data["bs_tax_ben"][j]
+                 for j in range(bs_n_periods)]
+    net_ppe = [bs_data["bs_land"][j] + bs_data["bs_fac_gross"][j] + bs_data["bs_dc_gross"][j]
+                + bs_data["bs_accum_dep"][j]  # accum dep is negative
+                for j in range(bs_n_periods)]
+    total_assets = [total_ca[j] + net_ppe[j] for j in range(bs_n_periods)]
+    total_cl = [bs_data["bs_ap"][j] + bs_data["bs_st_debt"][j] + bs_data["bs_tax_pay"][j]
+                 + bs_data["bs_div_pay"][j] for j in range(bs_n_periods)]
+    total_debt = [bs_data["bs_st_debt"][j] + bs_data["bs_lt_debt"][j] for j in range(bs_n_periods)]
+    total_liab = [total_cl[j] + bs_data["bs_lt_debt"][j] for j in range(bs_n_periods)]
+    total_equity = [bs_data["bs_stock"][j] + bs_data["bs_re"][j] for j in range(bs_n_periods)]
+    total_le = [total_liab[j] + total_equity[j] for j in range(bs_n_periods)]
+
+    bs_computed = [
+        ("**Total Current Assets**", total_ca),
+        ("**Net PPE**", net_ppe),
+        ("**Total Assets**", total_assets),
+        ("**Total Current Liabilities**", total_cl),
+        ("**Total Liabilities**", total_liab),
+        ("**Total Equity**", total_equity),
+        ("**Total L+E**", total_le),
+    ]
+    for label, vals in bs_computed:
+        row_cols = st.columns([2] + [1] * bs_n_periods)
+        with row_cols[0]:
+            st.markdown(f"<span style='font-size:0.85rem;'>{label}</span>", unsafe_allow_html=True)
+        for j in range(bs_n_periods):
+            with row_cols[j + 1]:
+                st.markdown(f"<span style='font-size:0.85rem;'>${vals[j]:,.0f}</span>",
+                             unsafe_allow_html=True)
+
+    # BS balance check
+    for j in range(bs_n_periods):
+        diff = total_assets[j] - total_le[j]
+        if abs(diff) > 1:
+            st.warning(f"⚠ **{bs_period_labels[j]}**: Assets (${total_assets[j]:,.0f}) ≠ L+E (${total_le[j]:,.0f}). "
+                        f"Difference: ${diff:,.0f}")
+
+    # ── Ratio Analysis ──────────────────────────────────────────────────────
+    st.markdown("---")
+    st.markdown("### Ratio Analysis")
+    st.caption("Auto-computed from the Booth ISM framework: Profitability (ROA tree), Risk (Liquidity + Solvency), "
+               "Efficiency (Turnover), Growth. Average assets uses Year (N-1) and Year N.")
+
+    ratio_tabs = st.tabs(["Profitability (ROA)", "Risk & Liquidity", "Efficiency & Turnover", "Common-Size P&L", "Trends"])
+
+    # ── Tab 1: Profitability / ROA ──────────────────────────────────────────
+    with ratio_tabs[0]:
+        st.markdown("**ROA = Profit Margin × Total Asset Turnover**")
+        prof_rows = []
+        for j in range(int(fs_n_years)):
+            rev = is_data["is_rev"][j]
+            oi = operating_income[j]
+            ni = net_income[j]
+            avg_assets = (total_assets[j] + total_assets[j + 1]) / 2 if total_assets[j] + total_assets[j + 1] > 0 else 1
+            roa = _safe_div(oi, avg_assets)
+            pm = _safe_div(oi, rev)
+            tat = _safe_div(rev, avg_assets)
+            gm = _safe_div(gross_profit[j], rev)
+            npm = _safe_div(ni, rev)
+            prof_rows.append({
+                "Year": year_labels[j],
+                "Revenue": f"${rev:,.0f}",
+                "Gross Margin": f"{gm:.1%}",
+                "Op. Income (EBIT)": f"${oi:,.0f}",
+                "Profit Margin (OI/Rev)": f"{pm:.1%}",
+                "Avg Assets": f"${avg_assets:,.0f}",
+                "Asset Turnover (Rev/Avg A)": f"{tat:.2f}x",
+                "ROA (OI/Avg A)": f"{roa:.1%}",
+                "Net Profit Margin": f"{npm:.1%}",
+            })
+        st.dataframe(pd.DataFrame(prof_rows), use_container_width=True, hide_index=True)
+
+        # ROA context
+        st.info("**Interpretation:** If ROA > asset cost of capital → creating value. "
+                "Excellent bond rating needs EBIT/interest ≥ 20×. Good = ≥ 7×.")
+
+    # ── Tab 2: Risk & Liquidity ─────────────────────────────────────────────
+    with ratio_tabs[1]:
+        risk_rows = []
+        for j in range(int(fs_n_years)):
+            cr = _safe_div(total_ca[j + 1], total_cl[j + 1]) if total_cl[j + 1] else 0
+            de = _safe_div(total_debt[j + 1], total_equity[j + 1]) if total_equity[j + 1] else 0
+            da = _safe_div(total_debt[j + 1], total_assets[j + 1]) if total_assets[j + 1] else 0
+            interest_exp = abs(is_data["is_int_exp"][j]) if is_data["is_int_exp"][j] else 0
+            icr = _safe_div(operating_income[j], interest_exp) if interest_exp > 0 else float("inf")
+            icr_str = f"{icr:.1f}x" if icr < float("inf") else "No debt"
+            rating = ("Excellent (≤10%)" if icr >= 20 else
+                       "Good (≤15%)" if icr >= 7 else
+                       "Poor (≤25%)" if icr >= 2 else
+                       "Emergency (40%)")
+            risk_rows.append({
+                "Year": year_labels[j],
+                "Current Ratio": f"{cr:.2f}x",
+                "Debt / Equity": f"{de:.2f}x",
+                "Debt / Assets": f"{da:.1%}",
+                "Interest Coverage (EBIT/Int)": icr_str,
+                "Implied Bond Rating": rating,
+            })
+        st.dataframe(pd.DataFrame(risk_rows), use_container_width=True, hide_index=True)
+
+        st.info("**Bond rating tiers:** Excellent ≥20× (10% APR), Good ≥7× (15% APR), Poor ≥2× (25%), "
+                "Emergency = 40% APR. Per ISM War Strategy: target Excellent or Good by Day 91 (Q1 EBIT locks).")
+
+    # ── Tab 3: Efficiency / Turnover ────────────────────────────────────────
+    with ratio_tabs[2]:
+        eff_rows = []
+        for j in range(int(fs_n_years)):
+            rev = is_data["is_rev"][j]
+            cogs = abs(is_data["is_cogs"][j])
+            avg_ar = (bs_data["bs_ar"][j] + bs_data["bs_ar"][j + 1]) / 2
+            avg_inv = (bs_data["bs_inv"][j] + bs_data["bs_inv"][j + 1]) / 2
+            avg_ppe = (net_ppe[j] + net_ppe[j + 1]) / 2
+            ar_turn = _safe_div(rev, avg_ar)
+            dso = _safe_div(fs_days_per_year, ar_turn) if ar_turn > 0 else 0
+            inv_turn = _safe_div(cogs, avg_inv)
+            dio = _safe_div(fs_days_per_year, inv_turn) if inv_turn > 0 else 0
+            ppe_turn = _safe_div(rev, avg_ppe)
+            eff_rows.append({
+                "Year": year_labels[j],
+                "AR Turnover": f"{ar_turn:.1f}x",
+                "DSO (days)": f"{dso:.0f}",
+                "Inventory Turnover": f"{inv_turn:.1f}x",
+                "DIO (days)": f"{dio:.0f}",
+                "PPE Turnover": f"{ppe_turn:.2f}x",
+            })
+        st.dataframe(pd.DataFrame(eff_rows), use_container_width=True, hide_index=True)
+
+        st.caption("**DSO** = Days Sales Outstanding (lower = faster collection). "
+                   "**DIO** = Days Inventory Outstanding (lower = less capital tied up). "
+                   "Per strategy: DOH target 15–30 days, mail shipping throughout Year 1.")
+
+    # ── Tab 4: Common-Size P&L ──────────────────────────────────────────────
+    with ratio_tabs[3]:
+        cs_rows = []
+        items_for_cs = [
+            ("Net Revenue", [is_data["is_rev"][j] for j in range(int(fs_n_years))]),
+            ("COGS", [is_data["is_cogs"][j] for j in range(int(fs_n_years))]),
+            ("Gross Profit", gross_profit),
+            ("Advertising", [is_data["is_adv"][j] for j in range(int(fs_n_years))]),
+            ("Selling Expense", [is_data["is_sell"][j] for j in range(int(fs_n_years))]),
+            ("DC Operating", [is_data["is_dc_opex"][j] for j in range(int(fs_n_years))]),
+            ("R&D", [is_data["is_rd"][j] for j in range(int(fs_n_years))]),
+            ("DC Depreciation", [is_data["is_dc_dep"][j] for j in range(int(fs_n_years))]),
+            ("Idle Factory", [is_data["is_idle"][j] for j in range(int(fs_n_years))]),
+            ("Operating Income", operating_income),
+            ("Net Interest", net_interest),
+            ("Net Income", net_income),
+        ]
+        for label, vals in items_for_cs:
+            row = {"Line": label}
+            for j in range(int(fs_n_years)):
+                rev = is_data["is_rev"][j]
+                pct = _safe_div(vals[j], rev)
+                row[year_labels[j]] = f"{pct:.1%}" if rev else "n/a"
+            cs_rows.append(row)
+        st.dataframe(pd.DataFrame(cs_rows), use_container_width=True, hide_index=True)
+
+        st.caption("All lines as % of Net Revenue. Useful for spotting cost structure shifts across years.")
+
+    # ── Tab 5: Trend Charts ─────────────────────────────────────────────────
+    with ratio_tabs[4]:
+        if int(fs_n_years) >= 2:
+            # Revenue + Operating Income + Net Income trend
+            fig_trend = go.Figure()
+            fig_trend.add_trace(go.Bar(x=year_labels, y=is_data["is_rev"],
+                                         name="Revenue", marker_color="#1a3c5e"))
+            fig_trend.add_trace(go.Bar(x=year_labels, y=operating_income,
+                                         name="Op. Income", marker_color="#2d6a2e"))
+            fig_trend.add_trace(go.Bar(x=year_labels, y=net_income,
+                                         name="Net Income", marker_color="#b8860b"))
+            fig_trend.update_layout(
+                height=350, yaxis_tickformat="$,.0f", barmode="group",
+                title=dict(text="Revenue / Operating Income / Net Income by Year",
+                             x=0.5, xanchor="center", y=0.97),
+                margin=dict(l=0, r=0, t=50, b=0),
+                legend=dict(orientation="h", yanchor="top", y=1.10, xanchor="center", x=0.5),
+            )
+            st.plotly_chart(fig_trend, use_container_width=True)
+
+            # ROA + PM + TAT trend
+            roa_vals, pm_vals, tat_vals, cr_vals = [], [], [], []
+            for j in range(int(fs_n_years)):
+                rev = is_data["is_rev"][j]
+                oi = operating_income[j]
+                avg_a = (total_assets[j] + total_assets[j + 1]) / 2 if total_assets[j] + total_assets[j + 1] else 1
+                roa_vals.append(_safe_div(oi, avg_a))
+                pm_vals.append(_safe_div(oi, rev))
+                tat_vals.append(_safe_div(rev, avg_a))
+                cr_vals.append(_safe_div(total_ca[j + 1], total_cl[j + 1]) if total_cl[j + 1] else 0)
+
+            fig_ratios = go.Figure()
+            fig_ratios.add_trace(go.Scatter(x=year_labels, y=[r * 100 for r in roa_vals],
+                                              name="ROA %", line=dict(color="#800000", width=2.5)))
+            fig_ratios.add_trace(go.Scatter(x=year_labels, y=[r * 100 for r in pm_vals],
+                                              name="Profit Margin %", line=dict(color="#1a3c5e", width=2.5)))
+            fig_ratios.update_layout(
+                height=320, yaxis_title="%", yaxis_ticksuffix="%",
+                title=dict(text="ROA and Profit Margin Trend", x=0.5, xanchor="center", y=0.97),
+                margin=dict(l=0, r=0, t=50, b=0),
+                legend=dict(orientation="h", yanchor="top", y=1.10, xanchor="center", x=0.5),
+            )
+            st.plotly_chart(fig_ratios, use_container_width=True)
+
+            # Asset composition stacked bar
+            fig_bs = go.Figure()
+            fig_bs.add_trace(go.Bar(x=bs_period_labels, y=total_ca, name="Current Assets",
+                                      marker_color="#1a3c5e"))
+            fig_bs.add_trace(go.Bar(x=bs_period_labels, y=net_ppe, name="Net PPE",
+                                      marker_color="#b8860b"))
+            fig_bs.update_layout(
+                height=320, barmode="stack", yaxis_tickformat="$,.0f",
+                title=dict(text="Asset Composition by Period", x=0.5, xanchor="center", y=0.97),
+                margin=dict(l=0, r=0, t=50, b=0),
+                legend=dict(orientation="h", yanchor="top", y=1.10, xanchor="center", x=0.5),
+            )
+            st.plotly_chart(fig_bs, use_container_width=True)
+        else:
+            st.info("Add at least 2 years of data to see trend charts.")
+
+    # ── Quick Reference from War Strategy ───────────────────────────────────
+    st.markdown("---")
+    with st.expander("📋 Quick Reference — Key Numbers (from ISM War Strategy)", expanded=False):
+        st.markdown("""
+| Item | Value |
+|------|-------|
+| Starting cash | $549K |
+| Line factory total | $600K ($100K land + $500K capex) |
+| DC total | $2.6M + $2K/day + fulfillment |
+| Sales commission (retailer) | 20% |
+| Handling (retailer) | $10/unit |
+| Mail same-region | $200/shipment (10 units) |
+| Mail inter-region | $400/shipment |
+| Container same-region | $5K / 1,000 units / 7d |
+| Container inter-region | $10K / 21d |
+| Bond rating: Excellent | EBIT/Interest ≥ 20× → ≤10% APR |
+| Bond rating: Good | EBIT/Interest ≥ 7× → ≤15% APR |
+| Bond rating: Poor | EBIT/Interest ≥ 2× → ≤25% APR |
+| Emergency loan | 40% APR — avoid |
+| Tax rate | 35% |
+| Depreciation | 15-year straight-line |
+| 364-day compounding | EAR = (1 + APR/364)^364 − 1 |
+| WC float | Materials 30d, others 15d ≈ $100–150K free float |
+| No dividends Year 1 | 6.5% after-tax < bond APR — retire debt first |
+""")
+
 
 
 # ══════════════════════════════════════════════════════════════════════════════
