@@ -183,6 +183,39 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# ── Access Control ────────────────────────────────────────────────────────────
+
+PUBLIC_PAGES = {"🚀 14 Trial War Room"}
+
+def _load_access_codes() -> dict:
+    try:
+        return dict(st.secrets.get("access_codes", {}))
+    except Exception:
+        return {}
+
+def _try_unlock(code: str) -> bool:
+    if not code:
+        return False
+    codes = _load_access_codes()
+    for label, value in codes.items():
+        if code.strip() == str(value):
+            st.session_state["unlocked"] = True
+            st.session_state["unlocked_by"] = label
+            return True
+    return False
+
+def _is_locked(page_key: str) -> bool:
+    if page_key in PUBLIC_PAGES:
+        return False
+    return not st.session_state.get("unlocked", False)
+
+def _display(page_key: str) -> str:
+    return page_key if not _is_locked(page_key) else f"🔒 {page_key}"
+
+if "unlocked" not in st.session_state:
+    st.session_state["unlocked"] = False
+    st.session_state["unlocked_by"] = None
+
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 
 with st.sidebar:
@@ -201,39 +234,111 @@ with st.sidebar:
     st.markdown(f"**{days_remaining}** days to graduation")
     st.markdown("---")
 
-    page = st.radio(
-        "Navigate",
-        [
-            "🎯 15-16 War Room",
-            "📊 15-16 P&L / BS Dashboard",
-            "🚀 14 Trial War Room",
-            "🏭 13 Trial War Room",
-            "⚔️ 12 Trial War Room",
-            "🎮 ISM War Room",
-            "📖 War Room Prep",
-            "🕸️ Knowledge Graph",
-        ],
-        index=0,
+    MAIN_PAGES = [
+        "🎯 15-16 War Room",
+        "📊 15-16 P&L / BS Dashboard",
+        "🚀 14 Trial War Room",
+        "🏭 13 Trial War Room",
+        "⚔️ 12 Trial War Room",
+        "🎮 ISM War Room",
+        "📖 War Room Prep",
+        "🕸️ Knowledge Graph",
+    ]
+    MISC_PAGES = [
+        "✨ 14 New War Room",
+        "📊 Learning Dashboard",
+        "📈 Content Analytics",
+        "🎯 Capstone Prep Hub",
+    ]
+
+    main_display = [_display(p) for p in MAIN_PAGES]
+    main_to_key = dict(zip(main_display, MAIN_PAGES))
+    default_main_idx = (
+        MAIN_PAGES.index("🎯 15-16 War Room")
+        if st.session_state.get("unlocked")
+        else MAIN_PAGES.index("🚀 14 Trial War Room")
     )
+    selected_main = st.radio("Navigate", main_display, index=default_main_idx)
+    page = main_to_key[selected_main]
+
     st.markdown("")
     st.caption("📁 Misc")
-    misc_page = st.radio(
+    misc_display = ["— none —"] + [_display(p) for p in MISC_PAGES]
+    misc_to_key = {"— none —": None, **dict(zip(misc_display[1:], MISC_PAGES))}
+    selected_misc = st.radio(
         "Misc",
-        [
-            "— none —",
-            "✨ 14 New War Room",
-            "📊 Learning Dashboard",
-            "📈 Content Analytics",
-            "🎯 Capstone Prep Hub",
-        ],
+        misc_display,
         index=0,
         label_visibility="collapsed",
     )
-    if misc_page != "— none —":
-        page = misc_page
+    if misc_to_key[selected_misc] is not None:
+        page = misc_to_key[selected_misc]
+
+    st.markdown("---")
+
+    # ── Access code panel ────────────────────────────────────────────────────
+    if st.session_state.get("unlocked"):
+        st.success(f"✅ Unlocked ({st.session_state.get('unlocked_by', '—')})")
+        if st.button("Sign out", use_container_width=True, key="sidebar_signout"):
+            st.session_state["unlocked"] = False
+            st.session_state["unlocked_by"] = None
+            st.rerun()
+    else:
+        with st.expander("🔑 Enter Access Code"):
+            code_in = st.text_input(
+                "Access code",
+                type="password",
+                key="sidebar_code",
+                label_visibility="collapsed",
+                placeholder="Enter code...",
+            )
+            if st.button("Unlock", key="sidebar_unlock", use_container_width=True):
+                if _try_unlock(code_in):
+                    st.rerun()
+                else:
+                    st.error("Invalid code")
+            st.caption("No code? Email derrick@elitez.asia")
+
     st.markdown("---")
     st.markdown("*Derrick Teo*")
     st.markdown("*Class of 2026*")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ACCESS GATE — blocks locked pages for trial users
+# ══════════════════════════════════════════════════════════════════════════════
+
+if _is_locked(page):
+    st.markdown('<p class="big-header">🔒 Full Access Required</p>', unsafe_allow_html=True)
+    st.markdown(
+        f'<p class="sub-header">The <b>{page}</b> page is part of the full analytics suite. '
+        f'Trial users can explore <b>🚀 14 Trial War Room</b> — select it from the sidebar.</p>',
+        unsafe_allow_html=True,
+    )
+    st.markdown("---")
+    gcol1, gcol2 = st.columns([2, 1])
+    with gcol1:
+        st.markdown("### Enter Access Code")
+        gate_code = st.text_input(
+            "Access code",
+            type="password",
+            key="gate_code",
+            placeholder="Enter code...",
+            label_visibility="collapsed",
+        )
+        if st.button("Unlock", type="primary", key="gate_unlock"):
+            if _try_unlock(gate_code):
+                st.rerun()
+            else:
+                st.error("Invalid code")
+    with gcol2:
+        st.markdown("### Request Access")
+        st.markdown(
+            "Email **[derrick@elitez.asia](mailto:derrick@elitez.asia"
+            "?subject=Booth%20Analytics%20Access%20Request)** to request a code."
+        )
+        st.caption("Include your name, role, and purpose.")
+    st.stop()
 
 
 # ══════════════════════════════════════════════════════════════════════════════
