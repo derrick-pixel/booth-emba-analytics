@@ -187,11 +187,16 @@ st.markdown("""
 
 PUBLIC_PAGES = {"🚀 14 Trial War Room"}
 
+# Fallback used only when no [access_codes] are configured in Streamlit secrets.
+# Override on Streamlit Cloud: Settings → Secrets → paste a [access_codes] section.
+_DEFAULT_CODES = {"shared": "Booth123"}
+
 def _load_access_codes() -> dict:
     try:
-        return dict(st.secrets.get("access_codes", {}))
+        configured = dict(st.secrets.get("access_codes", {}))
     except Exception:
-        return {}
+        configured = {}
+    return configured or _DEFAULT_CODES
 
 def _try_unlock(code: str) -> bool:
     if not code:
