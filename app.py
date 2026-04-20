@@ -234,7 +234,7 @@ with st.sidebar:
     st.markdown(f"**{days_remaining}** days to graduation")
     st.markdown("---")
 
-    MAIN_PAGES = [
+    ISM_PAGES = [
         "🎯 15-16 War Room",
         "📊 15-16 P&L / BS Dashboard",
         "🚀 14 Trial War Room",
@@ -242,37 +242,43 @@ with st.sidebar:
         "⚔️ 12 Trial War Room",
         "🎮 ISM War Room",
         "📖 War Room Prep",
-        "🕸️ Knowledge Graph",
-    ]
-    MISC_PAGES = [
         "✨ 14 New War Room",
+    ]
+    BOOTH_JOURNEY_PAGES = [
+        "🕸️ Knowledge Graph",
         "📊 Learning Dashboard",
         "📈 Content Analytics",
         "🎯 Capstone Prep Hub",
     ]
 
-    main_display = [_display(p) for p in MAIN_PAGES]
-    main_to_key = dict(zip(main_display, MAIN_PAGES))
-    default_main_idx = (
-        MAIN_PAGES.index("🎯 15-16 War Room")
+    st.caption("🎮 ISM")
+    ism_display = [_display(p) for p in ISM_PAGES]
+    ism_to_key = dict(zip(ism_display, ISM_PAGES))
+    default_ism_idx = (
+        ISM_PAGES.index("🎯 15-16 War Room")
         if st.session_state.get("unlocked")
-        else MAIN_PAGES.index("🚀 14 Trial War Room")
+        else ISM_PAGES.index("🚀 14 Trial War Room")
     )
-    selected_main = st.radio("Navigate", main_display, index=default_main_idx)
-    page = main_to_key[selected_main]
+    selected_ism = st.radio(
+        "ISM",
+        ism_display,
+        index=default_ism_idx,
+        label_visibility="collapsed",
+    )
+    page = ism_to_key[selected_ism]
 
     st.markdown("")
-    st.caption("📁 Misc")
-    misc_display = ["— none —"] + [_display(p) for p in MISC_PAGES]
-    misc_to_key = {"— none —": None, **dict(zip(misc_display[1:], MISC_PAGES))}
-    selected_misc = st.radio(
-        "Misc",
-        misc_display,
+    st.caption("🎓 Booth Journey")
+    bj_display = ["— none —"] + [_display(p) for p in BOOTH_JOURNEY_PAGES]
+    bj_to_key = {"— none —": None, **dict(zip(bj_display[1:], BOOTH_JOURNEY_PAGES))}
+    selected_bj = st.radio(
+        "Booth Journey",
+        bj_display,
         index=0,
         label_visibility="collapsed",
     )
-    if misc_to_key[selected_misc] is not None:
-        page = misc_to_key[selected_misc]
+    if bj_to_key[selected_bj] is not None:
+        page = bj_to_key[selected_bj]
 
     st.markdown("---")
 
