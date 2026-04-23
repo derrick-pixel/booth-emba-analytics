@@ -187,8 +187,9 @@ st.markdown("""
 
 PUBLIC_PAGES = {"🚀 14 Trial War Room"}
 
-# Fallback used only when no [access_codes] are configured in Streamlit secrets.
-# Override on Streamlit Cloud: Settings → Secrets → paste a [access_codes] section.
+# Committed master code — always valid, so the app is never locked out even
+# if Streamlit Cloud secrets are misconfigured. Extra per-person codes can be
+# added via Settings → Secrets → [access_codes]; they stack on top of this.
 _DEFAULT_CODES = {"shared": "Booth123"}
 
 def _load_access_codes() -> dict:
@@ -196,7 +197,9 @@ def _load_access_codes() -> dict:
         configured = dict(st.secrets.get("access_codes", {}))
     except Exception:
         configured = {}
-    return configured or _DEFAULT_CODES
+    # Merge: configured codes override defaults on matching labels, but the
+    # master "shared = Booth123" stays valid unless explicitly overridden.
+    return {**_DEFAULT_CODES, **configured}
 
 def _try_unlock(code: str) -> bool:
     if not code:
