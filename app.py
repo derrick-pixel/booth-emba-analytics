@@ -6,13 +6,10 @@ Derrick Teo | Autumn 2024 – Spring 2026
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import pandas as pd
 import numpy as np
 import networkx as nx
-import json
 from datetime import date, datetime, timedelta
-from collections import Counter
 
 from course_data import (
     COURSES, QUARTERS, MILESTONES, CATEGORY_COLORS,
