@@ -1,0 +1,532 @@
+<table class="containerTable" border="0" cellspacing="0" cellpadding="0" style="border:0px;width:auto;" align="center"><tbody><tr>
+<td valign="top" class="leftTableTD"><div style="width:auto;border:0px green solid;"><table cellpadding="3" cellspacing="1" frame="box" rules="cols" width="40%" id="xslttable" name="xslttable" style="font-size:12px;">
+<tbody><tr align="center">
+<td style="width:20%;">&nbsp;</td>
+<td onclick="toggleAllPercentage(this);" style="cursor:pointer;width:2%;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;"><b>$</b></td>
+</tr>
+<tr align="center">
+<td><b>Assets</b></td>
+<td style="border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;">&nbsp;</td>
+</tr>
+<tr align="left">
+<td onclick="openFinancialBalanceChart('Current Assets','category', this);" style="cursor: pointer;">Current assets:
+                                </td>
+<td style="border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;">&nbsp;</td>
+</tr>
+<tr align="left">
+<td style="padding-left:10px;cursor: pointer;" onclick="openFinancialBalanceChart('Cash','account', this);">Cash</td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;"><b>$</b></td>
+</tr>
+<tr align="left">
+<td style="padding-left:10px;cursor: pointer;" onclick="openFinancialBalanceChart('Accounts Receivable','account', this);">Accounts receivable</td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;"><b>$</b></td>
+</tr>
+<tr align="left">
+<td style="padding-left:10px;cursor: pointer;" onclick="openFinancialBalanceChart('Inventory|WIP','account', this);">Work in process inventory</td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;"><b>$</b></td>
+</tr>
+<tr align="left">
+<td style="padding-left:10px;cursor: pointer;" onclick="openFinancialBalanceChart('Inventory|Finished','account', this);">Finished goods inventory</td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;"><b>$</b></td>
+</tr>
+<tr align="left">
+<td style="padding-left:10px;cursor: pointer;" onclick="openFinancialBalanceChart('Tax Benefit','account', this);">Tax benefit</td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;"><b>$</b></td>
+</tr>
+<tr align="left">
+<td align="left" style="padding-left:20px;cursor:pointer;" onclick="openFinancialBalanceChart('Current Assets','category', this);"><span><b>Total current assets</b></span></td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left: 1px solid;"><b>$</b></td>
+</tr>
+<tr align="left">
+<td onclick="openFinancialBalanceChart('Noncurrent Assets','category', this);" style="cursor: pointer;">Noncurrent assets:
+                                </td>
+<td style="border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;">&nbsp;</td>
+</tr>
+<tr align="left">
+<td style="padding-left:10px;cursor: pointer;" onclick="openFinancialBalanceChart('Land','account', this);">Land</td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;"><b>$</b></td>
+</tr>
+<tr align="left">
+<td style="padding-left:10px;cursor: pointer;" onclick="openFinancialBalanceChart('Net property plant and equipment - factories','category', this);">Property plant and equipment - factories:
+                                  </td>
+<td style="border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;">&nbsp;</td>
+</tr>
+<tr align="left">
+<td style="padding-left:10px;cursor: pointer;" onclick="openFinancialBalanceChart('Factory|Original Cost','account', this);">Property plant and equipment - factories</td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;"><b>$</b></td>
+</tr>
+<tr align="left">
+<td style="padding-left:10px;cursor: pointer;" onclick="openFinancialBalanceChart('Factory|Depreciation','account', this);">Accumulated depreciation - factories</td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;"><b>$</b></td>
+</tr>
+<tr align="left">
+<td align="left" style="cursor: pointer;" onclick="openFinancialBalanceChart('Net property plant and equipment - factories','category', this);"><span><b>Net Property plant and equipment - factories</b></span></td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:1px solid;"><b>$</b></td>
+</tr>
+<tr align="left">
+<td style="padding-left:10px;cursor: pointer;" onclick="openFinancialBalanceChart('Net property plant and equipment - distribution centers','category', this);">Property plant and equipment - distribution centers:
+                                  </td>
+<td style="border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;">&nbsp;</td>
+</tr>
+<tr align="left">
+<td style="padding-left:10px;cursor: pointer;" onclick="openFinancialBalanceChart('Distribution Center|Original Cost','account', this);">Property plant and equipment - distribution centers</td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;"><b>$</b></td>
+</tr>
+<tr align="left">
+<td style="padding-left:10px;cursor: pointer;" onclick="openFinancialBalanceChart('Distribution Center|Depreciation','account', this);">Accumulated depreciation - distribution centers</td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;"><b>$</b></td>
+</tr>
+<tr align="left">
+<td align="left" style="cursor: pointer;" onclick="openFinancialBalanceChart('Net property plant and equipment - distribution centers','category', this);"><span><b>Net Property plant and equipment - distribution centers</b></span></td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:1px solid;"><b>$</b></td>
+</tr>
+<tr align="left">
+<td align="left" style="cursor: pointer;padding-left:20px;" onclick="openFinancialBalanceChart('Assets','category');"><b>Total assets</b></td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-bottom:3px double;border-left:1px solid;"><b>$</b></td>
+</tr>
+<tr align="center">
+<td><b>Liabilities and shareholders' equity</b></td>
+<td style="border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;">&nbsp;</td>
+</tr>
+<tr align="left">
+<td onclick="openFinancialBalanceChart('Liabilities','category', this);" style="cursor: pointer;">Liabilities:
+                                </td>
+<td style="border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;">&nbsp;</td>
+</tr>
+<tr align="left">
+<td style="padding-left:10px;cursor: pointer;" onclick="openFinancialBalanceChart('Current Liabilities','category', this);">Current liabilities:
+                                  </td>
+<td style="border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;">&nbsp;</td>
+</tr>
+<tr align="left">
+<td style="padding-left:10px;cursor: pointer;" onclick="openFinancialBalanceChart('Accounts Payable','account', this);">Accounts payable</td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;"><b>$</b></td>
+</tr>
+<tr align="left">
+<td style="padding-left:10px;cursor: pointer;" onclick="openFinancialBalanceChart('Raw materials payable','account', this);">Raw materials payable</td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;"><b>$</b></td>
+</tr>
+<tr align="left">
+<td style="padding-left:10px;cursor: pointer;" onclick="openFinancialBalanceChart('Emergency debt','account', this);">Emergency loan</td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;"><b>$</b></td>
+</tr>
+<tr align="left">
+<td style="padding-left:10px;cursor: pointer;" onclick="openFinancialBalanceChart('Taxes Payable','account', this);">Taxes payable</td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;"><b>$</b></td>
+</tr>
+<tr align="left">
+<td style="padding-left:10px;cursor: pointer;" onclick="openFinancialBalanceChart('Other Payables','account', this);">Other payables</td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;"><b>$</b></td>
+</tr>
+<tr align="left">
+<td align="left" style="padding-left:20px;cursor:pointer;" onclick="openFinancialBalanceChart('Current Liabilities','category', this);"><span><b>Total current liabilities</b></span></td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:1px solid;"><b>$</b></td>
+</tr>
+<tr align="left">
+<td style="padding-left:10px;cursor: pointer;" onclick="openFinancialBalanceChart('NonCurrent Liabilities','category', this);">Noncurrent liabilities:
+                                  </td>
+<td style="border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;">&nbsp;</td>
+</tr>
+<tr align="left">
+<td style="padding-left:10px;cursor: pointer;" onclick="openFinancialBalanceChart('Bonds','account', this);">Bonds</td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;"><b>$</b></td>
+</tr>
+<tr align="left">
+<td align="left" style="cursor: pointer;" onclick="openFinancialBalanceChart('NonCurrent Liabilities','category', this);"><span><b>Noncurrent liabilities</b></span></td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:1px solid;"><b>$</b></td>
+</tr>
+<tr align="left">
+<td onclick="openFinancialBalanceChart('Shareholder Equity','category', this);" style="cursor: pointer;">Shareholder equity:
+                                </td>
+<td style="border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;">&nbsp;</td>
+</tr>
+<tr align="left">
+<td style="padding-left:10px;cursor: pointer;" onclick="openFinancialBalanceChart('Contributed Capital','account', this);">Contributed capital</td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;"><b>$</b></td>
+</tr>
+<tr align="left">
+<td style="padding-left:10px;cursor: pointer;" onclick="openFinancialBalanceChart('Retained Earnings','account', this);">Retained earnings</td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-left: 1px solid;"><b>$</b></td>
+</tr>
+<tr align="left">
+<td align="left" style="padding-left:20px;cursor:pointer;" onclick="openFinancialBalanceChart('Shareholder Equity','category', this);"><span><b>Total shareholder equity</b></span></td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left: 1px solid;"><b>$</b></td>
+</tr>
+<tr align="left">
+<td align="left" style="cursor: pointer;padding-left:20px;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-bottom:3px double;" onclick="openFinancialBalanceChart('Liabilities and Shareholder Equity','category', this);"><b>Total liabilities and shareholders' equity</b></td>
+<td onclick="togglePercentage(this);" style="cursor: pointer;text-align:center;border-right:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-bottom:3px double;border-left:1px solid;"><b>$</b></td>
+</tr>
+</tbody></table></div></td>
+<td valign="top" class="rightTableTD"><div class="maxWidth" style="width:auto;overflow:auto;border:0px blue solid;"><table cellpadding="3" cellspacing="1" frame="box" rules="cols" width="40%" id="xslttable" name="xslttable" style="font-size:12px;">
+<tbody><tr align="center">
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">B612</td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">Dune</td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">Globex</td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">Gotham</td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">Panem</td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">Vulcan</td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">Westeros</td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">Zion</td>
+</tr>
+<tr align="center">
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+</tr>
+<tr align="left">
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+</tr>
+<tr align="left">
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">739,330</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">1,122,484</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">753,624</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">330,695</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">303,529</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">841,942</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">529,410</td>
+</tr>
+<tr align="left">
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">568,480</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">855,410</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">371,240</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">394,516</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">726,650</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">931,825</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">734,300</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">633,265</td>
+</tr>
+<tr align="left">
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">11,405</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">16,153</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">10,172</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">122,124</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">14,470</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">17,311</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">12,576</td>
+</tr>
+<tr align="left">
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">201,014</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">118,293</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">395,092</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">150,578</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">363,822</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">200,912</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">64,397</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">44,083</td>
+</tr>
+<tr align="left">
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">43,051</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">123,347</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">157,045</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">19,339</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">59,210</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">74,762</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">87,979</td>
+</tr>
+<tr align="left">
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">1,563,280</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">2,112,340</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">1,643,303</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">1,043,005</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">1,231,935</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">1,509,946</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">1,732,712</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">1,307,313</td>
+</tr>
+<tr align="left">
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+</tr>
+<tr align="left">
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">300,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">400,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">300,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">400,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">500,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">300,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">400,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">300,000</td>
+</tr>
+<tr align="left">
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+</tr>
+<tr align="left">
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">600,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">1,100,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">600,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">800,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">1,100,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">600,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">900,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">602,000</td>
+</tr>
+<tr align="left">
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">(30,415)</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">(35,391)</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">(31,063)</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">(35,239)</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">(35,929)</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">(36,108)</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">(36,022)</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">(35,311)</td>
+</tr>
+<tr align="left">
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">569,585</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">1,064,609</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">568,937</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">764,761</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">1,064,071</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">563,892</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">863,978</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">566,689</td>
+</tr>
+<tr align="left">
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+</tr>
+<tr align="left">
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">2,500,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">2,500,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">2,500,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">5,000,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">5,000,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">2,500,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">5,000,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">2,500,000</td>
+</tr>
+<tr align="left">
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">(333,333)</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">(333,333)</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">(333,333)</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">(342,696)</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">(345,578)</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">(333,333)</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">(344,173)</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">(333,333)</td>
+</tr>
+<tr align="left">
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">2,166,667</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">2,166,667</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">2,166,667</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">4,657,304</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">4,654,422</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">2,166,667</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">4,655,827</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">2,166,667</td>
+</tr>
+<tr align="left">
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-bottom:3px double;border-left:none;border-right:1px solid;">4,599,532</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-bottom:3px double;border-left:none;border-right:1px solid;">5,743,616</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-bottom:3px double;border-left:none;border-right:1px solid;">4,678,907</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-bottom:3px double;border-left:none;border-right:1px solid;">6,865,069</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-bottom:3px double;border-left:none;border-right:1px solid;">7,450,427</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-bottom:3px double;border-left:none;border-right:1px solid;">4,540,505</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-bottom:3px double;border-left:none;border-right:1px solid;">7,652,517</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-bottom:3px double;border-left:none;border-right:1px solid;">4,340,669</td>
+</tr>
+<tr align="center">
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+</tr>
+<tr align="left">
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+</tr>
+<tr align="left">
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+</tr>
+<tr align="left">
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">710</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+</tr>
+<tr align="left">
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">80,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">170,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">100,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">168,250</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">119,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">120,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">90,000</td>
+</tr>
+<tr align="left">
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">18,631</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+</tr>
+<tr align="left">
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">0</td>
+</tr>
+<tr align="left">
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">132,300</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">222,964</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">72,210</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">158,127</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">236,777</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">186,730</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">260,973</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">153,355</td>
+</tr>
+<tr align="left">
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">212,300</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">392,964</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">72,920</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">258,127</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">423,659</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">305,730</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">380,973</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">243,355</td>
+</tr>
+<tr align="left">
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+</tr>
+<tr align="left">
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">467,189</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">1,127,853</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">835,066</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">2,898,602</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">3,062,688</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">344,741</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">3,410,393</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">260,708</td>
+</tr>
+<tr align="left">
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">467,189</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">1,127,853</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">835,066</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">2,898,602</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">3,062,688</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">344,741</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">3,410,393</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">260,708</td>
+</tr>
+<tr align="left">
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+<td style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;"></td>
+</tr>
+<tr align="left">
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">4,000,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">4,000,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">4,000,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">4,000,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">4,000,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">4,000,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">4,000,000</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">4,000,000</td>
+</tr>
+<tr align="left">
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">(79,957)</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">222,798</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">(229,079)</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">(291,659)</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">(35,920)</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">(109,966)</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">(138,849)</td>
+<td align="right" style="border-left:none;mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';white-space:nowrap;border-right: 1px solid;">(163,394)</td>
+</tr>
+<tr align="left">
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">3,920,043</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">4,222,798</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">3,770,921</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">3,708,341</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">3,964,080</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">3,890,034</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">3,861,151</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-top: 1px solid;border-bottom: 1px solid;border-left:none;border-right: 1px solid;">3,836,606</td>
+</tr>
+<tr align="left">
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-bottom:3px double;border-left:none;border-right:1px solid;">4,599,532</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-bottom:3px double;border-left:none;border-right:1px solid;">5,743,616</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-bottom:3px double;border-left:none;border-right:1px solid;">4,678,907</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-bottom:3px double;border-left:none;border-right:1px solid;">6,865,069</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-bottom:3px double;border-left:none;border-right:1px solid;">7,450,427</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-bottom:3px double;border-left:none;border-right:1px solid;">4,540,505</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-bottom:3px double;border-left:none;border-right:1px solid;">7,652,517</td>
+<td align="right" style="mso-number-format:'\#\,\#\#0\.00\;\[red\]\(\#\,\#\#0\.00\)';text-align:right;white-space:nowrap;border-bottom:3px double;border-left:none;border-right:1px solid;">4,340,669</td>
+</tr>
+</tbody></table></div></td>
+</tr></tbody></table>

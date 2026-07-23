@@ -1,0 +1,4 @@
+.DS_Store
+# booth_analytics is its own independent git repo already pushed to
+# https://github.com/derrick-pixel/booth-emba-analytics.git -- do not embed/duplicate it here
+booth_analytics/
